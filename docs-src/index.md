@@ -1,4 +1,4 @@
-<img class="hero" src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a drop pull" width="176" height="176">
+<img class="hero" src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a round knob" width="176" height="176">
 
 # KnowledgeBaseMCP
 
