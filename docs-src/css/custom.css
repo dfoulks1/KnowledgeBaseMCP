@@ -88,13 +88,17 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 2px solid var(--
 :is(h1, h2, h3, h4, h5, h6):hover .headerlink, .headerlink:focus { opacity: .7; }
 
 /* Code */
-code, pre, kbd { font-family: var(--mono); font-size: .8em; }
+code, pre, kbd { font-family: var(--mono); font-size: .85em; }
 :not(pre) > code { padding: .05em .3em; background: var(--paper-2); border-radius: 2px; }
 pre {
-  margin: 1.2rem 0; padding: .9rem 1rem; overflow-x: auto; line-height: 1.5;
+  margin: 1.2rem 0; padding: 1rem 1.1rem; overflow-x: auto; line-height: 1.6;
+  font-size: .88rem; font-weight: 500; color: var(--ink); -webkit-font-smoothing: antialiased;
   background: var(--paper-2); border-left: 2px solid var(--rule); hyphens: none;
 }
 .highlight, .highlight pre { background: var(--paper-2) !important; }
+/* Code in ink, like a typeset listing: no syntax colors, comments muted and upright. */
+.highlight span { color: inherit !important; font-style: normal !important; font-weight: inherit !important; }
+.highlight :is(.c, .c1, .cm, .ch, .cs, .go) { color: var(--ink-2) !important; font-weight: 400 !important; }
 pre.mermaid { background: none; border: 0; text-align: center; font-family: var(--serif); }
 
 /* Tables, booktabs style: rules above and below, none between columns */

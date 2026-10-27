@@ -56,13 +56,22 @@ concept is written, never what it says.</p>
 <p>Local files only. No network. Never writes to git. One Python file, run with
 <a href="https://docs.astral.sh/uv/">uv</a>.</p>
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Link to this section">#</a></h2>
-<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py init bundle=eng apply=true        # a bundle
-uv run KnowledgeBaseMCP.py create eng/runbooks/deploy type=Playbook description="How we deploy."
-uv run KnowledgeBaseMCP.py lint format=text                  # what's wrong, each with a fix
-uv run KnowledgeBaseMCP.py fix apply=true                    # the mechanical repairs
-uv run KnowledgeBaseMCP.py help move                         # any tool: what it does, its arguments</code></pre>
+<pre class="highlight"><code class="language-sh"># start a bundle
+uv run KnowledgeBaseMCP.py init bundle=eng apply=true
+
+# write a concept
+uv run KnowledgeBaseMCP.py create eng/runbooks/deploy \
+    type=Playbook description="How we deploy."
+
+# what's wrong, each with a fix; then the mechanical repairs
+uv run KnowledgeBaseMCP.py lint format=text
+uv run KnowledgeBaseMCP.py fix apply=true
+
+# any tool: what it does, its arguments
+uv run KnowledgeBaseMCP.py help move</code></pre>
 <p>Register it with Claude Code:</p>
-<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/kb -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
+<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/kb \
+    -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
 <h2 id="what-a-knowledgebase-looks-like">What a knowledgebase looks like<a class="headerlink" href="#what-a-knowledgebase-looks-like" title="Link to this section">#</a></h2>
 <p><code>web format=mermaid</code> draws the links between bundles or concepts:</p>
 <pre class="mermaid"><code>graph LR

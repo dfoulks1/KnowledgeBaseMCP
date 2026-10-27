@@ -23,17 +23,26 @@ Local files only. No network. Never writes to git. One Python file, run with
 ## Quickstart
 
 ```sh
-uv run KnowledgeBaseMCP.py init bundle=eng apply=true        # a bundle
-uv run KnowledgeBaseMCP.py create eng/runbooks/deploy type=Playbook description="How we deploy."
-uv run KnowledgeBaseMCP.py lint format=text                  # what's wrong, each with a fix
-uv run KnowledgeBaseMCP.py fix apply=true                    # the mechanical repairs
-uv run KnowledgeBaseMCP.py help move                         # any tool: what it does, its arguments
+# start a bundle
+uv run KnowledgeBaseMCP.py init bundle=eng apply=true
+
+# write a concept
+uv run KnowledgeBaseMCP.py create eng/runbooks/deploy \
+    type=Playbook description="How we deploy."
+
+# what's wrong, each with a fix; then the mechanical repairs
+uv run KnowledgeBaseMCP.py lint format=text
+uv run KnowledgeBaseMCP.py fix apply=true
+
+# any tool: what it does, its arguments
+uv run KnowledgeBaseMCP.py help move
 ```
 
 Register it with Claude Code:
 
 ```sh
-claude mcp add knowledgebase --env KB_ROOT=/path/to/kb -- uv run /path/to/KnowledgeBaseMCP.py
+claude mcp add knowledgebase --env KB_ROOT=/path/to/kb \
+    -- uv run /path/to/KnowledgeBaseMCP.py
 ```
 
 ## What a knowledgebase looks like
