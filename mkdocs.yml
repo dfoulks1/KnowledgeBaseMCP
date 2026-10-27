@@ -17,13 +17,13 @@ edit_uri: edit/main/docs-src/
 docs_dir: docs-src
 site_dir: docs
 
-# Custom theme built on Bootstrap 5 (Jinja2 templates + Bootstrap 5).
-# Templates and assets live in theme/.
+# Custom theme: a reference-work look (Literata, paper and ink), no framework.
+# Templates live in theme/, styles in docs-src/css/.
 theme:
   name: null
   custom_dir: theme
-  include_search_page: false
-  search_index_only: false
+  static_templates:
+    - 404.html
 
 extra_css:
   - css/pygments.css

@@ -1,96 +1,112 @@
 
 <!doctype html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tools · KnowledgeBaseMCP</title>
   <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <script>try { var t = localStorage.getItem('docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/pygments.css"><link rel="stylesheet" href="../css/custom.css">
 </head>
 <body>
   
-<nav class="navbar navbar-expand-lg bg-dark sticky-top" data-bs-theme="dark">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-semibold" href="..">
-      <i class="bi bi-journal-code me-1"></i>KnowledgeBaseMCP
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#site-nav" aria-controls="site-nav"
-            aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="site-nav">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        
-          
-            <li class="nav-item">
-              <a class="nav-link "
-                 
-                 href="..">Home</a>
-            </li>
-          
-        
-          
-            <li class="nav-item">
-              <a class="nav-link "
-                 
-                 href="../guide/">Guide</a>
-            </li>
-          
-        
-          
-            <li class="nav-item">
-              <a class="nav-link active"
-                 aria-current="page"
-                 href="./">Tools</a>
-            </li>
-          
-        
-          
-            <li class="nav-item">
-              <a class="nav-link "
-                 
-                 href="../contributing/">Contributing</a>
-            </li>
-          
-        
-      </ul>
-      <ul class="navbar-nav">
-        
-          <li class="nav-item">
-            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
-               target="_blank" rel="noopener noreferrer">
-              <i class="bi bi-github"></i> GitHub
-            </a>
-          </li>
-        
-        <li class="nav-item d-flex align-items-center">
-          <button class="btn btn-sm btn-outline-light ms-lg-2" id="theme-toggle"
-                  type="button" title="Toggle light/dark" aria-label="Toggle theme">
-            <i class="bi bi-circle-half"></i>
-          </button>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
+<header class="running-head">
+  <a class="title" href="..">KnowledgeBaseMCP</a>
+  <nav aria-label="Site">
+    
+      <a href="..">Home</a>
+    
+      <a href="../guide/">Guide</a>
+    
+      <a href="./" aria-current="page">Tools</a>
+    
+      <a href="../contributing/">Contributing</a>
+    
+    <a href="https://github.com/dfoulks1/KnowledgeBaseMCP" rel="noopener noreferrer">Source</a>
+    <button id="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark">&#9681;</button>
+  </nav>
+</header>
 
-  <div class="container-fluid">
-    <div class="row">
-      <main class="col-12 col-xl-9 py-4 px-md-4 docs-content">
-        
-          <nav aria-label="breadcrumb">
-            <ol class="breadcrumb small">
-              <li class="breadcrumb-item"><a href="..">Home</a></li>
-              <li class="breadcrumb-item active" aria-current="page">Tools</li>
-            </ol>
-          </nav>
-        
-        <article><h1 id="tools">Tools<a class="headerlink" href="#tools" title="Link to this section">#</a></h1>
+  <div class="page">
+    
+      <aside class="contents">
+        <p class="label">Contents</p>
+        <ol class="toc">
+  
+    <li><a href="#tools">Tools</a><ol class="toc">
+  
+    <li><a href="#archive">archive</a></li>
+  
+    <li><a href="#baseline">baseline</a></li>
+  
+    <li><a href="#bundles">bundles</a></li>
+  
+    <li><a href="#cite">cite</a></li>
+  
+    <li><a href="#create">create</a></li>
+  
+    <li><a href="#fix">fix</a></li>
+  
+    <li><a href="#get">get</a></li>
+  
+    <li><a href="#heatmap">heatmap</a></li>
+  
+    <li><a href="#index">index</a></li>
+  
+    <li><a href="#ingest">ingest</a></li>
+  
+    <li><a href="#init">init</a></li>
+  
+    <li><a href="#links">links</a></li>
+  
+    <li><a href="#lint">lint</a></li>
+  
+    <li><a href="#list">list</a></li>
+  
+    <li><a href="#log">log</a></li>
+  
+    <li><a href="#migrate">migrate</a></li>
+  
+    <li><a href="#move">move</a></li>
+  
+    <li><a href="#provenance">provenance</a></li>
+  
+    <li><a href="#recheck_apply">recheck_apply</a></li>
+  
+    <li><a href="#recheck_plan">recheck_plan</a></li>
+  
+    <li><a href="#record">record</a></li>
+  
+    <li><a href="#rename">rename</a></li>
+  
+    <li><a href="#search">search</a></li>
+  
+    <li><a href="#set">set</a></li>
+  
+    <li><a href="#split">split</a></li>
+  
+    <li><a href="#status">status</a></li>
+  
+    <li><a href="#unarchive">unarchive</a></li>
+  
+    <li><a href="#upgrade">upgrade</a></li>
+  
+    <li><a href="#verify">verify</a></li>
+  
+    <li><a href="#web">web</a></li>
+  
+</ol></li>
+  
+</ol>
+      </aside>
+    
+
+    <main class="docs-content">
+      <article><h1 id="tools">Tools<a class="headerlink" href="#tools" title="Link to this section">#</a></h1>
 <p>Every tool, as <code>help &lt;tool&gt;</code> prints it.</p>
 <h2 id="archive">archive<a class="headerlink" href="#archive" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-text">archive: Move a concept, or (no file) the whole bundle= named, into the knowledgebase's archive bundle (`archive/`,
@@ -503,232 +519,39 @@ Arguments:
   bundle: str = ''
 
 format=json|text (any tool; text prints diffs as is); lint also github|sarif.</code></pre></article>
-        
-          <hr class="my-4">
-          <div class="d-flex justify-content-between">
-            
-              <a class="btn btn-outline-secondary btn-sm" href="../guide/">
-                <i class="bi bi-arrow-left"></i> Guide</a>
-            
-            
-              <a class="btn btn-outline-secondary btn-sm" href="../contributing/">
-                Contributing <i class="bi bi-arrow-right"></i></a>
-            
-          </div>
-        
-      </main>
-
       
-        <aside class="col-xl-3 d-none d-xl-block py-4 docs-toc">
-          <div class="position-sticky" style="top: 5rem;">
-            <h6 class="text-uppercase small text-muted fw-bold mb-2">On this page</h6>
-            <ul class="nav flex-column docs-toc-list">
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#tools">Tools</a>
-      <ul class="nav flex-column docs-toc-list">
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#archive">archive</a>
+        <nav class="turn" aria-label="Pages">
+          <a href="../guide/">&larr; Guide</a>
+          <a href="../contributing/">Contributing &rarr;</a>
+        </nav>
       
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#baseline">baseline</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#bundles">bundles</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#cite">cite</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#create">create</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#fix">fix</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#get">get</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#heatmap">heatmap</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#index">index</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#ingest">ingest</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#init">init</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#links">links</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#lint">lint</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#list">list</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#log">log</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#migrate">migrate</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#move">move</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#provenance">provenance</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#recheck_apply">recheck_apply</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#recheck_plan">recheck_plan</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#record">record</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#rename">rename</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#search">search</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#set">set</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#split">split</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#status">status</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#unarchive">unarchive</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#upgrade">upgrade</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#verify">verify</a>
-      
-    </li>
-  
-    <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#web">web</a>
-      
-    </li>
-  
-</ul>
-    </li>
-  
-</ul>
-          </div>
-        </aside>
-      
-    </div>
+    </main>
   </div>
 
-  <footer class="border-top mt-4 py-3">
-    <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
-      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
-      <span>Built with MkDocs + Bootstrap 5.</span>
-    </div>
+  <footer class="colophon">
+    <p>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</p>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
   <script>
     (function () {
-      // Restore saved theme before paint-sensitive work.
       var root = document.documentElement;
-      var saved = localStorage.getItem('docs-theme');
-      if (saved) root.setAttribute('data-bs-theme', saved);
-
-      // Make Markdown tables look like Bootstrap tables.
-      document.querySelectorAll('.docs-content table').forEach(function (t) {
-        t.classList.add('table', 'table-sm', 'table-striped', 'table-bordered', 'align-middle');
-        if (!t.parentElement.classList.contains('table-responsive')) {
-          var wrap = document.createElement('div');
-          wrap.className = 'table-responsive';
-          t.parentNode.insertBefore(wrap, t);
-          wrap.appendChild(t);
-        }
-      });
-
-      // Theme toggle (reload keeps mermaid in sync with the new theme).
       var btn = document.getElementById('theme-toggle');
       if (btn) btn.addEventListener('click', function () {
-        var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
-        root.setAttribute('data-bs-theme', next);
-        localStorage.setItem('docs-theme', next);
-        location.reload();
+        var dark = root.dataset.theme === 'dark' ||
+          (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+        root.dataset.theme = dark ? 'light' : 'dark';
+        try { localStorage.setItem('docs-theme', root.dataset.theme); } catch (e) {}
+        location.reload();  // redraws mermaid in the new palette
       });
-
-      // Render mermaid: superfences emits <pre class="mermaid"><code>…</code></pre>.
       if (window.mermaid) {
-        var dark = root.getAttribute('data-bs-theme') === 'dark';
-        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default' });
+        var dark = root.dataset.theme === 'dark' ||
+          (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+        mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: dark
+          ? { fontFamily: 'Literata, serif', primaryColor: '#2a2621', primaryTextColor: '#e8e0d2',
+              primaryBorderColor: '#8c7b63', lineColor: '#b59a74', clusterBkg: '#221f1b', clusterBorder: '#5c5144' }
+          : { fontFamily: 'Literata, serif', primaryColor: '#fffdf8', primaryTextColor: '#2b2620',
+              primaryBorderColor: '#8c7b63', lineColor: '#7a2e14', clusterBkg: '#f3ede1', clusterBorder: '#cdbfa6' } });
         document.querySelectorAll('pre.mermaid').forEach(function (pre) {
           var code = pre.querySelector('code');
           if (code) pre.textContent = code.textContent;
