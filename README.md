@@ -220,6 +220,18 @@ run `lint baseline=.okf-baseline.json`, so only new findings fail. The
 snapshot sits at the knowledgebase root and matches from any directory. CI lints;
 it does not push fixes (fork PRs get a read-only token anyway).
 
+To skip files outright, list them in a `kbmcp.nolint` file. It works like
+`.gitignore`: it may sit in any directory, patterns are relative to it, the
+last match wins and `!` re-includes. At the knowledgebase root it covers every
+bundle. Skipped files are still read, so links to them resolve.
+
+```gitignore
+# kbmcp.nolint: agent instructions are not concepts
+AGENTS*
+CLAUDE.md
+.kiro/
+```
+
 pre-commit, lint only (a hook that edits files leaves the commit unstaged):
 
 ```yaml

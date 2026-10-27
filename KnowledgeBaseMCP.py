@@ -798,7 +798,63 @@ def tag_majority(docs) -> dict:
     return {k: c.most_common(1)[0][0] for k, c in variants.items() if len(c) > 1}
 
 
+def glob_rx(pat: str) -> str:
+    """A gitignore glob as a regex: * and ? stay within a path segment, ** crosses them."""
+    out, i = "", 0
+    while i < len(pat):
+        if pat.startswith("**/", i):
+            out, i = out + "(?:.*/)?", i + 3
+        elif pat.startswith("**", i):
+            out, i = out + ".*", i + 2
+        elif pat[i] in "*?":
+            out, i = out + ("[^/]*" if pat[i] == "*" else "[^/]"), i + 1
+        elif pat[i] == "[" and (j := pat.find("]", i + 2)) > 0:
+            body = pat[i + 1:j]
+            out, i = out + "[" + ("^" + body[1:] if body.startswith("!") else body).replace("\\", "\\\\") + "]", j + 1
+        elif pat[i] == "\\" and i + 1 < len(pat):
+            out, i = out + re.escape(pat[i + 1]), i + 2
+        else:
+            out, i = out + re.escape(pat[i]), i + 1
+    return out
+
+
+def nolint(r: Path):
+    """Predicate on bundle-relative paths: true when a kbmcp.nolint says lint skips that file. Like .gitignore:
+    one may sit in any directory from the knowledgebase root down, patterns are relative to it, the last match
+    wins and ! re-includes. shortcut: ! can re-include a file under an excluded directory, which git forbids."""
+    dirs = sorted({d for d in [r, *r.parents, *(p.parent for p in walk(r, "kbmcp.nolint"))]
+                   if inside(d, KB_ROOT) and (d / "kbmcp.nolint").is_file()}, key=lambda d: len(d.parts))
+    rules = []
+    for d in dirs:
+        for line in (read(d / "kbmcp.nolint") or "").splitlines():
+            pat = line.rstrip()
+            if not pat or pat.startswith("#"):
+                continue
+            neg = pat.startswith("!")
+            pat = pat[neg:]
+            only_dir, pat = pat.endswith("/"), pat.rstrip("/")
+            rx = ("" if "/" in pat else "(?:.*/)?") + glob_rx(pat.lstrip("/"))
+            rules.append((d, re.compile(rx), only_dir, neg))
+
+    def skip(f: str) -> bool:
+        p, out = r / f, False
+        for d, rx, only_dir, neg in rules:
+            if not inside(p, d):
+                continue
+            parts = rel(p, d).split("/")
+            cands = ["/".join(parts[:n]) for n in range(1, len(parts) + (not only_dir))]
+            if any(rx.fullmatch(c) for c in cands):
+                out = not neg
+        return out
+    return skip
+
+
 def findings(r: Path, docs, reserved) -> list:
+    skip = nolint(r)
+    return [f for f in raw_findings(r, docs, reserved) if not skip(f["file"])]
+
+
+def raw_findings(r: Path, docs, reserved) -> list:
     out, names, linked, inner = [], servers(r), set(), nested(r)
     if declares(r / "index.md"):
         out += [finding("nested_bundle", rel(n / "index.md", r), "a bundle inside a bundle",
@@ -964,7 +1020,7 @@ def lint(scope: str = "all", limit: int = 100, offset: int = 0, baseline: str = 
     in it, with a summary per bundle. Without bundle=, it lints where the user is: the bundle around the
     working directory and everything in it (at the knowledgebase root, everything). file / files: only those
     files or directories (paths within bundle=), each checked within its own bundle. limit=0 returns every
-    finding."""
+    finding. A kbmcp.nolint file lists paths lint skips, in .gitignore syntax."""
     if scope not in ("all", "okf", "house"):
         raise ValueError(f"scope {scope!r} | fix: use all, okf or house")
     paths = ([file] if file else []) + list(files or [])

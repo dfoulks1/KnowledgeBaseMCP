@@ -166,6 +166,17 @@ assert k.lint(bundle="bad", baseline=".okf-baseline.json")["ok"]
 (kb / "bad/new.md").write_text("no frontmatter either\n")
 L = k.lint(bundle="bad", baseline=".okf-baseline.json")
 assert not L["ok"] and L["total"] == 1 and L["baselined"] == 1
+
+# kbmcp.nolint: gitignore-style patterns; lint skips matching files. Cascades, last match wins, ! re-includes.
+(kb / "bad/drafts/deep").mkdir(parents=True)
+for f in ("drafts/a.md", "drafts/deep/b.md", "drafts/keep.md", "x1.md"):
+    (kb / "bad" / f).write_text("no frontmatter\n")
+(kb / "bad/kbmcp.nolint").write_text("# old stuff\nold.md\nnew.md\ndrafts/\n!drafts/keep.md\nx[0-9].md\n")
+assert {f["file"] for f in k.lint(bundle="bad", limit=0)["findings"]} == {"drafts/keep.md"}
+(kb / "bad/drafts/kbmcp.nolint").write_text("/keep.md\n")
+assert k.lint(bundle="bad")["total"] == 0 and k.lint(bundle="bad")["ok"]
+assert k.lint(bundle="bad", file="drafts/keep.md")["total"] == 0
+assert all(k.glob_rx(p) for p in ("**/a", "a/**", "[!x]", r"\#x"))
 shutil.rmtree(kb / "bad")
 
 # fix: strips sub-index frontmatter, rebuilds the root list, re-lints; idempotent.
