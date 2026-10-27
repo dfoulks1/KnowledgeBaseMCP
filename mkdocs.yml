@@ -1,0 +1,68 @@
+site_name: KnowledgeBaseMCP — Dev Docs
+site_description: >-
+  Development documentation for KnowledgeBaseMCP, an MCP server fronting an
+  Open Knowledge Format document store.
+site_author: KnowledgeBaseMCP contributors
+copyright: KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines
+# Update to the published base URL once hosting is finalized.
+site_url: https://dfoulks1.github.io/KnowledgeBaseMCP/
+
+repo_name: dfoulks1/KnowledgeBaseMCP
+repo_url: https://github.com/dfoulks1/KnowledgeBaseMCP
+edit_uri: edit/main/docs-src/
+
+# Source markdown lives in docs-src/; the built HTML is written into docs/ so
+# GitHub Pages can serve it directly from a branch (Settings -> Pages ->
+# Deploy from a branch -> main / /docs). No GitHub Actions involved.
+docs_dir: docs-src
+site_dir: docs
+
+# Custom theme built on Bootstrap 5 (Jinja2 templates + Bootstrap 5).
+# Templates and assets live in theme/.
+theme:
+  name: null
+  custom_dir: theme
+  include_search_page: false
+  search_index_only: false
+
+extra_css:
+  - css/pygments.css
+  - css/custom.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets:
+      # Lets docs pages pull in repo-root files (e.g. CONTRIBUTING.md) as the
+      # single source of truth: use `--8<-- "CONTRIBUTING.md"` in a page.
+      base_path:
+        - .
+        - ..
+      check_paths: true
+
+# No Software Map: this is a single-file MCP server, not a distributed
+# multi-component system, so there is no component graph to draw.
+nav:
+  - Home: index.md
+  - AI Contribution Guide: ai-contribution.md
+  - Prompt System: prompt-system.md
+  - Architecture: architecture.md
+  - SBOM: sbom.md
+  - Development Progress: progress.md
+  - Policy Compliance: policy-compliance.md
+
+plugins:
+  - search
