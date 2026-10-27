@@ -188,7 +188,8 @@ path within it (<code>bundle=eng file=runbooks/deploy.md</code>), in every input
 output. On the command line, without <code>bundle=</code>, paths are relative to where
 you are. Write tools act in the bundle the file belongs to. In a git work
 tree, files git ignores are skipped.</p>
-<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py help                 # every tool, one line each
+<pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
+uv run KnowledgeBaseMCP.py help                 # every tool, one line each
 uv run KnowledgeBaseMCP.py help move            # one tool: what it does, its arguments
 uv run KnowledgeBaseMCP.py lint format=text
 uv run KnowledgeBaseMCP.py init apply=true       # start a new bundle</code></pre>
@@ -385,6 +386,24 @@ it does not push fixes (fork PRs get a read-only token anyway).</p>
           t.parentNode.insertBefore(wrap, t);
           wrap.appendChild(t);
         }
+      });
+
+      // A Copy button on every listing.
+      document.querySelectorAll('.docs-content pre').forEach(function (pre) {
+        if (pre.classList.contains('mermaid')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-light copy-btn';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', function () {
+          var code = pre.querySelector('code') || pre;
+          navigator.clipboard.writeText(code.innerText.replace(/\n$/, '')).then(function () {
+            btn.textContent = 'Copied';
+            setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+          });
+        });
+        pre.classList.add('has-copy');
+        pre.appendChild(btn);
       });
 
       // Theme toggle (reload keeps mermaid in sync with the new theme).

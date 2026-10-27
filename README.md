@@ -36,6 +36,7 @@ you are. Write tools act in the bundle the file belongs to. In a git work
 tree, files git ignores are skipped.
 
 ```sh
+wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
 uv run KnowledgeBaseMCP.py help                 # every tool, one line each
 uv run KnowledgeBaseMCP.py help move            # one tool: what it does, its arguments
 uv run KnowledgeBaseMCP.py lint format=text

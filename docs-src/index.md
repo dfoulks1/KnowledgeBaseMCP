@@ -8,6 +8,21 @@
   </p>
 </div>
 
+<div class="get-it" markdown="1">
+
+### Get it
+
+One file. [uv](https://docs.astral.sh/uv/) fetches its dependencies on the first run.
+
+```sh
+wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
+uv run KnowledgeBaseMCP.py help
+```
+
+No uv yet? `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+</div>
+
 <div class="row g-3 users my-4">
   <div class="col-md-4"><div class="card p-3">
     <h3>An agent, over MCP</h3>

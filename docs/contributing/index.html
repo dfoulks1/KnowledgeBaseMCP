@@ -209,6 +209,24 @@ uvx --with pymdown-extensions mkdocs build    # docs-src/ -&gt; docs/</code></pr
         }
       });
 
+      // A Copy button on every listing.
+      document.querySelectorAll('.docs-content pre').forEach(function (pre) {
+        if (pre.classList.contains('mermaid')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-light copy-btn';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', function () {
+          var code = pre.querySelector('code') || pre;
+          navigator.clipboard.writeText(code.innerText.replace(/\n$/, '')).then(function () {
+            btn.textContent = 'Copied';
+            setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+          });
+        });
+        pre.classList.add('has-copy');
+        pre.appendChild(btn);
+      });
+
       // Theme toggle (reload keeps mermaid in sync with the new theme).
       var btn = document.getElementById('theme-toggle');
       if (btn) btn.addEventListener('click', function () {

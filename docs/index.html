@@ -106,6 +106,13 @@
   </p>
 </div>
 
+<div class="get-it">
+<h3 id="get-it">Get it<a class="headerlink" href="#get-it" title="Link to this section">#</a></h3>
+<p>One file. <a href="https://docs.astral.sh/uv/">uv</a> fetches its dependencies on the first run.</p>
+<pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
+uv run KnowledgeBaseMCP.py help</code></pre>
+<p>No uv yet? <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></p>
+</div>
 <div class="row g-3 users my-4">
   <div class="col-md-4"><div class="card p-3">
     <h3>An agent, over MCP</h3>
@@ -233,6 +240,24 @@ for every command, and the <a href="https://github.com/GoogleCloudPlatform/knowl
           t.parentNode.insertBefore(wrap, t);
           wrap.appendChild(t);
         }
+      });
+
+      // A Copy button on every listing.
+      document.querySelectorAll('.docs-content pre').forEach(function (pre) {
+        if (pre.classList.contains('mermaid')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-light copy-btn';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', function () {
+          var code = pre.querySelector('code') || pre;
+          navigator.clipboard.writeText(code.innerText.replace(/\n$/, '')).then(function () {
+            btn.textContent = 'Copied';
+            setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+          });
+        });
+        pre.classList.add('has-copy');
+        pre.appendChild(btn);
       });
 
       // Theme toggle (reload keeps mermaid in sync with the new theme).
