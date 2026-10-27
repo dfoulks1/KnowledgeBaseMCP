@@ -24,6 +24,8 @@ out = ["# Tools", "", ("Every tool, from its own docstring. Run one as `uv run K
                        "name=value ...`, or see the same text with `help <tool>`."), ""]
 for name, fn in sorted(k.REG.items()):
     out += [f"## {name}", "", prose(fn.__doc__), ""]
+    if name in k.EXAMPLES:
+        out += ["```sh", *(f"uv run KnowledgeBaseMCP.py {e}" for e in k.EXAMPLES[name]), "```", ""]
     args = [(n, p) for n, p in inspect.signature(fn).parameters.items() if n != "ctx"]
     if args:
         out += ["| Argument | Type | Default |", "|---|---|---|"]

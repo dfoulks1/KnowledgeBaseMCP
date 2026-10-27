@@ -490,6 +490,7 @@ code, out = cli("web", "format=mermaid")
 assert code == 0 and "-->|link|" in out
 assert k.knowledgebase(ws / "a/sub") == ws / "a"  # no index above yet: the bundle is the knowledgebase
 assert "index_stale" not in kinds() and k.index(apply=True)["edited"] == {".": ["index.md"]}
+assert k.upgrade()["would_edit"] == {} and not k.declares(ws / "index.md")  # the knowledgebase root stays no bundle
 assert (ws / "index.md").read_text().count("* [") == 3 and "* [b](b/)" in (ws / "index.md").read_text()
 assert k.knowledgebase(ws / "a/sub") == ws and k.knowledgebase(ws) == ws
 (ws / "c").mkdir()
@@ -525,6 +526,7 @@ assert cli("set", "bare.md", "status=draft", "tags=[a, b]", "apply=true")[0] == 
 assert k.meta((kb / "bare.md").read_text())[0] | {} == {"type": "x", "status": "draft", "tags": ["a", "b"]}
 assert cli("move", "bare.md", "bare2.md", "apply=true")[0] == 0 and (kb / "bare2.md").exists()  # bare arguments
 (kb / "bare2.md").unlink()
+assert set(k.EXAMPLES) == set(k.REG)  # every tool has an example
 code, out = cli("help", "move")
 assert code == 0 and "to: str  (required)" in out and cli("move", "--help")[1] == out
 code, out = cli("bundles", "format=text")

@@ -1905,7 +1905,7 @@ def upgrade(apply: bool = False, bundle: str = "") -> dict:
         changes[x.path] = t
     ip = r / "index.md"
     it = read(ip) if ip.is_file() else None
-    if it is not None and "okf_version" not in (meta(it)[0] or {}):
+    if it is not None and "okf_version" not in (meta(it)[0] or {}) and not nested(r):  # a knowledgebase root is no bundle
         changes[ip] = put(it, "okf_version", OKF_VERSION)
     return commit(r, changes, apply, "**Update**: Migrated to OKF v0.2.") | {"needs_by": needs}
 
@@ -2207,6 +2207,40 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
 # ------------------------------------------------------------------ CLI
 
 
+EXAMPLES = {  # shown by `help <tool>` and on the docs site's Tools page
+    "archive": ["archive file=runbooks/old.md bundle=eng apply=true", "archive bundle=mkt apply=true"],
+    "baseline": ["baseline apply=true"],
+    "bundles": ["bundles format=text"],
+    "cite": ['cite db.md resource=https://www.postgresql.org/docs/release/ title="PostgreSQL releases" bundle=eng'],
+    "create": ['create runbooks/deploy type=Playbook description="How we deploy." bundle=eng'],
+    "fix": ["fix", "fix apply=true"],
+    "get": ["get db.md bundle=eng format=text"],
+    "heatmap": ["heatmap days=30 format=text"],
+    "index": ["index apply=true", "index dirs=true apply=true bundle=eng"],
+    "ingest": ["ingest ~/old-wiki bundle=wiki format=text", "ingest ~/old-wiki bundle=wiki apply=true"],
+    "init": ["init bundle=eng apply=true"],
+    "links": ["links db.md bundle=eng format=text"],
+    "lint": ["lint format=text", "lint eng/runbooks/ format=text", "lint scope=okf since=origin/main format=github"],
+    "list": ["list status=draft tier=unverified format=text"],
+    "log": ["log db.md bundle=eng format=text"],
+    "migrate": ["migrate db.md mkt bundle=eng apply=true"],
+    "move": ["move runbooks/deploy.md runbooks/ship.md bundle=eng apply=true"],
+    "provenance": ["provenance apply=true", "provenance apply=true --attest"],
+    "recheck_apply": ["recheck_apply db.md bundle=eng --attest"],
+    "recheck_plan": ["recheck_plan older_than_days=90 format=text"],
+    "record": ['record "Reviewed the runbooks against the new pipeline." bundle=eng'],
+    "rename": ["rename marketing bundle=mkt apply=true"],
+    "search": ["search postgres format=text"],
+    "set": ["set db.md status=deprecated tags=[db,ops] bundle=eng apply=true"],
+    "split": ["split notes apply=true"],
+    "status": ["status format=text"],
+    "unarchive": ["unarchive eng/runbooks/old.md apply=true"],
+    "upgrade": ["upgrade", "upgrade apply=true"],
+    "verify": ["verify db.md bundle=eng --attest promote=true"],
+    "web": ["web format=text", "web format=mermaid"],
+}
+
+
 def conv(v: str, ann):
     """A CLI string as the parameter's type."""
     if typing.get_origin(ann) in (typing.Union, types.UnionType):
@@ -2291,6 +2325,8 @@ def cli(argv) -> int:
             if k != "ctx":
                 ann = getattr(p.annotation, "__name__", None) or str(p.annotation).replace("typing.", "")
                 print(f"  {k}: {ann}" + ("  (required)" if p.default is p.empty else f" = {p.default!r}"))
+        if n in EXAMPLES:
+            print("\nExamples:\n" + "\n".join(f"  uv run KnowledgeBaseMCP.py {e}" for e in EXAMPLES[n]))
         print("\nformat=json|text (any tool; text prints diffs as is); lint also github|sarif.")
         return 0
     if argv[0] not in REG:
