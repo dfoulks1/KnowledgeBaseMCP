@@ -27,7 +27,7 @@
 <body>
   {% include "partials/navbar.html" %}
 
-  <div class="container-xxl">
+  <div class="container-fluid px-3 px-lg-4">
     <div class="docs-grid{% if page and page.toc and not page.is_homepage %} with-toc{% endif %}">
       {% if page and page.toc and not page.is_homepage %}
         <aside class="d-none d-lg-block docs-toc">
