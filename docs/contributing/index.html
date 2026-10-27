@@ -173,11 +173,8 @@ uv run test_KnowledgeBaseMCP.py     # self-check against throwaway bundles</code
 <p><code>docs-src/</code> is the source and <code>docs/</code> the built site, committed so GitHub Pages
 serves it from <code>main</code> <code>/docs</code>. No CI builds it. After changing the README, a
 tool or <code>docs-src/</code>, rebuild locally and commit both:</p>
-<pre class="highlight"><code class="language-sh">{ printf '# Tools\n\nEvery tool, as `help &lt;tool&gt;` prints it.\n\n'
-  for t in $(uv run KnowledgeBaseMCP.py help | sed '/^$/q' | awk '{print $1}'); do
-    printf '## %s\n\n```text\n' "$t"; uv run KnowledgeBaseMCP.py help "$t"; printf '```\n\n'
-  done; } &gt; docs-src/tools.md
-uvx --with pymdown-extensions mkdocs build</code></pre></article>
+<pre class="highlight"><code class="language-sh">uv run docs_tools.py                          # docs-src/tools.md, from the tools' docstrings
+uvx --with pymdown-extensions mkdocs build    # docs-src/ -&gt; docs/</code></pre></article>
         
           <hr class="my-5">
           <div class="d-flex justify-content-between gap-3">

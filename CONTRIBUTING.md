@@ -43,11 +43,8 @@ serves it from `main` `/docs`. No CI builds it. After changing the README, a
 tool or `docs-src/`, rebuild locally and commit both:
 
 ```sh
-{ printf '# Tools\n\nEvery tool, as `help <tool>` prints it.\n\n'
-  for t in $(uv run KnowledgeBaseMCP.py help | sed '/^$/q' | awk '{print $1}'); do
-    printf '## %s\n\n```text\n' "$t"; uv run KnowledgeBaseMCP.py help "$t"; printf '```\n\n'
-  done; } > docs-src/tools.md
-uvx --with pymdown-extensions mkdocs build
+uv run docs_tools.py                          # docs-src/tools.md, from the tools' docstrings
+uvx --with pymdown-extensions mkdocs build    # docs-src/ -> docs/
 ```
 
 [asf-gt]: https://www.apache.org/legal/generative-tooling.html

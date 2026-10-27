@@ -32,6 +32,7 @@ body { font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiase
 
 /* Contents sidebar */
 .docs-toc ul { padding-left: 0; margin: 0; }
+.docs-toc .position-sticky { scrollbar-width: thin; }
 .docs-toc ul ul { padding-left: .85rem; border-left: 1px solid var(--bs-border-color); margin: .15rem 0 .35rem; }
 .docs-toc a.nav-link { padding: .2rem 0 !important; color: var(--bs-secondary-color); text-decoration: none; font-size: .9rem; }
 .docs-toc a:hover { color: rgb(var(--bs-link-color-rgb)); }
