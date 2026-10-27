@@ -8,13 +8,14 @@
 Checks, maintains and imports OKF concepts: how they are written, never what they say. SPEC.md in this
 repo is the normative reference. Local files only: no network, never writes to git.
 
-Server:  uv run KnowledgeBaseMCP.py                       (KB_ROOT = bundle root; default: current directory)
+Server:  uv run KnowledgeBaseMCP.py                       (KB_ROOT = knowledgebase root; default: found from the current directory)
 By hand: uv run KnowledgeBaseMCP.py lint [scope=okf] [format=text|json|github|sarif]
          uv run KnowledgeBaseMCP.py help                  (every tool, one line each)
 Any tool runs as `<name> name=value ...` or `<name> '<json object>'`. Exit: 0 ok, 1 findings, 2 usage.
 """
 import asyncio
 import collections
+import copy
 import datetime as dt
 import difflib
 import fnmatch
@@ -39,6 +40,7 @@ from pydantic import BaseModel, Field
 KB_ROOT = Path(os.environ.get("KB_ROOT") or os.getcwd()).resolve()
 OKF_VERSION = "0.2"
 RESERVED = ("index.md", "log.md")  # §3.1
+ARCHIVE = "archive"  # the knowledgebase's archive bundle: archive/<bundle>/<path>, read-only to editing tools
 STATUSES = ("draft", "stable", "deprecated")  # §5.4
 CONFORMANCE = {"non_utf8", "no_frontmatter", "bad_yaml", "no_type", "okf_index", "okf_log"}  # §11
 DEFAULT_TYPE = "Document"
@@ -61,7 +63,8 @@ ERR = {"non_utf8": ("not UTF-8 (§4)", "re-save the file as UTF-8"),
        "no_frontmatter": ("no frontmatter (§4)", "start the file with a `---` block holding at least `type:`"),
        "bad_yaml": ("frontmatter is not a parseable YAML mapping (§4.1)",
                     "fix the YAML between the `---` lines: quote values containing `: `, close the block with `---`")}
-CLI = False  # set by cli(): a human at a terminal may attest as human:<id>
+CLI = False  # set by cli()
+ATTEST = ""  # human:<id>, set only by the CLI's --attest: the human at the terminal records as themselves
 
 INSTRUCTIONS = """Tools for Open Knowledge Format (OKF) v0.2 bundles: markdown concepts with YAML frontmatter.
 Workflow: lint; fix for mechanical repairs; lint again. Write tools that touch many files default to
@@ -201,12 +204,32 @@ def trust(d: dict) -> list:
     return bad
 
 
+def attested(by: str) -> str:
+    """The actor to record (§7). human:<id> never comes from a caller: only a human records a human, by --attest
+    at the terminal or in verify's prompt over MCP."""
+    if ATTEST:
+        if by:
+            raise ValueError("--attest records you | fix: drop by")
+        return ATTEST
+    if by and not ACTOR.match(by):
+        raise ValueError(f"by {by!r} is not an actor | fix: process:<id> or <tool>/<version> (§7)")
+    if by.startswith("human:"):
+        raise ValueError("only a human records human: | fix: at the terminal, run with --attest; over MCP, verify "
+                         "without `by` asks the human")
+    return by
+
+
 def trust_tier(d: dict) -> str:
     """§5.3, from `verified` only."""
     es = [e for e in entries(d.get("verified")) if isinstance(e, dict)] if d.get("verified") else []
     if not es:
         return "unverified"
     return "human-reviewed" if any(str(e.get("by", "")).startswith("human:") for e in es) else "machine-confirmed"
+
+
+def window(v) -> bool:
+    """§5.1: a usage_window is {from, to}, both ISO 8601 with a UTC offset."""
+    return isinstance(v, dict) and bool(when(v.get("from"))) and bool(when(v.get("to")))
 
 
 def is_stale(d: dict) -> bool:
@@ -247,8 +270,9 @@ class Doc(typing.NamedTuple):
 
 
 def root(bundle="", write=False, create=False) -> Path:
-    """The bundle directory: KB_ROOT, or a path under it (read tools also take any directory)."""
-    r = (KB_ROOT / bundle).resolve() if bundle else KB_ROOT
+    """The bundle directory: its path in the knowledgebase (read tools also take any directory); without one,
+    the bundle around the working directory."""
+    r = (KB_ROOT / bundle).resolve() if bundle else here()
     if write and r != KB_ROOT and KB_ROOT not in r.parents:
         raise ValueError(f"bundle {bundle!r} is outside KB_ROOT ({KB_ROOT}) | fix: write tools only edit under "
                          "KB_ROOT; set KB_ROOT or pick a path inside it")
@@ -259,6 +283,16 @@ def root(bundle="", write=False, create=False) -> Path:
 
 def rel(p: Path, r: Path) -> str:
     return p.relative_to(r).as_posix()
+
+
+def kbpath(p: Path) -> str:
+    """A bundle's name: its path in the knowledgebase ("." for the root)."""
+    return Path(os.path.relpath(p, KB_ROOT)).as_posix()
+
+
+def ref(p: Path, b: Path) -> dict:
+    """How tools name a file, the OKF way (§2): its bundle, and its path within it (the concept ID + .md)."""
+    return {"bundle": kbpath(b), "file": rel(p, b)}
 
 
 def inside(p: Path, r: Path) -> bool:
@@ -285,17 +319,31 @@ def here() -> Path:
     return enclosing(Path.cwd())
 
 
+def walk(r: Path, pattern: str = "*.md") -> list:
+    """Files under r matching pattern, sorted. Never follows symlinks (a linked file or directory is skipped),
+    never enters .git, and in a git work tree skips what git ignores (node_modules, build output)."""
+    if not r.is_dir():
+        return []
+    g = git(r, "ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z")
+    ignored = {(r / n.rstrip("/")).resolve() for n in g.stdout.split("\0") if n} if not g.returncode else set()
+    out = []
+    for d, dirs, names in os.walk(r):
+        dirs[:] = [x for x in dirs if x != ".git" and (Path(d) / x).resolve() not in ignored]
+        out += [Path(d) / n for n in names if fnmatch.fnmatch(n, pattern) and not (Path(d) / n).is_symlink()
+                and (Path(d) / n).resolve() not in ignored]
+    return sorted(out)
+
+
 def nested(r: Path) -> set:
     """Roots of the bundles inside r, at any depth. They are their own bundles, not part of r."""
-    return {p.parent for p in r.rglob("index.md")
-            if p.parent != r and ".git" not in p.relative_to(r).parts and declares(p)}
+    return {p.parent for p in walk(r, "index.md") if p.parent != r and declares(p)}
 
 
 def scan(r: Path):
     """(concepts, reserved files) of the bundle at r: every .md outside .git and outside nested bundles, read
     and parsed once."""
     docs, reserved, inner = [], [], nested(r)
-    for p in sorted(r.rglob("*.md")):
+    for p in walk(r):
         if ".git" in p.relative_to(r).parts or not p.is_file() or not inside(p, r) or any(n in p.parents for n in inner):
             continue
         t = read(p)
@@ -303,18 +351,41 @@ def scan(r: Path):
     return docs, reserved
 
 
-def concept(file: str, r: Path) -> Path:
-    p = (r / (file if file.endswith(".md") else file + ".md")).resolve()
-    if not inside(p, r) or not p.is_file() or p.name in RESERVED:
-        raise ValueError(f"{file!r} is not a concept in the bundle | fix: pass a bundle-relative path to an "
-                         "existing .md file (not index.md or log.md)")
-    return p
+def every(r: Path, bundle: str):
+    """(bundle, concept) where the user is, like lint: r and the bundles inside it; with bundle=, that one."""
+    return [(b, x) for b in ([r] if bundle else [r, *sorted(nested(r))]) for x in scan(b)[0]]
+
+
+def owner(p: Path, r: Path) -> Path:
+    """The bundle p belongs to: the nearest declared bundle root between p and r, else r."""
+    return next((d for d in [p.parent, *p.parent.parents]
+                 if d == r or (r in d.parents and declares(d / "index.md"))), r)
+
+
+def locate(file: str, bundle: str = "", new=False, edit=True) -> tuple:
+    """(path, bundle root) of a file named the OKF way: bundle= (default: where the user is) and its path within
+    that bundle (a concept ID, .md optional). A path that leads into another bundle belongs to that one.
+    new: the file must not exist yet. edit: refuse the archive bundle (unarchive first)."""
+    r = root(bundle, write=True)
+    p = confined(r, file if file.endswith(".md") else file + ".md")
+    b = owner(p, r)
+    if p.name in RESERVED or p.exists() if new else not p.is_file() or p.name in RESERVED:
+        raise ValueError(f"{rel(p, b)} in bundle {kbpath(b)} " + ("exists or is a reserved name | fix: pick another "
+                         "path" if new else "is not a concept | fix: pass bundle= and the concept's path in it "
+                         "(not index.md or log.md)"))
+    if edit and archived(b):
+        raise ValueError(f"{rel(p, b)} is archived | fix: `unarchive {rel(p, b)}` first; the archive is read-only")
+    return p, b
+
+
+def archived(b: Path) -> bool:
+    return b == (KB_ROOT / ARCHIVE).resolve() and declares(b / "index.md")
 
 
 def confined(r: Path, path: str) -> Path:
     p = (r / path).resolve()
     if not inside(p, r):
-        raise ValueError(f"{path!r} is outside the bundle | fix: use a bundle-relative path")
+        raise ValueError(f"{path!r} is outside {kbpath(r)} | fix: use a path inside it")
     return p
 
 
@@ -335,6 +406,21 @@ def target(link: str, src: Path, r: Path):
     return r / link.lstrip("/") if link.startswith("/") else src.parent / link
 
 
+def knowledgebase(c: Path) -> Path:
+    """The knowledgebase around c: the nearest index.md above c's bundle that links to it (bundles do not nest,
+    so that index lists a collection of bundles), else the bundle, else c."""
+    b = next((d for d in [c, *c.parents] if declares(d / "index.md")), None)
+    if b is None:
+        return c
+    return next((d for d in b.parents if (d / "index.md").is_file() and any(
+        (t := target(h, d / "index.md", d)) is not None and t.resolve() in (b, b / "index.md")
+        for h in hrefs(read(d / "index.md") or ""))), b)
+
+
+if not os.environ.get("KB_ROOT"):
+    KB_ROOT = knowledgebase(KB_ROOT)
+
+
 def servers(r: Path):
     """Server names in the bundle's .mcp.json (`mcpServers`, or VS Code's `servers`), or None without one.
     Only the names are used; no other value is read out or shown."""
@@ -346,31 +432,40 @@ def servers(r: Path):
     return set(d.get("mcpServers") or d.get("servers") or {}) if isinstance(d, dict) else None
 
 
+def entry(title: str, href: str, desc: str) -> str:
+    """One §8 index entry: `* [Title](url) - description`."""
+    return f"* [{title}]({urllib.parse.quote(href)})" + (f" - {desc}" if desc else "")
+
+
 def index_block(docs) -> str:
-    """The generated document list: one table per top-level folder, from frontmatter."""
+    """The generated document list (§8): a section per top-level folder, an entry per concept."""
     groups = {}
     for x in docs:
-        if x.meta is None:
-            continue
-        tags = x.meta.get("tags")
-        tags = ", ".join(map(str, tags)) if isinstance(tags, list) else str(tags or "")
-        top = x.rel.split("/")[0] if "/" in x.rel else "(root)"
-        groups.setdefault(top, []).append(
-            f"| [{title_of(x.meta, x.text, x.path).replace('|', '/')}](./{urllib.parse.quote(x.rel)}) | "
-            f"{x.meta.get('type') or ''} | {tags} | {describe(x.meta, x.text)} |")
+        if x.meta is not None:
+            groups.setdefault(x.rel.split("/")[0] if "/" in x.rel else "(root)", []).append(
+                entry(title_of(x.meta, x.text, x.path), f"./{x.rel}", describe(x.meta, x.text)))
     out = [INDEX_BEGIN, ""]
     for g in sorted(groups, key=lambda g: (g != "(root)", g)):
-        out += [f"### {g}", "", "| Document | Type | Tags | Description |", "|---|---|---|---|", *groups[g], ""]
+        out += [f"### {g}", "", *groups[g], ""]
     return "\n".join(out + [INDEX_END])
 
 
 def dir_block(d: Path, docs) -> str:
     """§8 list for one directory: its concepts, then its subdirectories."""
     out = [INDEX_BEGIN, ""]
-    out += [f"* [{title_of(x.meta, x.text, x.path)}]({urllib.parse.quote(x.path.name)}) - {describe(x.meta, x.text)}"
+    out += [entry(title_of(x.meta, x.text, x.path), x.path.name, describe(x.meta, x.text))
             for x in docs if x.meta is not None and x.path.parent == d]
     subs = sorted({x.path.relative_to(d).parts[0] for x in docs if d in x.path.parents and x.path.parent != d})
-    out += [f"* [{s}]({urllib.parse.quote(s)}/) - directory" for s in subs]
+    out += [entry(s, f"{s}/", "directory") for s in subs]
+    return "\n".join([*out, "", INDEX_END])
+
+
+def bundle_block(r: Path, inner) -> str:
+    """§8 list for a knowledgebase root: one line per bundle, titled by its index.md."""
+    out = [INDEX_BEGIN, ""]
+    for b in sorted(inner):
+        t = read(b / "index.md") or ""
+        out.append(entry(title_of({}, t, b), f"{rel(b, r)}/", describe({}, t)))
     return "\n".join([*out, "", INDEX_END])
 
 
@@ -382,14 +477,17 @@ def rebuilt(t: str, block: str, add=False):
 
 
 def indexes(r: Path, docs, add=False, dirs=False) -> dict:
-    """{index.md: text} for every index carrying the generated list: the root gets a table of all concepts,
-    others a §8 list of their directory. add: give the root a list. dirs: give every directory an index."""
-    out, ip = {}, r / "index.md"
+    """{index.md: text} for every index carrying the generated list: a bundle root gets a table of all
+    concepts, a knowledgebase root a list of its bundles, others a §8 list of their directory. add: give the
+    root a list. dirs: give every directory an index."""
+    out, ip, inner = {}, r / "index.md", nested(r)
     t = read(ip) if ip.is_file() else None
-    if t is not None and (n := rebuilt(t, index_block(docs), add)) is not None:
+    kb = inner and not declares(ip)
+    if kb and t is None and add:
+        out[ip] = f"# {r.name}\n\n{bundle_block(r, inner)}\n"
+    elif t is not None and (n := rebuilt(t, bundle_block(r, inner) if kb else index_block(docs), add)) is not None:
         out[ip] = n
-    inner = nested(r)
-    subs = {p.parent for p in r.rglob("index.md") if p.parent != r and ".git" not in p.relative_to(r).parts
+    subs = {p.parent for p in walk(r, "index.md") if p.parent != r
             and not any(n == p.parent or n in p.parent.parents for n in inner)}
     if dirs:
         subs |= {d for x in docs for d in x.path.parents
@@ -402,8 +500,38 @@ def indexes(r: Path, docs, add=False, dirs=False) -> dict:
     return out
 
 
+STAMP = re.compile(r"^\* <!-- (\d+) -->")
+
+
+def tidied(text: str) -> str:
+    """A §9 log after a git union merge: one section per date, newest first; entries newest first by their
+    hidden unix-time stamp (a section with a hand-written, unstamped entry keeps its order); duplicate lines
+    dropped. Unchanged if a heading is no date, or all is already in order."""
+    m = re.search(r"^## ", text, re.MULTILINE)
+    if not m:
+        return text
+    secs, seen = {}, []
+    for blk in re.split(r"(?m)^(?=## )", text[m.start():]):
+        if not blk:
+            continue
+        h, _, rest = blk.partition("\n")
+        if not re.fullmatch(r"## \d{4}-\d{2}-\d{2}", h.strip()):
+            return text
+        lines = [ln for ln in rest.splitlines() if ln.strip()]
+        seen.append((h.strip(), lines))
+        es = secs.setdefault(h.strip(), [])
+        es += [ln for ln in lines if ln not in es]
+    order = lambda es: sorted(es, key=lambda ln: -int(STAMP.match(ln).group(1))) if all(map(STAMP.match, es)) else es
+    tidy = [(h, order(secs[h])) for h in sorted(secs, reverse=True)]
+    if tidy == seen:  # already in order: leave the formatting alone
+        return text
+    return (text[:m.start()] + "".join(f"{h}\n\n" + "\n".join(es) + "\n\n" for h, es in tidy)).rstrip("\n") + "\n"
+
+
 def logged(text: str, note: str) -> str:
-    """§9: add `* note` under today's date heading, newest first."""
+    """§9: add `* note` under today's date heading, newest first, stamped with the unix time in a hidden
+    comment so entries merged from parallel branches can be put back in order (`fix`)."""
+    note = f"<!-- {int(now_dt().timestamp())} --> {note}"
     h = f"## {now()[:10]}"
     m = re.search(rf"^{h}[ \t]*\n+", text, re.MULTILINE)
     if m:
@@ -424,7 +552,8 @@ def commit(r: Path, changes: dict, apply: bool, note="") -> dict:
     changes = {p: t for p, t in changes.items() if t is None or t != (read(p) if p.exists() else None)}
     names = sorted(rel(p, r) for p in changes)
     if not apply:
-        return {"would_edit": names, "diff": "".join(diff((read(p) or "") if p.exists() else "", t or "", rel(p, r))
+        return {"would_edit": {kbpath(r): names} if names else {}, "diff": "".join(diff((read(p) or "") if p.exists() else "", t or "",
+                                                                       kbpath(p))
                                                      for p, t in sorted(changes.items()))}
     for p, t in changes.items():
         p.unlink() if t is None else write(p, t)
@@ -433,11 +562,97 @@ def commit(r: Path, changes: dict, apply: bool, note="") -> dict:
             if n != read(p):
                 write(p, n)
                 names.append(rel(p, r))
-        lp = r / "log.md"
+        c = Path(os.path.commonpath([p.parent for p in changes]))  # §9: the nearest log.md over the change
+        lp = next((d / "log.md" for d in [c, *c.parents] if inside(d, r) and (d / "log.md").is_file()), r / "log.md")
         if note and lp.is_file():
             write(lp, logged(read(lp) or "", note))
-            names.append("log.md")
-    return {"edited": sorted(set(names)), "next": "review the diff, then land it via a branch and PR"}
+            names.append(rel(lp, r))
+    return {"edited": {kbpath(r): sorted(set(names))} if names else {}, "next": "review the diff, then land it via a branch and PR"}
+
+
+def merged(outs: list) -> dict:
+    """One result from commits in several bundles."""
+    key = "edited" if any("edited" in o for o in outs) else "would_edit"
+    out = {key: {b: ns for o in outs for b, ns in o.get(key, {}).items() if ns}}
+    return out | ({"next": "review the diff, then land it via a branch and PR"} if key == "edited"
+                  else {"diff": "".join(o["diff"] for o in outs)})
+
+
+def pathed(v, src: Path, r: Path):
+    """What a §6.2 path-valued field names: (file, style) with style abs (/, the bundle root), doc (relative to
+    the document) or root (relative to the bundle root, as in the spec's references/ examples); (None,
+    "missing") when it names nothing; None for a URL or a scope description.
+    shortcut: a value with spaces, or with neither a file extension nor a leading /, ./ or ../, is read as a
+    description (like the spec's `dashboards/exec-revenue`)."""
+    s = str(v or "")
+    if not s or re.search(r"\s", s) or re.match(r"[a-zA-Z][\w+.-]*:", s) or not (
+            s.startswith(("/", "./", "../")) or re.search(r"\.\w{1,8}$", s)):
+        return None
+    s = urllib.parse.unquote(s)
+    if s.startswith("/"):
+        return (r / s.lstrip("/"), "abs") if (r / s.lstrip("/")).exists() else (None, "missing")
+    return next(((c, st) for c, st in ((src.parent / s, "doc"), (r / s, "root")) if c.exists()), (None, "missing"))
+
+
+def path_fields(d: dict) -> list:
+    """(key, index, subkey, value) of each §6.2 path-valued field: resource, computation, executor.resource,
+    attester.resource, sources[].resource."""
+    out = [(k, None, None, d.get(k)) for k in ("resource", "computation")]
+    out += [(k, None, "resource", d[k].get("resource")) for k in ("executor", "attester") if isinstance(d.get(k), dict)]
+    if isinstance(d.get("sources"), list):
+        out += [("sources", i, "resource", e.get("resource")) for i, e in enumerate(d["sources"]) if isinstance(e, dict)]
+    return [x for x in out if x[3]]
+
+
+def moved_to(t: Path, style: str, old: Path, new: Path, moved, to, rb_old: Path, rb_new: Path):
+    """Where a reference should now point, or None when its meaning did not change. A doc-relative one changes
+    when either end moved; a root-relative one when its target moved or the root did. moved/to: a file, or a
+    directory and everything in it."""
+    tr = t.resolve()
+    hit = moved is not None and (tr == moved or moved in tr.parents)
+    if not hit and (old == new if style == "doc" else rb_old == rb_new):
+        return None
+    return to / tr.relative_to(moved) if hit else tr
+
+
+def repoint(style: str, dest: Path, new: Path, rb_new: Path) -> str:
+    """A reference to dest, kept in its style when dest is in the document's bundle, else relative."""
+    if style != "doc" and inside(dest, rb_new):
+        return ("/" if style == "abs" else "") + rel(dest.resolve(), rb_new)
+    return os.path.relpath(dest, new.parent).replace(os.sep, "/")
+
+
+def relinked(text: str, old: Path, new: Path, moved, to, rb_old: Path, rb_new: Path) -> str:
+    """A document's links and §6.2 path-valued fields after `moved` became `to` (None: nothing moved), the
+    document itself going from old (in bundle rb_old) to new (in rb_new). Only references whose meaning
+    changes are rewritten.
+    shortcut: links inside code blocks are rewritten too; read the diff."""
+    def sub(m):
+        link = m.group(1)
+        t = target(link, old, rb_old)
+        style = "abs" if link.startswith("/") else "doc"
+        if t is None or (dest := moved_to(t, style, old, new, moved, to, rb_old, rb_new)) is None:
+            return m.group(0)
+        path = link.split("#")[0].split("?")[0]
+        n = repoint(style, dest, new, rb_new)
+        n += "/" if path.endswith("/") and not n.endswith("/") else ""
+        return m.group(0).replace(link, urllib.parse.quote(n) + link[len(path):], 1)
+    text = LINK.sub(sub, text)
+    d, err = meta(text)
+    edits = {}
+    for key, i, subkey, v in path_fields(d) if not err else []:
+        hit = pathed(v, old, rb_old)
+        if not hit or hit[0] is None or (dest := moved_to(hit[0], hit[1], old, new, moved, to, rb_old, rb_new)) is None:
+            continue
+        n = repoint(hit[1], dest, new, rb_new)
+        if subkey is None:
+            edits[key] = n
+            continue
+        val = edits.setdefault(key, copy.deepcopy(d[key]))
+        (val[i] if i is not None else val)[subkey] = n
+    for k, v in edits.items():
+        text = put(text, k, v)
+    return text
 
 
 # ------------------------------------------------------------------ lint
@@ -449,7 +664,8 @@ def finding(kind, file, message, fix, scope="okf", severity="error", fixable=Fal
 
 
 def fingerprint(f: dict) -> str:
-    return hashlib.sha1(f"{f['kind']}|{f['file']}|{f['message']}".encode()).hexdigest()[:16]
+    """Stable wherever lint runs from: the path is relative to the knowledgebase."""
+    return hashlib.sha1(f"{f['kind']}|{kbpath(KB_ROOT / f['bundle'] / f['file'])}|{f['message']}".encode()).hexdigest()[:16]
 
 
 def source_findings(f: str, d: dict, text: str, names) -> list:
@@ -460,6 +676,9 @@ def source_findings(f: str, d: dict, text: str, names) -> list:
     if not isinstance(src, list):
         return [finding("bad_source", f, "`sources` must be a list (§5.1)", "make it a YAML list of {id, resource}")]
     out, ids = [], collections.Counter()
+    if "usage_window" in d and not window(d["usage_window"]):
+        out.append(finding("bad_source", f, "usage_window is not {from, to} datetimes (§5.1)",
+                           "write it like { from: 2026-06-01T00:00:00Z, to: 2026-06-30T00:00:00Z }"))
     for i, e in enumerate(src):
         if not isinstance(e, dict) or not str(e.get("resource") or "").strip():
             out.append(finding("bad_source", f, f"sources[{i}] has no `resource` (§5.1)",
@@ -467,6 +686,16 @@ def source_findings(f: str, d: dict, text: str, names) -> list:
             continue
         if e.get("id") is not None:
             ids[str(e["id"])] += 1
+        if "last_modified" in e and not when(e["last_modified"]):
+            out.append(finding("bad_source", f, f"sources[{i}].last_modified is not ISO 8601 with a UTC offset (§5)",
+                               "write it like 2026-05-30T00:00:00Z"))
+        if "usage_count" in e and (isinstance(e["usage_count"], bool) or not isinstance(e["usage_count"], int)
+                                   or e["usage_count"] < 0):
+            out.append(finding("bad_source", f, f"sources[{i}].usage_count is not a count (§5.1)",
+                               "use a whole number of exercises over usage_window"))
+        if "usage_window" in e and not window(e["usage_window"]):
+            out.append(finding("bad_source", f, f"sources[{i}].usage_window is not {{from, to}} datetimes (§5.1)",
+                               "write it like { from: 2026-06-01T00:00:00Z, to: 2026-06-30T00:00:00Z }"))
         via = e.get("via")
         if names is not None and isinstance(via, dict) and via.get("server") not in names:
             out.append(finding("via_server", f, f"sources[{i}] cites server {via.get('server')!r}, not in .mcp.json",
@@ -498,12 +727,27 @@ def computation_findings(f: str, d: dict, text: str) -> list:
         out.append(finding("bad_computation", f, "no `runtime` (required for an Attested Computation, §10.2)",
                            "add `runtime:`, like bigquery, dbt or python"))
     ps = d.get("parameters")
-    if ps is not None and not (isinstance(ps, list) and all(isinstance(p, dict) and p.get("name") for p in ps)):
+    if ps is not None and not (isinstance(ps, list) and all(
+            isinstance(p, dict) and p.get("name") and p.get("type") and isinstance(p.get("required", False), bool)
+            for p in ps)):
         out.append(finding("bad_computation", f, "`parameters` is not a list of {name, type, required} (§10.2)",
                            "list each parameter as {name, type, required}"))
-    if not d.get("computation") and not re.search(r"^# Computation[ \t]*$", split(text)[1], re.MULTILINE):
+    inline = re.search(r"^# Computation[ \t]*$", split(text)[1], re.MULTILINE)
+    if not d.get("computation") and not inline:
         out.append(finding("bad_computation", f, "no computation (§10.3)",
                            "set `computation:` to a file, or add a `# Computation` section with the code"))
+    if d.get("computation") and inline:
+        out.append(finding("bad_computation", f, "both `computation:` and a `# Computation` section (§10.3)",
+                           "keep one: the file, or the inline fence"))
+    for key in ("executor", "attester"):
+        v = d.get(key)
+        if v is not None and not (isinstance(v, dict) and str(v.get("resource") or "").strip()):
+            out.append(finding("bad_computation", f, f"`{key}` needs `resource:` (§10.2)",
+                               f"write it like {key}: {{ resource: references/... }}"))
+    rc = d["executor"].get("receipt") if isinstance(d.get("executor"), dict) else None
+    if rc is not None and not isinstance(rc, list):
+        out.append(finding("bad_computation", f, "`executor.receipt` is not a list of field names (§10.2)",
+                           "write it like receipt: [job_id, executed_sql, result]"))
     return out
 
 
@@ -522,11 +766,15 @@ def tag_majority(docs) -> dict:
 
 def findings(r: Path, docs, reserved) -> list:
     out, names, linked, inner = [], servers(r), set(), nested(r)
+    if declares(r / "index.md"):
+        out += [finding("nested_bundle", rel(n / "index.md", r), "a bundle inside a bundle",
+                        "move it out beside this bundle, or drop its okf_version: bundles do not nest", "house")
+                for n in sorted(inner)]
     texts = {x.path.resolve(): x.text for x in docs}
     metas = {x.path.resolve(): x.meta or {} for x in docs}
-    for x in reserved:  # hand-written index entries count as inbound links; the generated list does not
+    for x in reserved:  # an index entry makes a concept discoverable (§8): it counts as a link
         if x.path.name == "index.md" and x.text:
-            linked |= {t.resolve() for link in hrefs(BLOCK.sub("", x.text)) if (t := target(link, x.path, r))}
+            linked |= {t.resolve() for link in hrefs(x.text) if (t := target(link, x.path, r))}
     for x in docs:
         if x.err:
             out.append(finding(x.err, x.rel, *ERR[x.err]))
@@ -546,27 +794,37 @@ def findings(r: Path, docs, reserved) -> list:
         if "stale_after" in d and not when(d["stale_after"]):
             out.append(finding("bad_stale_after", f, "`stale_after` is not ISO 8601 with a UTC offset (§5.5)",
                                "write it like 2026-09-23T00:00:00Z"))
+        if "tags" in d and not (isinstance(d["tags"], list) and all(isinstance(t, str) for t in d["tags"])):
+            out.append(finding("bad_tags", f, "`tags` is not a list of strings (§4.1)", "write it like tags: [a, b]",
+                               severity="warning"))
         out += source_findings(f, d, x.text, names)
+        out += [finding("dead_path", f, f"{key}{f'[{i}]' if i is not None else ''}{'.' + sk if sk else ''} names "
+                        f"{v}, which does not exist (§6.2)", "correct the path, or use a URL", "house", "warning")
+                for key, i, sk, v in path_fields(d) if pathed(v, x.path, r) == (None, "missing")]
+        linked |= {h[0].resolve() for *_, v in path_fields(d) if (h := pathed(v, x.path, r)) and h[0]}  # §5.1 lineage
         g = d.get("generated")
-        at = when(g.get("at")) if isinstance(g, dict) else None
+        at = when(g.get("at")) if isinstance(g, dict) else when(d.get("timestamp"))  # §13.1 fallback
         for e in d["sources"] if at and isinstance(d.get("sources"), list) else []:
             lm = when(e.get("last_modified")) if isinstance(e, dict) else None
             if lm and lm > at:
                 out.append(finding("source_changed", f, f"source {e.get('id') or e.get('resource')} changed "
-                                   f"({e['last_modified']}) after this concept was written ({g['at']}, §5.1)",
+                                   f"({e['last_modified']}) after this concept was written ({at.isoformat()}, §5.1)",
                                    "re-check the claims against the source, then refresh `generated`",
                                    severity="warning"))
         for link in hrefs(x.text):
             t = target(link, x.path, r)
             if t is not None and not t.exists():
                 out.append(finding("dead_link", f, f"link to {link} does not resolve",
-                                   "correct the path (a leading / means the bundle root, §6.1) or remove the link",
-                                   "house"))
+                                   "correct the path (a leading / means the bundle root), or leave it if the concept "
+                                   "is not written yet (§6.1)", "house", "warning"))
                 continue
             if t is not None and t.resolve() != x.path.resolve():
                 tr = t.resolve()
                 linked.add(tr)
-                if not inside(tr, r) or any(n == tr or n in tr.parents for n in inner):
+                if archived(enclosing(tr.parent)) and not archived(r):
+                    out.append(finding("archived_link", f, f"link to {link}: that concept is archived",
+                                       "point it at a current concept, or `unarchive` it", "house", "warning"))
+                elif not inside(tr, r) or any(n == tr or n in tr.parents for n in inner):
                     out.append(finding("cross_bundle", f, f"link to {link} leaves the bundle",
                                        "fine inside a knowledgebase; it breaks when this bundle ships alone (§3), "
                                        "so use a URL if it must travel", "house", "warning"))
@@ -579,8 +837,8 @@ def findings(r: Path, docs, reserved) -> list:
                     frag not in anchors(texts.get(dest.resolve()) or read(dest) or ""):
                 out.append(finding("dead_anchor", f, f"link to {link}: no heading makes #{frag}",
                                    "point it at an existing heading, or drop the #anchor", "house", "warning"))
-    out += [finding("orphan", x.rel, "no concept or hand-written index links here",
-                    "link it from a related concept or an index, or deprecate it", "house", "warning")
+    out += [finding("orphan", x.rel, "no concept, source or index links here",
+                    "link it from a related concept or list it in an index (`index`), or deprecate it", "house", "warning")
             for x in docs if x.meta is not None and x.path.resolve() not in linked]
     top = tag_majority(docs)
     out += [finding("tag_case", x.rel, f"tag {tg!r} differs only by case from {top[tg.lower()]!r}",
@@ -606,7 +864,10 @@ def findings(r: Path, docs, reserved) -> list:
                     for h in bad]
             if not bad and heads != sorted(heads, reverse=True):
                 out.append(finding("okf_log", x.rel, "date headings are not newest first (§9)",
-                                   "reorder the sections, newest date on top"))
+                                   "reorder the sections, newest date on top; `fix` does this", fixable=True))
+            elif not bad and len(set(heads)) < len(heads):
+                out.append(finding("okf_log", x.rel, "a date heading appears twice, as after a merge (§9)",
+                                   "`fix` merges the sections", fixable=True))
     out += [finding("index_stale", rel(p, r), "the generated document list is out of date",
                     "run `index apply=true` or `fix apply=true`", "house", fixable=True)
             for p, n in indexes(r, docs).items() if n != read(p)]
@@ -630,11 +891,9 @@ def collect(r: Path, every: bool, scope: str, since: str):
         c = not any(f["kind"] in CONFORMANCE for f in bf)
         keep = changed(b, since) if since else None
         bf = [f for f in bf if (scope == "all" or f["scope"] == scope) and (keep is None or f["file"] in keep)]
-        name = rel(b, r) if b != r else "."
-        if b != r:
-            bf = [f | {"file": f"{name}/{f['file']}"} for f in bf]
+        name = kbpath(b)
+        bf = [{"bundle": name} | f for f in bf]
         if every:
-            bf = [f | {"bundle": name} for f in bf]
             per[name] = {"conformant": c, "errors": sum(f["severity"] == "error" for f in bf)}
         fs, conformant = fs + bf, conformant and c
     return fs, conformant, per
@@ -659,30 +918,29 @@ def lint(scope: str = "all", limit: int = 100, offset: int = 0, baseline: str = 
          all: bool | None = None, file: str = "", files: list[str] | None = None, bundle: str = "") -> dict:
     """Check the bundle against OKF v0.2. Run it before and after any change, and in CI.
     Each finding: kind; scope (okf = the spec, house = hygiene); severity (error fails, warning does not); file;
-    message; fix (what to do); fixable (true: `fix` clears it). conformant: §11 holds for the whole bundle
+    message; fix (what to do); fixable (true: `fix` clears it). conformant: §11 holds for what was linted
     (frontmatter parses, `type` set, index.md and log.md well formed). ok: no errors in scope. scope: all |
     okf | house. baseline: path of a `baseline` snapshot; only new findings count. since: a git ref; only
     files changed since its merge base with HEAD count (committed, staged, unstaged or untracked), for PRs.
-    all=true: this bundle and every bundle nested in it, files relative to it, a summary per bundle.
-    Without bundle=, it lints where the user is: the bundle around the working directory and everything in
-    it (at the knowledgebase root, everything). file / files: only those files or directories (paths from the
-    working directory), each checked within its own bundle; file paths are then relative to the knowledgebase.
-    limit=0 returns every finding."""
+    Each finding names its bundle and its file within it (§2). all=true: this directory and every bundle
+    in it, with a summary per bundle. Without bundle=, it lints where the user is: the bundle around the
+    working directory and everything in it (at the knowledgebase root, everything). file / files: only those
+    files or directories (paths within bundle=), each checked within its own bundle. limit=0 returns every
+    finding."""
     if scope not in ("all", "okf", "house"):
         raise ValueError(f"scope {scope!r} | fix: use all, okf or house")
     paths = ([file] if file else []) + list(files or [])
     if paths:
-        r, fs, conformant, per = KB_ROOT, {}, True, {}
+        fs, conformant, per, base = {}, True, {}, root(bundle)
         for raw in paths:
-            p = (Path(raw) if Path(raw).is_absolute() else Path.cwd() / raw).resolve()
+            p = (base / raw).resolve()
             if not p.exists() or not inside(p, KB_ROOT):
-                raise ValueError(f"{raw!r} is not in the knowledgebase | fix: pass a path under {KB_ROOT}")
+                raise ValueError(f"{raw!r} is not in the knowledgebase | fix: pass a path inside bundle= {kbpath(base)}")
             b = enclosing(p if p.is_dir() else p.parent)
-            bf = collect(b, p.is_dir(), scope, since)[0]
-            for f in bf:
-                q = b / f["file"]
+            for f in collect(b, p.is_dir(), scope, since)[0]:
+                q = KB_ROOT / f["bundle"] / f["file"]
                 if q == p or p in q.parents:
-                    fs[(rel(q, r), f["kind"], f["message"])] = f | {"file": rel(q, r)}
+                    fs[(f["bundle"], f["file"], f["kind"], f["message"])] = f
                     conformant = conformant and f["kind"] not in CONFORMANCE
         fs = [fs[k] for k in sorted(fs)]
     else:
@@ -690,7 +948,7 @@ def lint(scope: str = "all", limit: int = 100, offset: int = 0, baseline: str = 
         fs, conformant, per = collect(r, all, scope, since)
     known = set()
     if baseline:
-        p = confined(r, baseline)
+        p = confined(KB_ROOT, baseline)
         if not p.is_file():
             raise ValueError(f"no baseline at {baseline} | fix: run `baseline apply=true` first")
         known = set(json.loads(read(p) or "[]"))
@@ -698,7 +956,7 @@ def lint(scope: str = "all", limit: int = 100, offset: int = 0, baseline: str = 
     return {"schema": 1, "ok": not any(f["severity"] == "error" for f in new), "conformant": conformant,
             "total": len(new), "baselined": len(fs) - len(new),
             "counts": dict(sorted(collections.Counter(f["kind"] for f in new).items())),
-            "findings": page(new, limit, offset), "root": str(r)} | ({"bundles": per} if per else {})
+            "findings": page(new, limit, offset)} | ({"bundles": per} if per else {})
 
 
 @expose(idempotent=True)
@@ -706,23 +964,31 @@ def baseline(path: str = ".okf-baseline.json", apply: bool = False, all: bool | 
              bundle: str = "") -> dict:
     """Snapshot today's lint findings so CI fails only on new ones (`lint baseline=<path>`; same bundle and
     `all`, and like lint it defaults to where the user is). For adopting OKF on a large existing collection.
-    apply=False only counts."""
+    The snapshot's path is relative to the knowledgebase. apply=False only counts."""
     r, all = (root(bundle, write=apply), bool(all)) if bundle else (here(), all is not False)
     fs = collect(r, all, "all", "")[0]
-    p = confined(r, path)
+    p = confined(KB_ROOT, path)
     if apply:
         write(p, json.dumps(sorted({fingerprint(f) for f in fs}), indent=1) + "\n")
-    return {"findings": len(fs), "path": rel(p, r), "written": apply}
+    return {"findings": len(fs), "path": rel(p, KB_ROOT), "written": apply}
 
 
 # ------------------------------------------------------------------ read tools
 
 
 @expose(read=True)
-def status(bundle: str = "") -> dict:
+def status(due_days: int = 30, bundle: str = "") -> dict:
     """Bundle summary: concepts by type, by status (absent = stable, §5.4), by trust tier (§5.3), stale count
-    (`stale_after` passed, §5.5), unparseable files, declared okf_version, conformance and lint totals."""
+    (`stale_after` passed, §5.5), unparseable files, declared okf_version, conformance and lint totals; and
+    the upkeep queues, five oldest or largest each: review (days since last `verified`), drafts (days since
+    `generated.at`), sources (concepts with and without), words (total, longest: split candidates), due
+    (`stale_after` within due_days). At a knowledgebase root without bundle=, `bundles` holds the same for
+    each bundle."""
     r = root(bundle)
+    inner = [] if bundle else sorted(nested(r))
+    if inner:
+        per = {"bundles": {kbpath(b): status(due_days, bundle=str(b)) for b in inner}}
+        return status(due_days, bundle=str(r)) | per if scan(r)[0] else per
     docs, reserved = scan(r)
     ok = [x for x in docs if x.meta is not None]
     fs = findings(r, docs, reserved)
@@ -737,7 +1003,27 @@ def status(bundle: str = "") -> dict:
             "okf_version": top.get("okf_version"), "conformant": not any(f["kind"] in CONFORMANCE for f in fs),
             "lint": {"errors": sum(f["severity"] == "error" for f in fs),
                      "warnings": sum(f["severity"] == "warning" for f in fs)},
-            "last_log": heads[0] if heads else None}
+            "last_log": heads[0] if heads else None} | upkeep(ok, due_days)
+
+
+def upkeep(ok: list, due_days: int) -> dict:
+    """status's queues: what needs a person next."""
+    today = now_dt()
+    top = lambda rows, key="days": sorted(rows, key=lambda x: -(x[key] if x[key] is not None else -1))[:5]
+    seen = lambda d: max((t for e in entries(d["verified"]) if isinstance(e, dict) and (t := when(e.get("at")))),
+                         default=None) if d.get("verified") else None
+    made = lambda d: when(d["generated"].get("at")) if isinstance(d.get("generated"), dict) else when(d.get("timestamp"))
+    words = [{"file": x.rel, "words": len(split(x.text)[1].split())} for x in ok]
+    return {
+        "review": {"oldest": top([{"file": x.rel, "days": (today - t).days} for x in ok if (t := seen(x.meta))])},
+        "drafts": {"count": sum(x.meta.get("status") == "draft" for x in ok),
+                   "oldest": top([{"file": x.rel, "days": (today - t).days if (t := made(x.meta)) else None}
+                                  for x in ok if x.meta.get("status") == "draft"])},
+        "sources": {"with": sum(bool(x.meta.get("sources")) for x in ok), "without": sum(not x.meta.get("sources") for x in ok)},
+        "words": {"total": sum(w["words"] for w in words), "longest": top(words, "words")},
+        "due": sorted(({"file": x.rel, "stale_after": str(x.meta["stale_after"])} for x in ok
+                       if (t := when(x.meta.get("stale_after"))) and today <= t < today + dt.timedelta(days=due_days)),
+                      key=lambda x: x["stale_after"])[:5]}
 
 
 @expose(read=True, name="list")
@@ -747,11 +1033,11 @@ def list_(type: str = "", tag: str = "", status: str = "", tier: str = "", stale
     (unverified | machine-confirmed | human-reviewed) or stale=true. The review worklist after an ingest:
     status=draft tier=unverified."""
     rows = []
-    for x in scan(root(bundle))[0]:
+    for b, x in every(root(bundle), bundle):
         if x.meta is None:
             continue
         d = x.meta
-        row = {"id": x.rel[:-3], "file": x.rel, "title": title_of(d, x.text, x.path), "type": d.get("type"),
+        row = {**ref(x.path, b), "id": x.rel[:-3], "title": title_of(d, x.text, x.path), "type": d.get("type"),
                "status": d.get("status") or "stable", "tier": trust_tier(d), "stale": is_stale(d),
                "description": describe(d, x.text)}
         tags = d.get("tags") if isinstance(d.get("tags"), list) else []
@@ -764,47 +1050,59 @@ def list_(type: str = "", tag: str = "", status: str = "", tier: str = "", stale
 
 @expose(read=True)
 def links(file: str, bundle: str = "") -> dict:
-    """Edges of one concept (§6): `out` = its links (exists false = broken), `in` = concepts linking to it.
-    Check `in` before moving, renaming or deprecating a concept."""
-    r = root(bundle)
-    p = concept(file, r)
+    """Edges of one concept (§6): `out` = its links, and its §6.2 path fields as `field` entries (sources are
+    lineage, §5.1); exists false = broken; target names the bundle and file. `in` = concepts in its bundle
+    that link to it or cite it. Check `in` before moving, renaming or deprecating a concept."""
+    p, r = locate(file, bundle, edit=False)
     docs = scan(r)[0]
     me = next(x for x in docs if x.path.resolve() == p)
     out = []
     for link in hrefs(me.text or ""):
         t = target(link, me.path, r)
-        out.append({"link": link, "target": rel(t.resolve(), r) if t is not None and inside(t, r) else None,
+        tr = t.resolve() if t is not None else None
+        out.append({"link": link, "target": ref(tr, enclosing(tr.parent)) if tr and inside(tr, KB_ROOT) else None,
                     "exists": None if t is None else t.exists()})
-    inbound = sorted(x.rel for x in docs if x.text and any(
-        (t := target(link, x.path, r)) is not None and t.resolve() == p for link in hrefs(x.text)))
-    return {"file": me.rel, "id": me.rel[:-3], "out": out, "in": inbound}
+    for key, i, sk, v in path_fields(me.meta or {}):
+        if h := pathed(v, me.path, r):
+            out.append({"field": f"{key}{f'[{i}]' if i is not None else ''}{'.' + sk if sk else ''}", "path": v,
+                        "target": ref(h[0].resolve(), enclosing(h[0].parent)) if h[0] else None, "exists": bool(h[0])})
+    inbound = sorted(x.rel for x in docs if x.text and (any(
+        (t := target(link, x.path, r)) is not None and t.resolve() == p for link in hrefs(x.text)) or any(
+        (h := pathed(v, x.path, r)) and h[0] and h[0].resolve() == p for *_, v in path_fields(x.meta or {}))))
+    return {**ref(p, r), "id": me.rel[:-3], "out": out, "in": inbound}
 
 
 @expose(read=True)
 def search(query: str, limit: int = 30, offset: int = 0, bundle: str = "") -> dict:
-    """Case-insensitive text search over concepts; hits are `file:line: text`."""
+    """Case-insensitive text search over concepts; each hit is {bundle, file, line, text}."""
     q, hits = query.lower(), []
-    for x in scan(root(bundle))[0]:
-        hits += [f"{x.rel}:{n}: {ln.strip()[:160]}" for n, ln in enumerate((x.text or "").splitlines(), 1)
-                 if q in ln.lower()]
+    for b, x in every(root(bundle), bundle):
+        hits += [{**ref(x.path, b), "line": n, "text": ln.strip()[:160]}
+                 for n, ln in enumerate((x.text or "").splitlines(), 1) if q in ln.lower()]
     return {"total": len(hits), "hits": page(hits, limit, offset)}
 
 
 @expose(read=True)
 def get(file: str = "", files: list[str] | None = None, offset: int = 0, limit: int = 0, bundle: str = "") -> dict:
-    """One .md file of the bundle (a concept, index.md or log.md), or several at once with files=[...].
-    offset/limit page by line; limit=0 = all."""
+    """One .md file of a bundle (a concept, index.md or log.md), or several at once with files=[...]. A
+    missing index.md is synthesized from frontmatter (§8; `synthesized: true`). offset/limit page by line;
+    limit=0 = all."""
     r = root(bundle)
 
     def one(f: str) -> dict:
         p = confined(r, f)
+        if p.name == "index.md" and not p.exists() and p.parent.is_dir():
+            b = enclosing(p.parent)
+            block = indexes(b, scan(b)[0], add=True, dirs=True).get(p) or f"# {p.parent.name}\n\n{index_block(scan(b)[0])}\n"
+            lines = block.splitlines(True)
+            return {**ref(p, b), "synthesized": True, "lines": len(lines), "text": "".join(page(lines, limit, offset))}
         if p.suffix != ".md" or not p.is_file():
-            raise ValueError(f"{f!r} is not a .md file in the bundle | fix: pass a bundle-relative path")
+            raise ValueError(f"{f!r} is not a .md file in {kbpath(r)} | fix: pass bundle= and a path in it")
         t = read(p)
         if t is None:
             raise ValueError(f"{f}: {ERR['non_utf8'][0]} | fix: {ERR['non_utf8'][1]}")
         lines = t.splitlines(True)
-        return {"file": rel(p, r), "lines": len(lines), "text": "".join(page(lines, limit, offset))}
+        return {**ref(p, owner(p, r) if p.name != "index.md" else enclosing(p.parent)), "lines": len(lines), "text": "".join(page(lines, limit, offset))}
     if files:
         return {"files": [one(f) for f in files]}
     if not file:
@@ -822,19 +1120,38 @@ def init(apply: bool = False, bundle: str = "") -> dict:
     r = root(bundle, write=True, create=True)
     if (r / "index.md").exists():
         raise ValueError(f"{r / 'index.md'} exists | fix: this is already a bundle; run lint")
+    if (b := enclosing(r.parent)) != r and declares(b / "index.md") or nested(r):
+        raise ValueError("a bundle here would nest | fix: bundles do not nest; init beside the other bundle")
     changes = {r / "index.md": f'---\nokf_version: "{OKF_VERSION}"\n---\n\n# {r.name}\n\n## All documents\n\n'
                                f"{index_block([])}\n"}
     if not (r / "log.md").exists():
-        changes[r / "log.md"] = f"# Log\n\n## {now()[:10]}\n\n* **Initialization**: Created the bundle.\n"
-    return commit(r, changes, apply)
+        changes[r / "log.md"] = logged("# Log\n", "**Initialization**: Created the bundle.")
+    out = commit(r, changes, apply)
+    ga = KB_ROOT / ".gitattributes"  # union: parallel log entries merge without conflict; `fix` reorders them
+    have = (read(ga) if ga.is_file() else "") or ""
+    if "log.md merge=union" not in have:
+        if apply:
+            write(ga, (have.rstrip("\n") + "\n" if have.strip() else "") + "log.md merge=union\n")
+        out["gitattributes"] = "log.md merge=union"
+    return out
 
 
 @expose(idempotent=True, exit=lambda o: 1 if o.get("would_edit") or not o.get("remaining", {"ok": 1})["ok"] else 0)
-def fix(apply: bool = False, bundle: str = "") -> dict:
+def fix(apply: bool = False, all: bool | None = None, bundle: str = "") -> dict:
     """Mechanical repairs, nothing that needs judgment: strip frontmatter from index.md files (§8; the root
-    keeps okf_version), rebuild generated index lists, and give each tag its most common spelling. apply=False shows the diff (CLI exit 1 if there is
-    work); apply=True writes, re-lints and returns `remaining` (CLI exit 1 if errors remain)."""
+    keeps okf_version), rebuild generated index lists, give each tag its most common spelling, and put log.md
+    sections and entries back in order after a merge (§9).
+    apply=False shows the diff (CLI exit 1 if there is work); apply=True writes, re-lints and returns `remaining` (CLI exit 1 if errors remain). Like lint, it
+    defaults to where the user is and every bundle there; all=false keeps to one bundle."""
     r = root(bundle, write=apply)
+    every = bool(all) if bundle else all is not False
+    out = merged([fix_one(b, apply) for b in ([r, *sorted(nested(r))] if every else [r])])
+    if apply:
+        out["remaining"] = lint(limit=20, all=every, bundle=str(r))
+    return out
+
+
+def fix_one(r: Path, apply: bool) -> dict:
     docs, reserved = scan(r)
     texts = {x.path: x.text for x in reserved if x.path.name == "index.md" and x.text is not None}
     texts.update(indexes(r, docs))
@@ -846,25 +1163,24 @@ def fix(apply: bool = False, bundle: str = "") -> dict:
             head = yaml.dump(keep, Dumper=Dumper, default_flow_style=False) if keep else ""
             t = (f"---\n{head}---\n" if keep else "") + split(t)[1].lstrip("\n")
         changes[p] = t
+    changes.update({x.path: tidied(x.text) for x in reserved if x.path.name == "log.md" and x.text})
     top = tag_majority(docs)
     for x in docs:
         if any(str(tg).lower() in top and str(tg) != top[str(tg).lower()] for tg in tags_of(x)):
             changes[x.path] = put(x.text, "tags", list(dict.fromkeys(top.get(str(tg).lower(), str(tg))
                                                                      for tg in tags_of(x))))
-    out = commit(r, changes, apply, "**Update**: Ran fix.")
-    if apply:
-        out["remaining"] = lint(limit=20, bundle=bundle)
-    return out
+    return commit(r, changes, apply, "**Update**: Ran fix.")
 
 
 @expose(idempotent=True)
 def index(apply: bool = False, dirs: bool = False, bundle: str = "") -> dict:
     """Rebuild generated document lists from frontmatter (title, type, tags, `description`, §8): the
-    bundle-root index.md (a table, added if missing) and every index.md that already has a list. dirs=true
+    bundle-root index.md (a table, added if missing) and every index.md that already has a list. At a
+    knowledgebase root, its index.md lists the bundles (created if missing). dirs=true
     also gives every directory an index.md listing its concepts and subdirectories (§8 progressive
     disclosure). apply=False shows the diff."""
     r = root(bundle, write=apply)
-    if not (r / "index.md").is_file() and not dirs:
+    if not (r / "index.md").is_file() and not dirs and not nested(r):
         raise ValueError("no index.md at the bundle root | fix: run `init apply=true`")
     return commit(r, indexes(r, scan(r)[0], add=True, dirs=dirs), apply)
 
@@ -889,41 +1205,43 @@ def set_(fields: dict, file: str = "", files: list[str] | None = None, apply: bo
             raise ValueError(f"status {v!r} | fix: use draft, stable or deprecated (§5.4)")
         if k == "stale_after" and not when(v):
             raise ValueError("stale_after must be ISO 8601 with a UTC offset (§5.5) | fix: like 2026-09-23T00:00:00Z")
+        if k == "usage_window" and not window(v):
+            raise ValueError("usage_window is {from, to} (§5.1) | fix: ISO 8601 with a UTC offset, like 2026-06-01T00:00:00Z")
         if k == "tags" and not (isinstance(v, list) and all(isinstance(x, str) for x in v)):
             raise TypeError("tags must be a list of strings")
     targets = ([file] if file else []) + list(files or [])
     if not fields or not targets:
         raise ValueError("nothing to do | fix: pass fields and file (or files)")
-    r = root(bundle, write=True)
-    changes = {}
+    groups = {}
     for f in targets:
-        p = concept(f, r)
-        t = changes.get(p) or loaded(p, r)[0]
+        p, b = locate(f, bundle)
+        t = groups.setdefault(b, {}).get(p) or loaded(p, b)[0]
         for k, v in fields.items():
             t = put(t, k, v, drop=v is None)
-        changes[p] = t
-    return commit(r, changes, apply, f"**Update**: Set {', '.join(fields)} on {len(changes)} concept(s).")
+        groups[b][p] = t
+    dep = fields.get("status") == "deprecated"  # §9's conventional Deprecation entry
+    return merged([commit(b, ch, apply, f"**Deprecation**: Deprecated {', '.join(f'[{rel(q, b)}](/{rel(q, b)})' for q in ch)}."
+                          if dep else f"**Update**: Set {', '.join(fields)} on {len(ch)} concept(s).")
+                   for b, ch in groups.items()])
 
 
 @expose()
-def create(file: str, type: str, title: str = "", description: str = "", tags: list[str] | None = None,
+def create(file: str, type: str, title: str = "", description: str = "", resource: str = "",
+           tags: list[str] | None = None,
            status: str = "", body: str = "", by: str = "", bundle: str = "") -> dict:
-    """Create a concept with valid OKF frontmatter (§4.1): type, title, description, tags, status, and
+    """Create a concept with valid OKF frontmatter (§4.1): type, title, description, resource, tags, status, and
     `generated` {by, at} when by (your actor) is given. body is markdown; a `# title` heading is added unless
     the body starts with one. Refuses an existing file or a reserved name (index.md, log.md)."""
     if not type.strip():
         raise ValueError("type is required (§4.1) | fix: pass a type, like Reference or Playbook")
     if status and status not in STATUSES:
         raise ValueError(f"status {status!r} | fix: use draft, stable or deprecated (§5.4)")
-    if by and not ACTOR.match(by):
-        raise ValueError(f"by {by!r} is not an actor | fix: human:<id>, process:<id> or <tool>/<version> (§7)")
-    r = root(bundle, write=True)
-    p = confined(r, file if file.endswith(".md") else file + ".md")
-    if p.name in RESERVED or p.exists():
-        raise ValueError(f"{rel(p, r)} exists or is a reserved name | fix: pick another path")
+    by = attested(by)
+    p, r = locate(file, bundle, new=True)
     title, body = title or p.stem.replace("-", " ").replace("_", " "), body.strip()
     t = "\n" + (body + "\n" if body.startswith("# ") else f"# {title}\n" + (f"\n{body}\n" if body else ""))
-    for k, v in (("type", type), ("title", title), ("description", description), ("tags", tags), ("status", status)):
+    for k, v in (("type", type), ("title", title), ("description", description), ("resource", resource),
+                 ("tags", tags), ("status", status)):
         if v:
             t = put(t, k, v)
     if by:
@@ -934,50 +1252,69 @@ def create(file: str, type: str, title: str = "", description: str = "", tags: l
 @expose(destructive=True)
 def move(file: str, to: str, apply: bool = False, bundle: str = "") -> dict:
     """Move or rename a concept and rewrite every link to it (relative and /-absolute, §6.1, in concepts,
-    index.md and log.md), plus the moved concept's own relative links. Check `links` first. apply=False
-    shows the diff.
-    shortcut: links inside code blocks are rewritten too; read the diff."""
-    r = root(bundle, write=True)
-    p = concept(file, r)
-    q = confined(r, to if to.endswith(".md") else to + ".md")
-    if q.name in RESERVED or q.exists():
-        raise ValueError(f"{rel(q, r)} exists or is a reserved name | fix: pick another path")
-
-    def relink(text: str, old: Path, new: Path) -> str:
-        def sub(m):
-            link = m.group(1)
-            t = target(link, old, r)
-            if t is None or (t.resolve() != p and (old == new or link.startswith("/"))):
-                return m.group(0)
-            dest = q if t.resolve() == p else t.resolve()
-            path = link.split("#")[0].split("?")[0]
-            n = "/" + rel(dest, r) if link.startswith("/") else os.path.relpath(dest, new.parent).replace(os.sep, "/")
-            n += "/" if path.endswith("/") and not n.endswith("/") else ""
-            return m.group(0).replace(link, urllib.parse.quote(n) + link[len(path):], 1)
-        return LINK.sub(sub, text)
-
+    index.md and log.md), plus the moved concept's own relative links. Stays inside one bundle; `migrate`
+    moves between bundles. Check `links` first. apply=False shows the diff."""
+    p, r = locate(file, bundle)
+    q, b = locate(to, bundle, new=True)
+    if b != r:
+        raise ValueError("that move crosses bundles | fix: use migrate")
     docs, reserved = scan(r)
     changes = {}
     for x in docs + reserved:
         if x.text is None:
             continue
-        if x.path.resolve() == p:
-            changes[p], changes[q] = None, relink(x.text, p, q)
-        elif (n := relink(x.text, x.path.resolve(), x.path.resolve())) != x.text:
+        xr = x.path.resolve()
+        if xr == p:
+            changes[p], changes[q] = None, relinked(x.text, p, q, p, q, r, r)
+        elif (n := relinked(x.text, xr, xr, p, q, r, r)) != x.text:
             changes[x.path] = n
     return commit(r, changes, apply, f"**Update**: Moved {rel(p, r)} to [{rel(q, r)}](/{rel(q, r)}).")
 
 
+@expose(read=True)
+def log(file: str = "", limit: int = 20, bundle: str = "") -> dict:
+    """History, newest first. With file: the entries in every log.md over that concept that link to it (§9),
+    and the git commits that changed it. Without: the bundle's recent entries from all its log.md files.
+    `record` writes an entry."""
+    p, b = locate(file, bundle, edit=False) if file else (None, root(bundle))
+    if p is None:
+        logs = [x.path for x in scan(b)[1] if x.path.name == "log.md"]
+    else:
+        logs = [d / "log.md" for d in [p.parent, *p.parent.parents] if inside(d, b) and (d / "log.md").is_file()]
+    entries = []
+    for lp in logs:
+        day = ""
+        for ln in (read(lp) or "").splitlines():
+            if m := re.match(r"## (\d{4}-\d{2}-\d{2})\s*$", ln):
+                day = m.group(1)
+            elif ln.startswith("* ") and day and (p is None or any(
+                    (t := target(h, lp, b)) is not None and t.resolve() == p for h in hrefs(ln))):
+                st = STAMP.match(ln)
+                at = dt.datetime.fromtimestamp(int(st.group(1)), dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if st else day
+                entries.append({"at": at, "entry": STAMP.sub("*", ln)[2:].strip(), "log": rel(lp, b)})
+    entries.sort(key=lambda e: e["at"], reverse=True)
+    out = {"bundle": kbpath(b), **({"file": rel(p, b)} if p else {}), "entries": page(entries, limit, 0)}
+    if p and (g := repo(b)):
+        c = git(g[0], "log", f"-n{int(limit) or 1000}", "--follow", "--use-mailmap", "--format=%h%x09%aI%x09%aN%x09%s",
+                "--", str(p))
+        out["commits"] = [dict(zip(("sha", "at", "author", "subject"), ln.split("\t", 3)))
+                          for ln in c.stdout.splitlines() if ln.count("\t") >= 3]
+    return out
+
+
 @expose()
-def log(note: str, kind: str = "Update", bundle: str = "") -> dict:
-    """Add a §9 entry, `* **<kind>**: <note>`, under today's date in the bundle-root log.md (newest first;
-    created if absent). Kinds by convention: Update, Creation, Deprecation."""
+def record(note: str, kind: str = "Update", dir: str = "", bundle: str = "") -> dict:
+    """Write a §9 entry, `* **<kind>**: <note>`, under today's date in a log.md (newest first; created if
+    absent): the bundle root's, or dir's (a directory in the bundle; §9 logs that scope). Link the concept it
+    is about, `[title](/path.md)`, so `log` finds it. Kinds by convention: Update, Creation, Deprecation."""
     if not note.strip() or "\n" in note + kind:
         raise ValueError("note must be one non-empty line | fix: shorten it")
     r = root(bundle, write=True)
-    lp = r / "log.md"
+    lp = confined(r, dir) / "log.md"
+    if not lp.parent.is_dir():
+        raise ValueError(f"{dir!r} is not a directory in {kbpath(r)} | fix: pass an existing directory")
     write(lp, logged((read(lp) if lp.is_file() else None) or "# Log\n", f"**{kind.strip()}**: {note.strip()}"))
-    return {"edited": ["log.md"]}
+    return {"edited": {kbpath(r): [rel(lp, r)]}}
 
 
 class Review(BaseModel):
@@ -990,31 +1327,26 @@ async def verify(file: str, by: str = "", promote: bool = False, ctx: Context = 
     """Record a §5.2 `verified` entry {by, at} (at = now, UTC). Two paths:
     you (an agent or process) checked it: by=<tool>/<version> or process:<id>; the concept is machine-confirmed.
     A human checked it: omit `by`; the human gets a confirmation prompt and types their own id. Never pass
-    human:<id> yourself. Present the concept to them first. At the CLI a human passes by=human:<id>.
+    human:<id> yourself. Present the concept to them first. At the terminal a human runs it with --attest.
     promote=true also moves a draft to stable (§5.4); only a human review may."""
-    r = root(bundle, write=True)
-    p = concept(file, r)
+    p, r = locate(file, bundle)
     t, d = loaded(p, r)
-    if by:
-        if not ACTOR.match(by):
-            raise ValueError(f"by {by!r} is not an actor | fix: human:<id>, process:<id> or <tool>/<version> (§7)")
+    if by := attested(by):
         if promote and not by.startswith("human:"):
             raise ValueError("only a human review promotes draft to stable | fix: drop promote, or let the human verify")
-        if by.startswith("human:") and not CLI:
-            raise ValueError("only a human attests as human: | fix: call verify without `by`; the human confirms "
-                             "in a prompt (or runs the CLI)")
     elif CLI:
-        raise ValueError("pass by | fix: by=human:<your id>")
+        raise ValueError("who checked it? | fix: run with --attest (you), or pass by=process:<id> or <tool>/<version>")
     else:
         body = split(t)[1]
         words = body.split()
-        msg = (f"Confirm you reviewed {rel(p, r)} ({title_of(d, t, p)}, {len(words)} words). It opens: "
-               f"{' '.join(words)[:300]}. This records you in `verified`: the concept becomes human-reviewed (OKF §5.3).")
+        msg = (f"Confirm you reviewed {rel(p, r)} in {kbpath(r)} ({title_of(d, t, p)}, {len(words)} words). It opens: "
+               f"{' '.join(words)[:300]}. This records you in `verified`: the concept becomes human-reviewed (OKF §5.3)"
+               + (" and moves from draft to stable (§5.4)." if promote and d.get("status") == "draft" else "."))
         try:
             res = await ctx.elicit(message=msg, schema=Review)
         except Exception as e:
             raise ValueError(f"this client cannot show a confirmation prompt ({type(e).__name__}) | fix: the human runs "
-                             f"`uv run KnowledgeBaseMCP.py verify file={rel(p, r)} by=human:<id>`") from e
+                             f"`uv run KnowledgeBaseMCP.py verify bundle={kbpath(r)} file={rel(p, r)} --attest`") from e
         if res.action != "accept" or not res.data.confirm:
             return {"edited": [], "result": "not confirmed; nothing written"}
         rid = res.data.reviewer.strip().removeprefix("human:")
@@ -1038,18 +1370,20 @@ async def verify(file: str, by: str = "", promote: bool = False, ctx: Context = 
 
 @expose()
 def cite(file: str, resource: str = "", id: str = "", title: str = "", server: str = "", tool: str = "",
-         args: dict | None = None, observed: str = "", rev: str = "", by: str = "", stale_days: int = 0,
-         bundle: str = "") -> dict:
-    """Record where a fact came from as a §5.1 `sources` entry. When an MCP tool produced it, pass server,
-    tool and args (the exact call), observed (the value seen) and rev (a version or sha, if any): that call
-    is the re-check recipe for recheck_plan. resource: a real URL when the result has one, else
-    mcp://server/tool?args is used. by: your actor. stale_days>0 sets stale_after. Returns the footnote marker
+         args: dict | None = None, stale_days: int = 0, author: str = "", usage_count: int | None = None,
+         last_modified: str = "", bundle: str = "") -> dict:
+    """Record where a fact came from as a §5.1 `sources` entry, with `retrieved_at` (when). When an MCP tool
+    produced it, pass server, tool and args, the exact call (`via`, how): it is the re-check recipe for
+    recheck_plan. resource: a real URL when the result has one, else mcp://server/tool?args is used.
+    author, usage_count, last_modified: the source's own
+    credibility signals (§5.1), when you know them. stale_days>0 sets stale_after. Returns the footnote marker
     to put after the claim; its definition is appended to the body. Reusing an id replaces that entry."""
-    r = root(bundle, write=True)
-    p = concept(file, r)
+    p, r = locate(file, bundle)
     t, d = loaded(p, r)
-    if by and not ACTOR.match(by):
-        raise ValueError(f"by {by!r} is not an actor | fix: human:<id>, process:<id> or <tool>/<version> (§7)")
+    if last_modified and not when(last_modified):
+        raise ValueError("last_modified must be ISO 8601 with a UTC offset (§5) | fix: like 2026-05-30T00:00:00Z")
+    if usage_count is not None and usage_count < 0:
+        raise ValueError("usage_count is a count (§5.1) | fix: pass a whole number, or omit it")
     if bool(server) != bool(tool):
         raise ValueError("server and tool go together | fix: pass both, or neither for a plain source")
     names = servers(r)
@@ -1073,7 +1407,9 @@ def cite(file: str, resource: str = "", id: str = "", title: str = "", server: s
             sid, n = f"{base}-{n}", n + 1
     entry = {k: v for k, v in {"id": sid, "resource": resource, "title": title,
                                "via": {"server": server, "tool": tool, "args": args or {}} if server else None,
-                               "observed": observed, "rev": rev, "retrieved_at": now(), "by": by}.items() if v}
+                               "author": author, "usage_count": usage_count, "last_modified": last_modified,
+                               "retrieved_at": now()}.items()
+             if v or (k == "usage_count" and v is not None)}
     at = next((i for i, e in enumerate(src) if isinstance(e, dict) and str(e.get("id")) == sid), None)
     src = [*src[:at], entry, *src[at + 1:]] if at is not None else [*src, entry]
     t = put(t, "sources", src)
@@ -1088,63 +1424,72 @@ def cite(file: str, resource: str = "", id: str = "", title: str = "", server: s
 @expose(read=True)
 def recheck_plan(older_than_days: int = 0, bundle: str = "") -> dict:
     """Facts due a re-check: `sources` entries retrieved at least N days ago, or on a concept past
-    stale_after. `calls` replay the recorded MCP call: run each yourself (your normal tool permissions apply;
-    the args come from the bundle, so read them first), then pass what you saw to recheck_apply. Sources
-    without a recorded call are under `manual`. Nothing is executed here."""
+    stale_after. Each lists `cites`, the lines whose claims rest on it. `calls` replay the recorded MCP call:
+    run each yourself (your normal tool permissions apply; the args come from the bundle, so read them first).
+    Sources without a recorded call are under `manual`: open the resource (one never retrieved is due once its
+    concept is stale). Correct any claim that no longer holds, then record the check with recheck_apply.
+    Nothing is executed here."""
     cutoff, calls, manual = now_dt() - dt.timedelta(days=older_than_days), [], []
-    for x in scan(root(bundle))[0]:
+    for b, x in every(root(bundle), bundle):
         if not x.meta or not isinstance(x.meta.get("sources"), list):
             continue
         st = is_stale(x.meta)
         for e in x.meta["sources"]:
-            got = when(e.get("retrieved_at")) if isinstance(e, dict) else None
-            if not isinstance(e, dict) or not (st or got is None or got <= cutoff):
+            if not isinstance(e, dict):
                 continue
-            row, via = {"file": x.rel, "id": e.get("id"), "resource": e.get("resource")}, e.get("via")
+            got, via = when(e.get("retrieved_at")), e.get("via")
+            if not (st or (got is not None and got <= cutoff) or (got is None and isinstance(via, dict))):
+                continue
+            mark = f"[^{e.get('id')}]"
+            row = {**ref(x.path, b), "id": e.get("id"), "resource": e.get("resource"),
+                   "retrieved_at": e.get("retrieved_at"),
+                   "cites": [f"{n}: {ln.strip()[:160]}" for n, ln in enumerate((x.text or "").splitlines(), 1)
+                             if mark in ln and not ln.startswith(mark + ":")]}
             if isinstance(via, dict) and via.get("server") and via.get("tool"):
-                calls.append(row | {"call": {"server": via["server"], "tool": via["tool"], "args": via.get("args") or {}},
-                                    "observed": e.get("observed"), "rev": e.get("rev"),
-                                    "retrieved_at": e.get("retrieved_at")})
+                calls.append(row | {"call": {"server": via["server"], "tool": via["tool"], "args": via.get("args") or {}}})
             else:
                 manual.append(row)
     return {"calls": calls, "manual": manual}
 
 
 @expose()
-def recheck_apply(results: list[dict], by: str = "", stale_days: int = 0, bundle: str = "") -> list:
-    """Record re-check results, each {file, id, observed, rev?}. Same value (rev compared when both have one):
-    retrieved_at moves to now. Changed: the entry takes the new value and `review` lists the lines citing
-    [^id]; reread and correct those claims. stale_days>0 also moves stale_after forward."""
-    if by and not ACTOR.match(by):
-        raise ValueError(f"by {by!r} is not an actor | fix: human:<id>, process:<id> or <tool>/<version> (§7)")
-    r, out = root(bundle, write=True), []
+def recheck_apply(results: list[dict] | None = None, by: str = "", stale_days: int = 0, bundle: str = "",
+                  file: str = "", id: str = "") -> list:
+    """Record a re-check, after you compared each due source with the claims citing it (recheck_plan) and
+    corrected any that changed; git keeps what they said before. Each result is {bundle?, file, id?}, or one
+    as file= and id=; no id = every source on that concept. retrieved_at moves to now. by (at the terminal,
+    --attest) also adds a §5.2 `verified` entry: the concept was confirmed against its sources.
+    stale_days>0 also moves stale_after forward."""
+    by = attested(by)
+    results = list(results or []) + ([{"file": file, "id": id}] if file else [])
+    if not results:
+        raise ValueError("nothing to record | fix: pass file (and id), or results")
+    out, texts = [], {}
     for res in results:
-        p = concept(str(res.get("file", "")), r)
-        t, d = loaded(p, r)
+        p, b = locate(str(res.get("file", "")), str(res.get("bundle") or bundle))
+        t, d, _ = texts.get(p) or (*loaded(p, b), b)
         src = list(d.get("sources") or []) if isinstance(d.get("sources"), list) else []
-        i = next((i for i, e in enumerate(src) if isinstance(e, dict) and str(e.get("id")) == str(res.get("id"))), None)
-        if i is None:
-            out.append({**res, "result": "no such source"})
+        want = str(res.get("id") or "")
+        hit = [i for i, e in enumerate(src) if isinstance(e, dict) and (not want or str(e.get("id")) == want)]
+        if not hit:
+            out.append({**ref(p, b), "id": want or None, "result": "no such source"})
             continue
-        e, obs, rv = dict(src[i]), str(res.get("observed", "")), str(res.get("rev") or "")
-        same = rv == str(e["rev"]) if rv and e.get("rev") else obs == str(e.get("observed", ""))
-        e["retrieved_at"] = now()
+        for i in hit:
+            src[i] = {**src[i], "retrieved_at": now()}
+        texts[p] = (put(t, "sources", src), {**d, "sources": src}, b)
+        out.append({**ref(p, b), "checked": [src[i].get("id") for i in hit]})
+    groups = {}
+    for p, (t, d, b) in texts.items():
         if by:
-            e["by"] = by
-        if not same:
-            e["observed"] = obs
-            if rv:
-                e["rev"] = rv
-        src[i] = e
-        t = put(t, "sources", src)
+            old = d.get("verified")
+            if old is not None and not isinstance(old, (dict, list)):
+                raise ValueError(f"{rel(p, b)}: `verified` is malformed | fix: correct it by hand (§5.2)")
+            t = put(t, "verified", ([] if old is None else entries(old)) + [{"by": by, "at": now()}])
         if stale_days > 0:
             t = put(t, "stale_after", now(stale_days))
-        commit(r, {p: t}, True, f"**Update**: Re-checked source {e['id']} of [{title_of(d, t, p)}](/{rel(p, r)}): "
-                                f"{'unchanged' if same else 'changed'}.")
-        mark = f"[^{e['id']}]"
-        review = [] if same else [f"{rel(p, r)}:{n}: {ln.strip()[:160]}" for n, ln in enumerate(t.splitlines(), 1)
-                                  if mark in ln and not ln.startswith(mark + ":")]
-        out.append({"file": rel(p, r), "id": e["id"], "result": "unchanged" if same else "changed", "review": review})
+        groups.setdefault(b, {})[p] = t
+    for b, ch in groups.items():
+        commit(b, ch, True, f"**Update**: Re-checked the sources of {len(ch)} concept(s)" + (f"; verified by {by}." if by else "."))
     return out
 
 
@@ -1268,40 +1613,27 @@ def provenance(apply: bool = False, skip: list[str] | None = None, bundle: str =
 @expose(name="split")
 def split_off(dir: str, apply: bool = False, bundle: str = "") -> dict:
     """Make a directory its own bundle (§3): its index.md declares okf_version "0.2" (created if missing, with
-    a generated list), a log.md is started, and `/` links inside it are rewritten for the new root (§6.1).
+    a generated list), a log.md is started, and `/` links and §6.2 paths inside it are rewritten for the new
+    root (§6.1).
     Links that now cross between the two bundles are listed, not changed; lint warns on them.
     shortcut: links inside code blocks are rewritten too; read the diff."""
     r = root(bundle, write=True)
     d = confined(r, dir)
     if d == r or not d.is_dir():
-        raise ValueError(f"{dir!r} is not a directory inside the bundle | fix: pass a subdirectory")
+        raise ValueError(f"{dir!r} is not a directory inside {kbpath(r)} | fix: pass a subdirectory")
     if declares(d / "index.md"):
-        raise ValueError(f"{rel(d, r)} is already a bundle | fix: nothing to do")
+        raise ValueError(f"{kbpath(d)} is already a bundle | fix: nothing to do")
+    if declares((r := owner(d / "x", KB_ROOT)) / "index.md"):
+        raise ValueError("splitting inside a bundle would nest | fix: bundles do not nest; init a sibling bundle "
+                         "and migrate concepts into it")
     docs, changes, crossing = scan(r)[0], {}, []
     for x in docs:
-        if x.text is None or d not in x.path.parents:
-            if x.text and d not in x.path.parents:
-                crossing.extend(f"{x.rel}: {link}" for link in hrefs(x.text)
-                                if (t := target(link, x.path, r)) is not None and inside(t, d))
+        if not x.text:
             continue
-
-        def sub(m, x=x):
-            link = m.group(1)
-            t = target(link, x.path, r)
-            if t is None:
-                return m.group(0)
-            path = link.split("#")[0].split("?")[0]
-            if not inside(t, d):
-                crossing.append(f"{x.rel}: {link}")
-                if not link.startswith("/"):
-                    return m.group(0)
-                n = os.path.relpath(t.resolve(), x.path.parent).replace(os.sep, "/")
-            elif link.startswith("/"):
-                n = "/" + rel(t.resolve(), d)
-            else:
-                return m.group(0)
-            return m.group(0).replace(link, urllib.parse.quote(n) + link[len(path):], 1)
-        if (n := LINK.sub(sub, x.text)) != x.text:
+        xr, ins = x.path.resolve(), d in x.path.parents
+        crossing.extend(f"{x.rel}: {link}" for link in hrefs(x.text)
+                        if (t := target(link, x.path, r)) is not None and inside(t, d) != ins)
+        if ins and (n := relinked(x.text, xr, xr, None, None, r, d)) != x.text:
             changes[x.path] = n
     ip = d / "index.md"
     it = (read(ip) if ip.is_file() else None) or f"# {d.name}\n"
@@ -1312,8 +1644,173 @@ def split_off(dir: str, apply: bool = False, bundle: str = "") -> dict:
     return out | {"crossing": {"count": len(crossing), "first": crossing[:10]}}
 
 
+@expose(destructive=True)
+def migrate(file: str, to_bundle: str, to: str = "", apply: bool = False, bundle: str = "") -> dict:
+    """Move a concept to another bundle of the knowledgebase (`move` stays inside one). to_bundle: the target
+    bundle's path in the knowledgebase ("." for its root). to: the path inside it (default: the same path).
+    Links to the concept in both bundles are rewritten; its own `/` links, which meant the old bundle's root,
+    become relative paths (cross-bundle: lint warns). Links from other bundles are not touched. apply=False
+    shows the diff."""
+    p, b1 = locate(file, bundle)
+    b2 = root(to_bundle or ".", write=True)
+    if b2 != KB_ROOT and not declares(b2 / "index.md"):
+        raise ValueError(f"{to_bundle!r} is not a bundle | fix: run `init apply=true bundle={to_bundle}` first")
+    if b2 == b1:
+        raise ValueError("that is the same bundle | fix: use move")
+    dest = to or rel(p, b1)
+    q = confined(b2, dest if dest.endswith(".md") else dest + ".md")
+    if q.name in RESERVED or q.exists() or owner(q, b2) != b2:
+        raise ValueError(f"{kbpath(q)} exists, is reserved or sits in another bundle | fix: pick another path")
+    changes = {b1: {}, b2: {}}
+    for b in (b1, b2):
+        docs, reserved = scan(b)
+        for x in docs + reserved:
+            if x.text is None:
+                continue
+            xr = x.path.resolve()
+            if xr == p:
+                changes[b1][p], changes[b2][q] = None, relinked(x.text, p, q, p, q, b1, b2)
+            elif (n := relinked(x.text, xr, xr, p, q, b, b)) != x.text:
+                changes[b][x.path] = n
+    title = rel(q, b2)
+    return merged([
+        commit(b1, changes[b1], apply, f"**Update**: Migrated {rel(p, b1)} to {kbpath(b2)}."),
+        commit(b2, changes[b2], apply, f"**Creation**: Migrated in [{title}](/{title}) from {kbpath(b1)}.")])
+
+
+def relocate(src: Path, dst: Path, rb_old: Path, rb_new: Path) -> dict:
+    """{(where, where it will live): text} for moving src (a file, or a directory and all in it) to dst, with
+    src's bundle root going from rb_old to rb_new: every document in the knowledgebase whose links or §6.2
+    paths change, plus every moved one."""
+    out = {}
+    for b in [KB_ROOT, *sorted(nested(KB_ROOT))]:
+        docs, reserved = scan(b)
+        for x in docs + reserved:
+            if x.text is None:
+                continue
+            xr = x.path.resolve()
+            if xr == src or src in xr.parents:
+                q = dst / xr.relative_to(src) if xr != src else dst
+                out[(xr, q)] = relinked(x.text, xr, q, src, dst, rb_old, rb_new)
+            elif (n := relinked(x.text, xr, xr, src, dst, b, b)) != x.text:
+                out[(xr, xr)] = n
+    return out
+
+
+def relocated(src: Path, dst: Path, home: Path, changes: dict, apply: bool, notes: dict) -> dict:
+    """Show, or carry out, a relocate(): move src to dst on disk (home: the bundle it lands in), write the
+    rewritten documents, log in each bundle touched (notes: {bundle: entry}, else a link note) and refresh the
+    knowledgebase index."""
+    if not apply:
+        return {"move": f"{kbpath(src)} -> {kbpath(dst)}",
+                "would_edit": sorted(kbpath(q) for (o, q), t in changes.items() if t != read(o)),
+                "diff": "".join(diff(read(o) or "", t, kbpath(q)) for (o, q), t in sorted(changes.items()) if t != read(o))}
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    src.rename(dst)
+    groups = {}
+    for (_, q), t in changes.items():
+        groups.setdefault(home if inside(q, dst) else owner(q, KB_ROOT), {})[q] = t
+    outs = [commit(b, ch, True, notes.get(b) or f"**Update**: Repointed links after {kbpath(src)} moved to {kbpath(dst)}.")
+            for b, ch in groups.items()]
+    for b, note in notes.items():  # a bundle whose files only moved still logs it
+        if b not in groups and (lp := b / "log.md").is_file():
+            write(lp, logged(read(lp) or "", note))
+    for p, n in indexes(KB_ROOT, scan(KB_ROOT)[0]).items():
+        if n != read(p):
+            write(p, n)
+    return {"moved": f"{kbpath(src)} -> {kbpath(dst)}"} | merged(outs)
+
+
+def free(dst: Path, what: str):
+    if dst.exists() or any(declares(d / "index.md") for d in dst.parents if inside(d, KB_ROOT) and d != KB_ROOT):
+        raise ValueError(f"{kbpath(dst)} exists or sits inside a bundle | fix: {what}")
+
+
+@expose(destructive=True, name="rename")
+def rename_bundle(to: str, apply: bool = False, bundle: str = "") -> dict:
+    """Rename or move a bundle within the knowledgebase (§3): bundle= (default: where the user is) to `to`, a
+    path in the knowledgebase. Links into it from other bundles, its links out, and §6.2 paths are rewritten
+    (§6.1); its own `/` links stay, since its root moves with it. The knowledgebase index follows.
+    apply=False shows the plan and diff."""
+    old = root(bundle, write=True)
+    if old == KB_ROOT or not declares(old / "index.md"):
+        raise ValueError(f"{kbpath(old)} is not a bundle beside others | fix: pass bundle= as `bundles` lists it")
+    new = confined(KB_ROOT, to)
+    free(new, "pick a free path beside the other bundles")
+    return relocated(old, new, new, relocate(old, new, old, new), apply,
+                     {new: f"**Update**: Renamed the bundle from {kbpath(old)} to {kbpath(new)}."})
+
+
+def archive_root(apply: bool) -> Path:
+    """The archive bundle, started (on apply) when absent."""
+    a = (KB_ROOT / ARCHIVE).resolve()
+    if not declares(a / "index.md"):
+        if declares(KB_ROOT / "index.md"):
+            raise ValueError("the knowledgebase root is itself a bundle, so an archive beside it would nest | fix: "
+                             "keep bundles in subdirectories of the knowledgebase")
+        if apply:
+            init(apply=True, bundle=ARCHIVE)
+    return a
+
+
+@expose(destructive=True)
+def archive(file: str = "", apply: bool = False, bundle: str = "") -> dict:
+    """Move a concept, or (no file) the whole bundle= named, into the knowledgebase's archive bundle (`archive/`,
+    started when absent) at <bundle>/<path>, so `unarchive` can put it back. Links to it are rewritten and warn
+    afterwards (archived_link); status is left alone. A whole bundle keeps its log.md, and its index.md stops
+    declaring a bundle (§8). The archive is read-only to editing tools. apply=False shows the plan and diff."""
+    a = archive_root(apply)
+    if file:
+        p, b = locate(file, bundle)
+        if b == KB_ROOT and not declares(b / "index.md"):
+            raise ValueError("only a concept in a bundle can be archived | fix: migrate it into a bundle first")
+        src, dst = p, a / kbpath(b) / rel(p, b)
+    else:
+        if not bundle:
+            raise ValueError("archive a whole bundle? | fix: pass bundle= explicitly (or file= for one concept)")
+        src = b = root(bundle, write=True)
+        if b == KB_ROOT or not declares(b / "index.md") or archived(b):
+            raise ValueError(f"{kbpath(b)} is not a bundle beside others | fix: pass bundle= as `bundles` lists it")
+        dst = a / kbpath(b)
+    if dst.exists():
+        raise ValueError(f"{kbpath(dst)} is already archived | fix: unarchive it first")
+    changes = relocate(src, dst, b, a)
+    if src == b:
+        ip = (b / "index.md").resolve()
+        changes[(ip, dst / "index.md")] = split(changes.get((ip, dst / "index.md")) or read(ip) or "")[1].lstrip("\n")
+    return relocated(src, dst, a, changes, apply, {a: f"**Update**: Archived {kbpath(src)}."})
+
+
+@expose(destructive=True)
+def unarchive(path: str, apply: bool = False) -> dict:
+    """Put an archived concept or bundle back where it came from: path is its place in the archive,
+    <bundle>/<path> for a concept (its bundle must exist) or <bundle> for a whole bundle (its index.md
+    declares okf_version again). apply=False shows the plan and diff."""
+    a = (KB_ROOT / ARCHIVE).resolve()
+    if not archived(a):
+        raise ValueError("there is no archive bundle | fix: nothing is archived")
+    src = confined(a, path if path.endswith(".md") or (a / path).is_dir() else path + ".md")
+    if src == a or not src.exists():
+        raise ValueError(f"{path!r} is not in the archive | fix: pass <bundle>/<path> or <bundle> as `list bundle={ARCHIVE}` shows")
+    dst = (KB_ROOT / rel(src, a)).resolve()
+    if src.is_dir():
+        free(dst, "rename the bundle that took its place, then retry")
+        changes = relocate(src, dst, a, dst)
+        ip = (src / "index.md").resolve()
+        changes[(ip, dst / "index.md")] = put(changes.get((ip, dst / "index.md")) or read(ip) or f"# {dst.name}\n",
+                                              "okf_version", OKF_VERSION)
+        note = {dst: f"**Update**: Unarchived the bundle {kbpath(dst)}."}
+    else:
+        b = owner(dst, KB_ROOT)
+        if not declares(b / "index.md") or dst.exists():
+            raise ValueError(f"{kbpath(dst)} exists, or its bundle does not | fix: `unarchive {rel(src, a).split('/')[0]}`, "
+                             "or init that bundle first")
+        changes, note = relocate(src, dst, a, b), {b: f"**Update**: Unarchived [{rel(dst, b)}](/{rel(dst, b)})."}
+    return relocated(src, dst, dst if src.is_dir() else owner(dst, KB_ROOT), changes, apply, note)
+
+
 @expose(idempotent=True)
-def migrate(apply: bool = False, bundle: str = "") -> dict:
+def upgrade(apply: bool = False, bundle: str = "") -> dict:
     """OKF v0.1 to v0.2 (§13). A legacy `timestamp` becomes `generated: {by, at, basis: git-history}` with by
     from git history (`by` is required, so without history it stays and is listed in needs_by); a body
     `# Citations` list becomes `sources` entries and the list is removed; the root index.md declares
@@ -1353,14 +1850,125 @@ def migrate(apply: bool = False, bundle: str = "") -> dict:
 
 
 @expose(read=True)
+def heatmap(days: int = 30, limit: int = 10, bundle: str = "") -> dict:
+    """The hottest concepts and who heats them, from git history (.mailmap names). files: commits that changed
+    each concept in the last `days`, most first, and how many people did. bundles: the same per bundle.
+    authors: each person's changes and concepts in the window. single_author: concepts only one person has
+    ever changed (all history; a bus-factor flag). index.md and log.md are left out: every write touches
+    them. Like lint, it covers where the user is (at the knowledgebase root, every bundle). limit=0 lists all."""
+    r = root(bundle)
+    g = repo(r)
+    if not g:
+        raise ValueError("heatmap reads git history | fix: run it inside the knowledgebase's repository")
+
+    def changes(*since):  # {concept path: Counter(author)}
+        out, who = collections.defaultdict(collections.Counter), ""
+        for ln in git(g[0], "log", *since, "--use-mailmap", "--name-only", "--format=@%aN", "--", str(r)).stdout.splitlines():
+            if ln.startswith("@"):
+                who = ln[1:]
+            elif ln.strip() and (q := (g[0] / ln).resolve()).suffix == ".md" and q.name not in RESERVED \
+                    and q.is_file() and inside(q, r):
+                out[q][who] += 1
+        return out
+    recent = changes(f"--since={int(days)} days ago")
+    files, per, people = [], collections.defaultdict(collections.Counter), collections.defaultdict(collections.Counter)
+    for q, who in recent.items():
+        b = enclosing(q.parent)
+        files.append({**ref(q, b), "changes": sum(who.values()), "authors": len(who)})
+        per[kbpath(b)].update(who)
+        for a, n in who.items():
+            people[a]["changes"] += n
+            people[a]["concepts"] += 1
+    files.sort(key=lambda f: (-f["changes"], f["bundle"], f["file"]))
+    solo = sorted(({**ref(q, (b := enclosing(q.parent))), "author": next(iter(who))}
+                   for q, who in changes().items() if len(who) == 1), key=lambda f: (f["bundle"], f["file"]))
+    return {"days": days,
+            "bundles": sorted(({"bundle": b, "changes": sum(w.values()), "authors": len(w)} for b, w in per.items()),
+                              key=lambda x: -x["changes"]),
+            "files": page(files, limit, 0),
+            "authors": page(sorted(({"author": a, **c} for a, c in people.items()), key=lambda x: -x["changes"]), limit, 0),
+            "single_author": page(solo, limit, 0)} | ({"shallow": "history is truncated; counts are low"} if g[1] else {})
+
+
+@expose(read=True)
+def web(concepts: bool = False, mermaid: bool = False, bundle: str = ""):
+    """The link graph (§6): which concepts link to (`link`) or cite (`cite`: sources and §6.2 path fields,
+    lineage, §5.1) which. Where the user is, like lint: at the knowledgebase root, bundles with edges counted;
+    in a bundle (or concepts=true), concepts. Broken links are left out (lint reports them); archived and
+    deprecated nodes are marked. Returns {level, nodes, edges}; mermaid=true returns a Mermaid diagram instead
+    (CLI: format=mermaid), which GitHub and most markdown viewers draw."""
+    r = root(bundle)
+    scope = [r] if bundle else [r, *sorted(nested(r))]
+    by_concept = concepts or len(scope) == 1
+    nodes, edges = {}, collections.Counter()
+    for b in scope:
+        for x in scan(b)[0]:
+            if x.meta is None:
+                continue
+            me = kbpath(x.path)
+            nodes[me] = {**ref(x.path, b), "status": x.meta.get("status") or "stable", "archived": archived(b)}
+            ts = [("link", target(h, x.path, b)) for h in hrefs(x.text)]
+            ts += [("cite", hit[0]) for *_, v in path_fields(x.meta) if (hit := pathed(v, x.path, b)) and hit[0]]
+            for kind, t in ts:
+                if t is None or not t.is_file() or t.suffix != ".md" or t.name in RESERVED or not inside(t, KB_ROOT):
+                    continue
+                t, tb = t.resolve(), enclosing(t.resolve().parent)
+                if t == x.path.resolve() or (not by_concept and tb == b):
+                    continue
+                edges[(me if by_concept else kbpath(b), kbpath(t) if by_concept else kbpath(tb), kind)] += 1
+                if by_concept:
+                    nodes.setdefault(kbpath(t), {**ref(t, tb), "status": "stable", "archived": archived(tb)})
+    if not by_concept:
+        nodes = {kbpath(b): {"bundle": kbpath(b), "archived": archived(b)} for b in scope
+                 if declares(b / "index.md") or scan(b)[0]}  # the knowledgebase root only if it holds concepts
+    out = {"level": "concepts" if by_concept else "bundles", "nodes": sorted(nodes.values(), key=str),
+           "edges": [{"from": a, "to": z, "kind": k, "count": n} for (a, z, k), n in sorted(edges.items())]}
+    return graph(out) if mermaid else out
+
+
+def graph(w: dict) -> str:
+    """A web() result as a Mermaid flowchart: links solid, citations dotted, archived or deprecated greyed."""
+    key = (lambda n: f"{n['bundle']}/{n['file']}".removeprefix("./")) if w["level"] == "concepts" else (lambda n: n["bundle"])
+    ids = {key(n): f"n{i}" for i, n in enumerate(w["nodes"])}
+    lab = lambda t: t.replace('"', "#quot;")
+    out, groups = ["graph LR"], {}
+    for n in w["nodes"]:
+        groups.setdefault(n["bundle"] if w["level"] == "concepts" else None, []).append(n)
+    for g, ns in groups.items():
+        out += [f'  subgraph {ids.get(g, "b" + str(len(out)))}_g["{lab(g)}"]'] if g else []
+        out += [f'  {"  " if g else ""}{ids[key(n)]}["{lab(n.get("file", n["bundle"]))}"]' for n in ns]
+        out += ["  end"] if g else []
+    out += [f"  {ids[e['from']]} {'-->' if e['kind'] == 'link' else '-.->'}|{e['count'] if e['count'] > 1 else e['kind']}| "
+            f"{ids[e['to']]}" for e in w["edges"]]
+    grey = [ids[key(n)] for n in w["nodes"] if n.get("archived") or n.get("status") == "deprecated"]
+    return "\n".join(out + (["  classDef dim fill:#eee,stroke:#999,color:#888", f"  class {','.join(grey)} dim"] if grey else []))
+
+
+def web_text(w: dict) -> str:
+    """A web() result for the terminal: ──▶ links, ┄┄▶ citations, ◀ inbound."""
+    mark = lambda n: " (archived)" if n.get("archived") else " (deprecated)" if n.get("status") == "deprecated" else ""
+    arrow = lambda e: f"──{e['count']}──▶" if e["kind"] == "link" else f"┄┄{e['count']}┄┄▶"
+    if w["level"] == "bundles":
+        info = {n["bundle"]: n for n in w["nodes"]}
+        return "bundles\n" + "\n".join(f"  {e['from']} {arrow(e)} {e['to']}{mark(info[e['to']])}" for e in w["edges"])
+    out = []
+    for n in w["nodes"]:
+        k = f"{n['bundle']}/{n['file']}".removeprefix("./")
+        out.append(f"{k}{mark(n)}")
+        out += [f"  {'──▶' if e['kind'] == 'link' else '┄┄▶'} {e['to']}" for e in w["edges"] if e["from"] == k]
+        out += [f"  {'◀──' if e['kind'] == 'link' else '◀┄┄'} {e['from']}" for e in w["edges"] if e["to"] == k]
+    return "\n".join(out)
+
+
+@expose(read=True)
 def bundles(bundle: str = "") -> dict:
     """Bundle roots under a directory: each index.md declaring okf_version (§12). A bundle without that
     declaration looks like any folder; pass it as bundle= directly."""
     r, out = root(bundle), []
-    for p in sorted(r.rglob("index.md")):
-        d = meta(read(p))[0] if ".git" not in p.relative_to(r).parts else None
+    for p in walk(r, "index.md"):
+        d = meta(read(p))[0]
         if d and "okf_version" in d:
-            out.append({"bundle": rel(p.parent, r), "okf_version": str(d["okf_version"])})
+            out.append({"bundle": kbpath(p.parent), "okf_version": str(d["okf_version"])})
     return {"bundles": out}
 
 
@@ -1372,13 +1980,19 @@ def spec() -> str:
 
 
 def permalink(src: Path, top: Path):
-    """f(path, sha) -> a web URL for the file at that commit, from `origin` (credentials dropped); else None.
+    """f(path, sha) -> a web URL for the file at that commit, from `origin`; None for a local or file:// remote.
+    Credentials and ports are dropped (an ssh port is not the web port).
     shortcut: assumes the GitHub/GitLab-style /blob/<sha>/<path> route; other forges need their own."""
     url = git(src, "remote", "get-url", "origin").stdout.strip()
-    m = re.match(r"(?:ssh://)?(?:[^@/]+@)?([^/:]+)[/:](.+?)(?:\.git)?/?$", re.sub(r"^https?://", "", url))
-    if not m:
-        return None
-    return lambda f, sha: f"https://{m.group(1)}/{m.group(2)}/blob/{sha}/{urllib.parse.quote(rel(f.resolve(), top))}"
+    if m := re.match(r"[\w.-]+@([^:/]+):(.+)$", url):  # scp-like: git@host:owner/repo.git
+        host, path = m.groups()
+    else:
+        u = urllib.parse.urlsplit(url)
+        if u.scheme not in ("http", "https", "ssh", "git") or not u.hostname:
+            return None
+        host, path = u.hostname, u.path
+    path = re.sub(r"\.git$", "", path.strip("/"))
+    return lambda f, sha: f"https://{host}/{path}/blob/{sha}/{urllib.parse.quote(rel(f.resolve(), top))}"
 
 
 @expose(idempotent=True, destructive=True)
@@ -1402,17 +2016,21 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
     if status and status not in STATUSES:
         raise ValueError(f"status {status!r} | fix: use draft, stable, deprecated, or '' for none")
     dst = root(bundle, write=True, create=True)
+    if archived(dst):
+        raise ValueError("the archive is read-only | fix: ingest into another bundle")
     inplace, g = src == dst, repo(src)
     if inplace and apply and (not g or git(src, "status", "--porcelain").stdout.strip()):
         raise ValueError("in-place ingest needs a clean git tree | fix: commit or stash first, so the diff is the review")
     if g:
         files = [src / f for f in git(src, "ls-files", "-z").stdout.split("\0") if f]
     else:
-        files = sorted(p for p in src.rglob("*") if p.is_file() or p.is_symlink())
+        files = walk(src, "*")
     files = [f for f in files if not any(x.startswith(".") for x in f.relative_to(src).parts)
              and (inplace or not inside(f, dst))]
     md = [f for f in files if f.suffix.lower() in (".md", ".markdown")]
-    hist = history(src, [f for f in md if f.is_file() and not f.is_symlink()]) if g else {}
+    shallow = bool(g and g[1])
+    hist = history(src, [f for f in md if f.is_file() and not f.is_symlink()]) if g and not shallow else {}
+    head = git(src, "rev-parse", "HEAD").stdout.strip() if shallow else ""
     link = permalink(src, g[0]) if g else None
     skipped, items, changes, absolute = collections.Counter(), [], {}, []
     skips, pending, brought = [], [], set()
@@ -1444,14 +2062,16 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
             continue
         h = hist.get(f, {})
         new = t
-        origin = {"id": "origin", "resource": link(f, h["sha"]) if link else f"git:{h['sha']}:{r_}",
-                  "last_modified": h.get("at") or h["last_modified"]} if h else None
+        sha = h.get("sha") or head
+        origin = {"id": "origin", "resource": link(f, sha) if link else f"git:{sha}:{r_}"} if sha else None
+        if origin and h:
+            origin["last_modified"] = h.get("at") or h["last_modified"]
         if is_okf:
             srcs = d.get("sources") if isinstance(d.get("sources"), list) else []
             if origin and not any(isinstance(e, dict) and e.get("id") == "origin" for e in srcs):
                 new = put(new, "sources", [*srcs, origin])
             items.append({"from": r_, "to": to, "type": d["type"],
-                          "provenance": "full" if "by" in h else "partial" if h else "none"})
+                          "provenance": "full" if "by" in h else "partial" if origin else "none"})
         elif not (name in RESERVED and err == "no_frontmatter"):
             typ = next((v for k, v in (rules or {}).items() if fnmatch.fnmatch(r_, k)), DEFAULT_TYPE)
             new = put(new, "type", typ)
@@ -1461,7 +2081,7 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
                 new = put(new, "status", status)
             if stale_days > 0:
                 new = put(new, "stale_after", now(stale_days))
-            if h and "sources" not in (d or {}):
+            if origin and "sources" not in (d or {}):
                 srcs = [origin]
                 canon = next((str(d[k]) for k in ("canonical_url", "canonical", "source", "url")
                               if re.match(r"https?://", str((d or {}).get(k, "")))), None)
@@ -1471,7 +2091,7 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
             if "by" in h and "generated" not in (d or {}):
                 new = put(new, "generated", {"by": h["by"], "at": h["at"], "basis": "git-history"})
             items.append({"from": r_, "to": to, "type": typ,
-                          "provenance": "full" if "by" in h else "partial" if h else "none"})
+                          "provenance": "full" if "by" in h else "partial" if origin else "none"})
         changes[dst / to] = new
         brought.add(f.resolve())
         if inplace and to != r_:
@@ -1492,6 +2112,8 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
                                    "note": "these links will not resolve in the bundle; fix them after ingest (move helps)"},
             "license": {"files": sorted(p.name for p in src.iterdir() if re.match(r"(LICEN[CS]E|COPYING|NOTICE)", p.name, re.IGNORECASE)),
                         "checked": False},
+            **({"shallow": "truncated history: origin points at the cloned commit, and there is no authorship "
+                           "(`generated`); fetch full history for it"} if shallow else {}),
             "not_done": ["secrets: not scanned; run a scanner such as gitleaks on the source first",
                          "licenses: not checked; confirm the source allows your bundle's license",
                          "other formats: not converted; convert them to markdown first"]}
@@ -1524,13 +2146,31 @@ def esc(s: str, prop=False) -> str:
     return s.replace(":", "%3A").replace(",", "%2C") if prop else s
 
 
-def render(out, fmt: str, r: Path) -> str:
-    """lint findings as text, GitHub annotations or SARIF; anything else as JSON. Paths are made relative to
-    the working directory, where CI runs."""
+def render(out, fmt: str) -> str:
+    """JSON; or text: lint findings one per line, anything else one key per line with any diff printed as is;
+    or lint findings as GitHub annotations or SARIF. Paths are made relative to the working directory."""
+    if isinstance(out, str):
+        return out
+    if fmt == "text" and isinstance(out, dict) and "edges" in out:
+        return web_text(out)
+    if fmt == "text" and not (isinstance(out, dict) and "findings" in out):
+        def show(v, pad=""):
+            if isinstance(v, dict) and "findings" in v:  # a nested lint result, like fix's `remaining`
+                return "\n" + "\n".join(pad + "  " + ln for ln in render(v, "text").splitlines())
+            if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
+                return "\n" + "\n".join(f"{pad}  - " + ", ".join(f"{k}: {show(y)}" for k, y in x.items()) for x in v)
+            if isinstance(v, dict) and v and all(isinstance(y, dict) for y in v.values()):
+                return "\n" + "\n".join(f"{pad}  {k}:" + show(y, pad + "  ") for k, y in v.items())
+            if isinstance(v, dict) and v and pad:
+                return "\n" + "\n".join(f"{pad}  {k}: {show(y)}" for k, y in v.items())
+            return v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
+        if isinstance(out, list):
+            return show(out).lstrip("\n")
+        return "\n".join([f"{k}: {show(v)}" for k, v in out.items() if k != "diff"] + [out.get("diff") or ""]).rstrip()
     if fmt == "json" or not isinstance(out, dict) or "findings" not in out:
-        return out if isinstance(out, str) else json.dumps(out, indent=2, ensure_ascii=False)
+        return json.dumps(out, indent=2, ensure_ascii=False)
     fs = out["findings"]
-    path = lambda f: os.path.relpath(r / f["file"])
+    path = lambda f: os.path.relpath(KB_ROOT / f["bundle"] / f["file"])
     if fmt == "text":
         return "\n".join([f"{path(f)}: {f['severity']}: {f['kind']}: {f['message']} | fix: {f['fix']}" for f in fs]
                          + [f"{out['total']} finding(s); conformant: {out['conformant']}; ok: {out['ok']}"])
@@ -1546,14 +2186,39 @@ def render(out, fmt: str, r: Path) -> str:
 
 def cli(argv) -> int:
     """Terminal front end, no AI. `help` lists tools; args are name=value (lists: a,b or JSON) or one JSON object.
-    format=text|json|github|sarif renders lint (github/sarif for CI)."""
-    global CLI
-    CLI = True
+    format=text|json|github|sarif renders lint (github/sarif for CI). Inside the knowledgebase, paths are
+    relative to the working directory; with bundle=, file paths are within that bundle."""
+    global CLI, ATTEST
+    CLI, ATTEST = True, ""
+    if "--attest" in argv[1:]:  # CLI only, by design: an MCP caller cannot pass it
+        argv = [a for a in argv if a != "--attest"]
+        uid = os.environ.get("KB_USER") or git(Path.cwd(), "config", "user.email").stdout.strip()
+        if argv[0] not in REG or "by" not in inspect.signature(REG[argv[0]]).parameters:
+            print(f"error: --attest records who did it; {argv[0]} takes no `by`", file=sys.stderr)
+            return 2
+        if not uid:
+            print("error: --attest needs your id | fix: set KB_USER, or git config user.email", file=sys.stderr)
+            return 2
+        ATTEST = f"human:{uid}"
+    if argv[0] in ("help", "-h", "--help") and argv[1:] and argv[1] in REG or argv[0] in REG and argv[1:] in (
+            ["help"], ["-h"], ["--help"]):
+        n = argv[1] if argv[0] in ("help", "-h", "--help") else argv[0]
+        f = REG[n]
+        print(f"{n}: {inspect.cleandoc(f.__doc__ or '')}\n\nArguments:")
+        for k, p in inspect.signature(f).parameters.items():
+            if k != "ctx":
+                ann = getattr(p.annotation, "__name__", None) or str(p.annotation).replace("typing.", "")
+                print(f"  {k}: {ann}" + ("  (required)" if p.default is p.empty else f" = {p.default!r}"))
+        print("\nformat=json|text (any tool; text prints diffs as is); lint also github|sarif.")
+        return 0
     if argv[0] not in REG:
         for n, f in sorted(REG.items()):
             print(f"{n:14} {' '.join((f.__doc__ or '').split()).split('. ')[0].rstrip('.')}.")
         print("\nUsage: <tool> name=value ...   e.g. lint scope=okf format=github\n"
-              "       lists: a,b or JSON; dicts: JSON; or pass one JSON object.")
+              "       lists: a,b or JSON; dicts: JSON; or pass one JSON object.\n"
+              "       help <tool>: its arguments and what it does.\n"
+              "       --attest: record yourself (KB_USER, else git user.email) as human:<id> on create, verify\n"
+              "       and recheck_apply. Terminal only; the MCP server cannot.")
         return 0 if argv[0] in ("help", "-h", "--help") else 2
     fn = REG[argv[0]]
     params = {k: p for k, p in inspect.signature(fn).parameters.items() if k != "ctx"}
@@ -1569,18 +2234,35 @@ def cli(argv) -> int:
                     fmt = v
                 elif not eq and "files" in params:
                     args.setdefault("files", []).append(a)
+                elif not eq and (k := next((n for n, q in params.items() if n not in args and (
+                        q.default is q.empty or n == "file")), None)):  # bare: the next required argument
+                    args[k] = conv(a, params[k].annotation)
+                elif eq and k not in params and "fields" in params:  # set: any other key is frontmatter
+                    try:
+                        args.setdefault("fields", {})[k] = yaml.load(v, Loader=Loader) if v else None
+                    except yaml.YAMLError:
+                        args["fields"][k] = v
                 elif not eq or k not in params:
                     raise ValueError(f"{a!r} | fix: arguments are {', '.join(params) or '(none)'}")
                 else:
                     args[k] = conv(v, params[k].annotation)
+        if fmt == "mermaid" and "mermaid" in params:
+            args["mermaid"], fmt = True, "text"
         if fmt not in ("text", "json", "github", "sarif"):
             raise ValueError(f"format {fmt!r} | fix: text, json, github or sarif")
+        if inside(Path.cwd(), KB_ROOT):  # in the knowledgebase, CLI paths are relative to where you are
+            within = () if args.get("bundle") else ("file", "files", "dir", *(("to",) if argv[0] == "move" else ()))
+            for k in ("source", "bundle", "to_bundle", *within):
+                if isinstance(args.get(k), str) and args[k]:
+                    args[k] = os.path.abspath(args[k])
+                elif isinstance(args.get(k), list):
+                    args[k] = [os.path.abspath(v) for v in args[k]]
         if argv[0] == "lint" and fmt != "json":
             args.setdefault("limit", 0)
         out = fn(**args)
         if inspect.iscoroutine(out):
             out = asyncio.run(out)
-        print(render(out, fmt, Path(out["root"]) if isinstance(out, dict) and "root" in out else KB_ROOT))
+        print(render(out, fmt))
     except (TypeError, ValueError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2

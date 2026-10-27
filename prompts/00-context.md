@@ -16,18 +16,22 @@ work cheaper and more consistent, not possible.
 
 - A single [PEP 723][pep723] script (`KnowledgeBaseMCP.py`) with inline deps
   (`mcp`, `pyyaml`). Runs as an stdio MCP server, or as a CLI for any tool.
-- The knowledgebase is `KB_ROOT` (default: the current directory): a workspace
-  of one or more bundles. An `index.md` declaring `okf_version` marks a bundle
-  root; `bundle=` picks one. `lint` follows the working directory.
+- The knowledgebase is `KB_ROOT` (default: found from the current directory):
+  one bundle, or sibling bundles (no nesting) listed by a root `index.md`. An
+  `index.md` declaring `okf_version` marks a bundle root. Files are named the OKF
+  way (§2): `bundle=` plus the path within it, in every input and output.
+  Without `bundle=`, tools follow the working directory; the CLI reads paths
+  from where you are.
 - A self-check (`test_KnowledgeBaseMCP.py`) runs every tool against throwaway
   bundles, including SPEC.md's own examples.
 
 ## Tools
 
-Read: `lint`, `status`, `list`, `links`, `search`, `get`, `recheck_plan`,
+Read: `lint`, `status`, `list`, `links`, `search`, `get`, `recheck_plan`, `heatmap`, `web`, `log`,
 `bundles`; the spec as resource `okf://spec`.
-Write: `init`, `create`, `set`, `move`, `split`, `log`, `fix`, `index`, `verify`, `cite`,
-`recheck_apply`, `provenance`, `migrate`, `ingest`, `baseline`.
+Write: `init`, `create`, `set`, `move`, `migrate`, `split`, `rename`, `archive`,
+`unarchive`, `record`, `fix`, `index`,
+`verify`, `cite`, `recheck_apply`, `provenance`, `upgrade`, `ingest`, `baseline`.
 
 ## Constraints
 

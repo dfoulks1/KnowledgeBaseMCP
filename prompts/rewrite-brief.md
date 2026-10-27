@@ -64,7 +64,7 @@ pre-commit), and a developer at a terminal with no AI.
   destructiveHint, idempotentHint, openWorldHint=false). Reads read-only;
   `fix`, `index`, `set` non-destructive + idempotent; `ingest` and `move`
   destructive (they can delete a renamed original); `verify`, `cite`,
-  `create`, `log` non-destructive, not idempotent.
+  `create`, `record` non-destructive, not idempotent.
 - Server `instructions` string: the workflow (lint, fix, verify, cite), what
   needs a human, what never to do (claim `human:`).
 - CLI parses arguments from the function signature (not `str(annotation)`).
@@ -120,7 +120,7 @@ with offset. Existing entries keep their values; a bare mapping becomes a list.
   body length; the human confirms and types their own id (default from
   `KB_USER`). On accept, write `human:<id>`. Re-read the file first and refuse
   if the body changed. If the client lacks elicitation, refuse with a `fix:`
-  hint. CLI: `by=human:<id>` writes directly.
+  hint. CLI: `--attest` records the person at the terminal (KB_USER, else git user.email); no MCP call can pass it.
 
 ### cite, recheck_plan, recheck_apply (replace the kb-verify machinery)
 
@@ -131,22 +131,20 @@ sources:
   - id: infra-123
     resource: <real URL if the tool result has one, else mcp://server/tool?args>
     title: ...
-    via: {server: jira, tool: get_issue, args: {issue_key: INFRA-123}}
-    observed: In Progress
-    rev: <optional version/sha>
-    retrieved_at: 2026-10-27T11:20:00Z
-    by: <caller's actor>
+    via: {server: jira, tool: get_issue, args: {issue_key: INFRA-123}}   # how
+    retrieved_at: 2026-10-27T11:20:00Z                                  # when
 ```
 
 - `cite(file, resource, id="", title="", server="", tool="", args=None,
-  observed="", rev="", by, stale_days=0)`. Writes the entry (`server` empty =
-  plain source), returns the `[^id]` marker for the claim, optionally sets
-  `stale_after`.
-- `recheck_plan(older_than_days=0)`: for each stale source with `via`, emits
-  the call to replay. Executes nothing.
-- `recheck_apply(results)`: compare `observed`. Match: bump `retrieved_at` and
-  `stale_after`. Drift: update the entry, list every line carrying that
-  footnote for review.
+  stale_days=0, author, usage_count, last_modified)`. Writes the entry
+  (`server` empty = plain source), returns the `[^id]` marker for the claim,
+  optionally sets `stale_after`.
+- `recheck_plan(older_than_days=0)`: each due source, the lines citing it, and
+  for those with `via` the call to replay. Executes nothing.
+- `recheck_apply(file, id="")`: after the checker corrects any claim that
+  changed (git keeps the old text), bump `retrieved_at`; no id = every source
+  on the concept. `by` (or `--attest` at the terminal) adds a §5.2 `verified`
+  entry. No stored `observed`/`rev`: revision control has the history.
 - If the bundle has `.mcp.json` (also `servers` key for VS Code style), read
   server names only, never values (`env`, `headers`). `lint` flags a `via.server`
   not listed (`via_server`, house). No file, no check.
@@ -265,16 +263,21 @@ Each step leaves the self-check passing.
 ## Later
 
 Built since the first pass: `create` (the generic `new`), `move`, `log`,
-`migrate`, per-directory `index`, `bundles`, the spec resource, and lint
+`upgrade` (v0.1), per-directory `index`, `bundles`, the spec resource, and lint
 warnings for orphans, anchors, tag case, missing `description` and the §10
-contract (an error). Still later: `action.yml`, `.pre-commit-hooks.yaml`,
-ingest sync. `lint since=<ref>` is built.
+contract (an error). Still later: `.pre-commit-hooks.yaml`, ingest sync. No
+`action.yml`: CI stays a README snippet. `lint since=<ref>` is built.
 
-A knowledgebase is a workspace of bundles (wherever the user points). Nested
-bundle roots (`index.md` with `okf_version`) are boundaries. Built: `split`,
+A knowledgebase is wherever the user points: one bundle, or sibling bundles.
+Bundles do not nest (`nested_bundle` is a house error). Tools default to the
+bundle around the working directory; writes route to the file's own bundle;
+`migrate` moves between bundles, `upgrade` converts v0.1. Built: `split`,
 `ingest keep_okf`, `lint all` / file paths / working-directory context,
 `verify promote`, `get files`, and warnings `cross_bundle`, `deprecated_link`,
-`source_changed`; `fix` normalizes tag case.
+`source_changed`; `fix` normalizes tag case. §6.2 path fields move with
+`move`/`migrate`/`split` and lint as `dead_path`; symlinks are never followed;
+shallow-clone ingest records origin only; `permalink` drops credentials and
+ports and skips local remotes. Revisit `concept()` routing next.
 
 ## Defaults chosen without asking
 
