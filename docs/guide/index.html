@@ -249,8 +249,11 @@ it does not push fixes (fork PRs get a read-only token anyway).</p>
   attested here.</li>
 <li>From a shallow clone, <code>ingest</code> records the cloned commit as the origin but no
   authorship.</li>
-<li><code>ingest</code> does not convert other formats, scan for secrets or check
-  licenses. Its plan says so.</li>
+<li>Secret scanning (<code>lint</code>'s <code>secret</code>, and <code>ingest</code> skipping such files) matches
+  common credential shapes in current files: private keys, cloud, chat and API
+  tokens, JWTs, passwords in URLs. It is not exhaustive and does not read git
+  history; run <a href="https://github.com/gitleaks/gitleaks">gitleaks</a> for that.</li>
+<li><code>ingest</code> does not convert other formats or check licenses. Its plan says so.</li>
 </ul></article>
       
         <nav class="turn" aria-label="Pages">

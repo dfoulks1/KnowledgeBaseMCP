@@ -121,6 +121,21 @@ check("---\ntype: x\nsources: [{resource: r, last_modified: yesterday}]\n---\n",
 check("---\ntype: x\nsources: [{resource: r, usage_count: many}]\n---\n", "bad_source")
 check("---\ntype: x\nusage_window: {from: 2026-06-01}\nsources: [{resource: r}]\n---\n", "bad_source")
 check("---\ntype: x\ntags: sales\n---\n", "bad_tags")
+check("---\ntype: x\n---\nkey: AKIAIOSFODNN7EXAMPLE\n", "secret")  # AWS's documented example key
+check("---\ntype: x\n---\n-----BEGIN OPENSSH PRIVATE KEY-----\n", "secret")
+check("---\ntype: x\n---\npostgres://app:hunter2@db/prod\n", "secret")
+assert k.secrets("tok ghp_" + "a" * 36 + "\nfine\n") == [(1, "GitHub token")]
+assert not k.secrets("see https://example.com/a and ghp_short and sk-tiny\n")
+(kb / "bad/leak.md").write_text("---\ntype: x\n---\nkey: AKIAIOSFODNN7EXAMPLE\n")
+L = k.lint(bundle="bad", limit=0)
+assert not L["ok"] and "AKIAIOSFODNN7EXAMPLE" not in json.dumps(L)  # named by kind and line, never the value
+(kb / "bad/leak.md").unlink()
+sec = Path(tempfile.mkdtemp())  # ingest leaves a file with a credential behind, and says why
+(sec / "ok.md").write_text("# Fine\n")
+(sec / "leak.md").write_text("# Leak\n\ntoken: glpat-" + "x" * 20 + "\n")
+plan = k.ingest(str(sec), bundle="bad")
+assert plan["ingest"] == 1 and plan["secrets"]["skipped"] == 1
+assert any(f["file"] == "leak.md" and "GitLab token on line 3" in f["reason"] for f in plan["skipped_files"])
 for c in ("parameters: [{name: year}]", "executor: {receipt: [job_id]}", "computation: x.sql\n---\n# Computation\n"):
     check(f"---\ntype: Attested Computation\nruntime: bigquery\n{c}" + ("" if "---" in c else "\n---\n# Computation\n"),
           "bad_computation")

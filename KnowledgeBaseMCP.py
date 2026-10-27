@@ -48,6 +48,25 @@ ACTOR = re.compile(r"^(human:\S+|process:\S+|[^\s/:]+/\S+)$")  # §7
 FM = re.compile(r"\A---[ \t]*\n(.*?)^---[ \t]*(?:\n|\Z)", re.DOTALL | re.MULTILINE)
 LINK = re.compile(r"\]\(<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\)")
 FOOTREF = re.compile(r"\[\^([^\]\s]+)\](?!:)")
+# Credential shapes that leak most, matched precisely (no entropy guessing). A scanner, not an audit: for git
+# history and more rules, run gitleaks.
+SECRETS = [(k, re.compile(v)) for k, v in (
+    ("private key", r"-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----"),
+    ("AWS access key", r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"),
+    ("GitHub token", r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,})"),
+    ("GitLab token", r"\bglpat-[A-Za-z0-9_-]{20,}"),
+    ("Slack token", r"\bxox[abprs]-[A-Za-z0-9-]{10,}"),
+    ("Google API key", r"\bAIza[0-9A-Za-z_-]{35}\b"),
+    ("Stripe live key", r"\b[rs]k_live_[0-9A-Za-z]{20,}"),
+    ("OpenAI or Anthropic key", r"\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{32,}"),
+    ("JSON web token", r"\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"),
+    ("password in a URL", r"\b[a-z][a-z0-9+.-]*://[^\s/:@<>]+:[^\s/@<>]{3,}@"),
+)]
+
+
+def secrets(text: str) -> list:
+    """[(line, kind)] for each credential-shaped string in text. The value itself is never returned."""
+    return [(n, k) for n, ln in enumerate((text or "").splitlines(), 1) for k, rx in SECRETS if rx.search(ln)]
 CODE = re.compile(r"```.*?```|~~~.*?~~~|`[^`\n]*`", re.DOTALL)
 AI = re.compile("|".join(["claude", "copilot", "gemini", "gpt", "codex", "cursor", "kiro", "devin", "aider",
                           "openai", "anthropic", "llama", "mistral"]
@@ -868,6 +887,10 @@ def findings(r: Path, docs, reserved) -> list:
             elif not bad and len(set(heads)) < len(heads):
                 out.append(finding("okf_log", x.rel, "a date heading appears twice, as after a merge (§9)",
                                    "`fix` merges the sections", fixable=True))
+    out += [finding("secret", x.rel, f"line {n} holds what looks like a {kind}",
+                    "remove it and rotate it (it may already be in git history; gitleaks finds it there); "
+                    "if it is a harmless example, baseline it", "house")
+            for x in docs + reserved for n, kind in secrets(x.text)]
     out += [finding("index_stale", rel(p, r), "the generated document list is out of date",
                     "run `index apply=true` or `fix apply=true`", "house", fixable=True)
             for p, n in indexes(r, docs).items() if n != read(p)]
@@ -2008,7 +2031,8 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
     carrying frontmatter is renamed <dir>-index.md/<dir>-log.md. apply=False is the plan: run it first, sample
     files, set rules. keep_okf=true merges another OKF bundle: files that have `type` are copied as they are
     (plus an origin source when git has one) and the source's index.md/log.md are left behind. It does not
-    clone, convert other formats, scan for secrets or check licenses."""
+    clone, convert other formats or check licenses. Files holding a credential-shaped string are skipped
+    (`secrets` in the plan); run gitleaks on the source's history too."""
     src = Path(source).expanduser()
     src = (src if src.is_absolute() else KB_ROOT / src).resolve()
     if not src.is_dir():
@@ -2045,7 +2069,9 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
                else "too large" if f.stat().st_size > max_bytes
                else "LFS pointer" if (t or "").startswith("version https://git-lfs") else "not UTF-8" if t is None
                else "frontmatter does not parse; fix it by hand" if err == "bad_yaml"
-               else "already OKF (has type)" if is_okf and not keep_okf else None)
+               else "already OKF (has type)" if is_okf and not keep_okf
+               else f"possible secret: {found[0][1]} on line {found[0][0]}; remove it at the source (rotate it), "
+                    "then re-run" if (found := secrets(t)) else None)
         name = Path(to).name
         if not why and keep_okf and name in RESERVED:
             why = "reserved file of the source bundle"
@@ -2114,8 +2140,10 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
                         "checked": False},
             **({"shallow": "truncated history: origin points at the cloned commit, and there is no authorship "
                            "(`generated`); fetch full history for it"} if shallow else {}),
-            "not_done": ["secrets: not scanned; run a scanner such as gitleaks on the source first",
-                         "licenses: not checked; confirm the source allows your bundle's license",
+            "secrets": {"skipped": sum(r["reason"].startswith("possible secret") for r in skips),
+                        "note": "files holding credential-shaped strings are skipped; this checks current files "
+                                "only, so run gitleaks on the source's history too"},
+            "not_done": ["licenses: not checked; confirm the source allows your bundle's license",
                          "other formats: not converted; convert them to markdown first"]}
     if not apply:
         return plan | {"next": "review, set rules for types, then run again with apply=true"}

@@ -244,8 +244,11 @@ repos:
   attested here.
 - From a shallow clone, `ingest` records the cloned commit as the origin but no
   authorship.
-- `ingest` does not convert other formats, scan for secrets or check
-  licenses. Its plan says so.
+- Secret scanning (`lint`'s `secret`, and `ingest` skipping such files) matches
+  common credential shapes in current files: private keys, cloud, chat and API
+  tokens, JWTs, passwords in URLs. It is not exhaustive and does not read git
+  history; run [gitleaks](https://github.com/gitleaks/gitleaks) for that.
+- `ingest` does not convert other formats or check licenses. Its plan says so.
 
 <!-- --8<-- [end:limits] -->
 ## Self-check

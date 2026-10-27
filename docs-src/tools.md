@@ -175,7 +175,8 @@ overwrites; files that already have `type` are skipped, so a re-run is a no-op. 
 carrying frontmatter is renamed <dir>-index.md/<dir>-log.md. apply=False is the plan: run it first, sample
 files, set rules. keep_okf=true merges another OKF bundle: files that have `type` are copied as they are
 (plus an origin source when git has one) and the source's index.md/log.md are left behind. It does not
-clone, convert other formats, scan for secrets or check licenses.
+clone, convert other formats or check licenses. Files holding a credential-shaped string are skipped
+(`secrets` in the plan); run gitleaks on the source's history too.
 
 Arguments:
   source: str  (required)
