@@ -371,7 +371,37 @@ k.set_({"stale_after": k.now(10)}, file="t/m.md", bundle="uses", apply=True)
 st = k.status(bundle="uses")
 assert st["review"]["oldest"] == [{"file": "t/m.md", "days": 0}] and st["drafts"] == {"count": 1, "oldest": [{"file": "t/d.md", "days": 0}]}
 assert [d["file"] for d in st["due"]] == ["t/m.md"] and not k.status(due_days=5, bundle="uses")["due"]
+# §6.2: a value naming a real file is a path, whatever its shape.
+(u / "t/data").write_text("x")
+assert k.pathed("data", u / "t/m.md", u) == (u / "t/data", "doc") and k.pathed("t/nothing", u / "t/m.md", u) is None
+
+
+class Who:  # the person answering provenance's prompt
+    def __init__(self, ok=True):
+        self.ok = ok
+
+    async def elicit(self, message, schema):
+        assert "no history" in message
+        return SimpleNamespace(action="accept" if self.ok else "decline", data=SimpleNamespace(confirm=True, author="ann"))
+
+
+assert asyncio.run(k.provenance(apply=True, ctx=Who(False), bundle="uses"))["unknown"]["count"] >= 1
+asyncio.run(k.provenance(apply=True, ctx=Who(), bundle="uses"))
+g_ = k.meta((u / "t/src.md").read_text())[0]["generated"]
+assert g_["by"] == "human:ann" and g_["basis"] == "stated" and TS.fullmatch(g_["at"]), g_
 shutil.rmtree(u)
+k.KB_ROOT = saved
+
+# The archive also works when the knowledgebase root is itself a bundle: it is set apart, not nested.
+one = Path(tempfile.mkdtemp()) / "solo"
+one.mkdir()
+k.KB_ROOT = one
+k.init(apply=True)
+k.create("x.md", "Note", description="x.", bundle=".")
+k.archive("x.md", bundle=".", apply=True)
+assert (one / "archive/solo/x.md").exists() and "nested_bundle" not in kinds() and not (one / "x.md").exists()
+k.unarchive("solo/x.md", apply=True)
+assert (one / "x.md").exists() and not (one / "archive/solo/x.md").exists()
 k.KB_ROOT = saved
 
 # A knowledgebase of sibling bundles: tools follow where the user is; bundles do not nest.
@@ -380,7 +410,7 @@ ws.mkdir()
 k.KB_ROOT = ws
 k.init(apply=True, bundle="a")
 k.init(apply=True, bundle="b")
-assert (ws / ".gitattributes").read_text() == "log.md merge=union\n"
+assert (ws / ".gitattributes").read_text() == "log.md merge=union\nindex.md merge=union\n"
 (ws / "a/sub").mkdir()
 (ws / "a/sub/c.md").write_text("---\ntype: x\ndescription: c.\nsources: [{id: n, resource: /n.md}]\n---\n[n](/n.md)\n")
 (ws / "a/n.md").write_text("---\ntype: x\ndescription: n.\n---\n[c](sub/c.md) [b](../b/m.md)\n")
@@ -438,14 +468,16 @@ k.rename_bundle("d", bundle="b", apply=True)
 assert not (ws / "b").exists() and "[m](/m.md)" in (ws / "d/m.md").read_text()
 assert "../d/m.md" in (ws / "a/n.md").read_text() and "Renamed the bundle" in (ws / "d/log.md").read_text()
 k.archive("n.md", bundle="a", apply=True)  # one concept
-assert (ws / "archive/a/n.md").exists() and k.declares(ws / "archive/index.md")
+assert (ws / "archive/a/n.md").exists() and k.declares(ws / "archive/a/index.md")  # archive/a: an archived bundle
+assert not k.declares(ws / "archive/index.md") and "* [a](a/)" in (ws / "archive/index.md").read_text()
+assert "archive/a" not in k.lint()["bundles"] and "n.md" not in json.dumps(k.list_())  # set apart from the live one
 assert "../archive/a/n.md" in (ws / "d/m.md").read_text() and "archived_link" in kinds(bundle="d")
 assert "archived" in raises(k.set_, {"status": "draft"}, file="a/n.md", bundle="archive")
 k.unarchive("a/n.md", apply=True)
 assert (ws / "a/n.md").exists() and "../a/n.md" in (ws / "d/m.md").read_text()
 assert "explicitly" in raises(k.archive)
 k.archive(bundle="d", apply=True)  # a whole bundle: its log comes along, it stops being a bundle
-assert not (ws / "d").exists() and not k.declares(ws / "archive/d/index.md") and (ws / "archive/d/log.md").exists()
+assert not (ws / "d").exists() and k.declares(ws / "archive/d/index.md") and (ws / "archive/d/log.md").exists()
 assert "../archive/d/m.md" in (ws / "a/n.md").read_text() and "nested_bundle" not in kinds(bundle="archive")
 k.unarchive("d", apply=True)
 assert k.declares(ws / "d/index.md") and "../d/m.md" in (ws / "a/n.md").read_text() and k.lint(bundle="d")["ok"]
@@ -543,7 +575,7 @@ h = k.history(src, [src / "docs/guide.md", src / "README.md", src / "bot.md"])
 assert h[src / "docs/guide.md"]["by"] == "human:ann@example.com"  # Bob's frontmatter edit does not count
 assert h[src / "README.md"]["by"] == "claude/claude-opus-5.5"
 assert h[src / "bot.md"]["by"] == "process:dependabot"
-assert k.provenance(bundle="src")["would_edit"] == {"src": ["docs/guide.md"]}
+assert asyncio.run(k.provenance(bundle="src"))["would_edit"] == {"src": ["docs/guide.md"]}
 
 plan = k.ingest("src", bundle="imported", rules={"docs/*": "Guide"})
 assert plan["ingest"] == 4 and plan["skipped"] == {"not markdown": 1}, plan

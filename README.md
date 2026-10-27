@@ -48,7 +48,8 @@ other `key=value` is frontmatter (`set a.md status=deprecated tags=[x,y]`).
 Write tools that touch many files default to `apply=false` and show a diff.
 
 `--attest` records you, as `human:<KB_USER>` (else your git `user.email`), on
-`create` (`generated`), `verify` and `recheck_apply` (`verified`). It exists
+`create` and `provenance` (`generated`), `verify` and `recheck_apply`
+(`verified`). It exists
 only on the command line: no MCP call can pass it.
 
 Output is JSON; `format=text` prints one key per line and diffs as is.
@@ -62,15 +63,16 @@ Exit codes: 0 ok, 1 findings, 2 usage error.
 ```
 kb/                          the knowledgebase (KB_ROOT)
   index.md                   lists the bundles; no frontmatter
-  .gitattributes             log.md merge=union
+  .gitattributes             log.md and index.md merge=union
   eng/                       a bundle
     index.md                 okf_version, then the list of its concepts
     log.md                   its history (§9)
     runbooks/
       index.md               optional: this directory's concepts
       deploy.md              a concept
-  archive/                   the archive bundle (read-only to editing tools)
-    eng/old-runbook.md       archived from eng
+  archive/                   the archive: a knowledgebase of its own, set apart
+    index.md                 lists the archived bundles
+    eng/old-runbook.md       archived from eng (archive/eng is a bundle)
 ```
 
 ### index.md
@@ -124,20 +126,28 @@ reads a concept's history: the entries linking to it in every `log.md` above it,
 and the git commits that changed it. `log` alone shows the bundle's recent
 entries.
 
-`init` adds `log.md merge=union` to the knowledgebase's `.gitattributes`, so git
-keeps both sides when parallel branches log. After such a merge, `fix` merges
-duplicate date sections and orders stamped entries by time. A section with a
+`init` adds `log.md merge=union` and `index.md merge=union` to the
+knowledgebase's `.gitattributes`, so git keeps both sides when parallel
+branches log or index. After such a merge, `fix` merges duplicate log date
+sections, orders stamped entries by time, and rebuilds the generated index
+lists. A section with a
 hand-written, unstamped entry keeps its order.
 
 ### The archive
 
-`archive file=x.md bundle=eng` moves a concept to `archive/eng/x.md`.
-`archive bundle=eng` moves the whole bundle to `archive/eng/`, with its log;
-its `index.md` drops `okf_version`, since bundles do not nest. `unarchive
-eng/x.md` or `unarchive eng` puts them back. Links follow both ways, and lint
-warns on links into the archive (`archived_link`). Editing tools refuse
-archived concepts. That is the only enforcement: the files are plain files,
-so an editor or a commit can still change them.
+`archive/` is a knowledgebase within the knowledgebase, and a special one. Its
+`index.md` lists its bundles, like the knowledgebase root's. `archive file=x.md
+bundle=eng` moves a concept to `archive/eng/x.md` (starting `archive/eng` as a
+bundle); `archive bundle=eng` moves the whole bundle to `archive/eng/`, still a
+bundle. `unarchive eng/x.md` or `unarchive eng` puts them back. Links follow
+both ways.
+
+The live knowledgebase does not see the archive: lint, list, search, status
+and web leave it out, nothing in it counts as nesting, and lint warns on links
+into it (`archived_link`). Editing tools refuse archived concepts. That is the
+only enforcement: the files are plain files, so an editor or a commit can still
+change them. It works whether the knowledgebase root is a set of bundles or a
+bundle itself.
 
 <!-- --8<-- [end:layout] -->
 <!-- --8<-- [start:register] -->
@@ -224,18 +234,13 @@ repos:
 
 ## Known limits
 
-- Every write refreshes the generated index lists when they exist. In a busy
-  repo they conflict across PRs: take either side, then `fix apply=true`
-  rebuilds them.
 - A human `verify` over MCP needs a client that supports elicitation
   (confirmation prompts); otherwise the human runs it from the CLI.
 - `move`, `migrate`, `split`, `rename`, `archive` and `unarchive` rewrite links
   (code blocks included; read the diff) and §6.2 path fields (`resource`,
-  `computation`, `executor`/`attester`, `sources[].resource`). A path field
-  with spaces, or with neither a file extension nor a leading `/`, `./` or
-  `../`, is read as a description and left alone.
-- The archive needs bundles in subdirectories: a knowledgebase whose root is
-  itself a bundle has no place beside it for one.
+  `computation`, `executor`/`attester`, `sources[].resource`). A value naming
+  an existing file is a path; one naming nothing is a path only if it has a
+  file extension or a leading `/`, `./` or `../`, else a scope description.
 - OKF makes `okf_version` optional; here it is how a bundle is found. An
   undeclared bundle is any folder until you pass it as `bundle=`.
 - `ingest` does not convert other formats or check licenses. Its plan says so.

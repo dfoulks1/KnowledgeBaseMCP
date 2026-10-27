@@ -5,10 +5,11 @@ Every tool, as `help <tool>` prints it.
 ## archive
 
 ```text
-archive: Move a concept, or (no file) the whole bundle= named, into the knowledgebase's archive bundle (`archive/`,
-started when absent) at <bundle>/<path>, so `unarchive` can put it back. Links to it are rewritten and warn
-afterwards (archived_link); status is left alone. A whole bundle keeps its log.md, and its index.md stops
-declaring a bundle (§8). The archive is read-only to editing tools. apply=False shows the plan and diff.
+archive: Retire a concept, or (no file) the whole bundle= named, into the archive: `archive/`, a knowledgebase within
+the knowledgebase (started when absent), at archive/<bundle>/<path>, so `unarchive` can put it back. Archived
+bundles stay bundles; the live knowledgebase (lint, list, search, status, web) does not see them, and editing
+tools refuse them. Links to it are rewritten and warn afterwards (archived_link); status is left alone.
+apply=False shows the plan and diff.
 
 Arguments:
   file: str = ''
@@ -322,9 +323,12 @@ format=json|text (any tool; text prints diffs as is); lint also github|sarif.
 ## provenance
 
 ```text
-provenance: Fill a missing `generated: {by, at}` (§5.2) from git history: the last commit that changed the body, by
-its AI trailer (<producer>/<name>), bot (process:) or author (human:<login | ASF id | email>). Marked
-`basis: git-history` since it is inferred; trust tiers come only from `verified`, so this never raises one.
+provenance: Fill a missing `generated: {by, at}` (§5.2). From git history: the last commit that changed the body, by its
+AI trailer (<producer>/<name>), bot (process:) or author (human:<login | ASF id | email>), marked `basis:
+git-history` (inferred). Concepts git knows nothing about (untracked, or no repository): with apply=true the
+person is asked who wrote them, once (a confirmation prompt over MCP; --attest at the terminal), and recorded
+as `generated: {by: human:<id>, at: <file's last change>, basis: stated}`; otherwise they are listed in
+`unknown`. Never sets a human from a caller. Trust tiers come only from `verified`, so this never raises one.
 Concepts that carry `generated` are left alone. skip: paths to leave without it. apply=False shows the diff.
 
 Arguments:
@@ -474,8 +478,8 @@ format=json|text (any tool; text prints diffs as is); lint also github|sarif.
 
 ```text
 unarchive: Put an archived concept or bundle back where it came from: path is its place in the archive,
-<bundle>/<path> for a concept (its bundle must exist) or <bundle> for a whole bundle (its index.md
-declares okf_version again). apply=False shows the plan and diff.
+<bundle>/<path> for a concept (its bundle must exist) or <bundle> for a whole bundle. apply=False shows the
+plan and diff.
 
 Arguments:
   path: str  (required)

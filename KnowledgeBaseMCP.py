@@ -40,7 +40,7 @@ from pydantic import BaseModel, Field
 KB_ROOT = Path(os.environ.get("KB_ROOT") or os.getcwd()).resolve()
 OKF_VERSION = "0.2"
 RESERVED = ("index.md", "log.md")  # §3.1
-ARCHIVE = "archive"  # the knowledgebase's archive bundle: archive/<bundle>/<path>, read-only to editing tools
+ARCHIVE = "archive"  # archive/: a knowledgebase within the knowledgebase, read-only, set apart from the live one
 STATUSES = ("draft", "stable", "deprecated")  # §5.4
 CONFORMANCE = {"non_utf8", "no_frontmatter", "bad_yaml", "no_type", "okf_index", "okf_log"}  # §11
 DEFAULT_TYPE = "Document"
@@ -353,9 +353,18 @@ def walk(r: Path, pattern: str = "*.md") -> list:
     return sorted(out)
 
 
+def arch() -> Path:
+    return (KB_ROOT / ARCHIVE).resolve()
+
+
+def apart(p: Path, r: Path) -> bool:
+    """p is in the archive and r is not: the live knowledgebase does not see archived files."""
+    return inside(p, arch()) and not inside(r, arch())
+
+
 def nested(r: Path) -> set:
     """Roots of the bundles inside r, at any depth. They are their own bundles, not part of r."""
-    return {p.parent for p in walk(r, "index.md") if p.parent != r and declares(p)}
+    return {p.parent for p in walk(r, "index.md") if p.parent != r and declares(p) and not apart(p, r)}
 
 
 def scan(r: Path):
@@ -363,7 +372,8 @@ def scan(r: Path):
     and parsed once."""
     docs, reserved, inner = [], [], nested(r)
     for p in walk(r):
-        if ".git" in p.relative_to(r).parts or not p.is_file() or not inside(p, r) or any(n in p.parents for n in inner):
+        if ".git" in p.relative_to(r).parts or not p.is_file() or not inside(p, r) or any(n in p.parents for n in inner) \
+                or apart(p, r):
             continue
         t = read(p)
         (reserved if p.name in RESERVED else docs).append(Doc(p, rel(p, r), t, *meta(t)))
@@ -398,7 +408,7 @@ def locate(file: str, bundle: str = "", new=False, edit=True) -> tuple:
 
 
 def archived(b: Path) -> bool:
-    return b == (KB_ROOT / ARCHIVE).resolve() and declares(b / "index.md")
+    return inside(b, arch()) and b != arch()
 
 
 def confined(r: Path, path: str) -> Path:
@@ -431,9 +441,10 @@ def knowledgebase(c: Path) -> Path:
     b = next((d for d in [c, *c.parents] if declares(d / "index.md")), None)
     if b is None:
         return c
-    return next((d for d in b.parents if (d / "index.md").is_file() and any(
+    k = next((d for d in b.parents if (d / "index.md").is_file() and any(
         (t := target(h, d / "index.md", d)) is not None and t.resolve() in (b, b / "index.md")
         for h in hrefs(read(d / "index.md") or ""))), b)
+    return k.parent if k.name == ARCHIVE and (k.parent / "index.md").is_file() else k  # the archive is not the top
 
 
 if not os.environ.get("KB_ROOT"):
@@ -485,6 +496,8 @@ def bundle_block(r: Path, inner) -> str:
     for b in sorted(inner):
         t = read(b / "index.md") or ""
         out.append(entry(title_of({}, t, b), f"{rel(b, r)}/", describe({}, t)))
+    if r == KB_ROOT and (arch() / "index.md").is_file():
+        out.append(entry("Archive", f"{ARCHIVE}/", "retired bundles and concepts, read-only"))
     return "\n".join([*out, "", INDEX_END])
 
 
@@ -506,7 +519,7 @@ def indexes(r: Path, docs, add=False, dirs=False) -> dict:
         out[ip] = f"# {r.name}\n\n{bundle_block(r, inner)}\n"
     elif t is not None and (n := rebuilt(t, bundle_block(r, inner) if kb else index_block(docs), add)) is not None:
         out[ip] = n
-    subs = {p.parent for p in walk(r, "index.md") if p.parent != r
+    subs = {p.parent for p in walk(r, "index.md") if p.parent != r and not apart(p, r)
             and not any(n == p.parent or n in p.parent.parents for n in inner)}
     if dirs:
         subs |= {d for x in docs for d in x.path.parents
@@ -600,17 +613,19 @@ def merged(outs: list) -> dict:
 def pathed(v, src: Path, r: Path):
     """What a §6.2 path-valued field names: (file, style) with style abs (/, the bundle root), doc (relative to
     the document) or root (relative to the bundle root, as in the spec's references/ examples); (None,
-    "missing") when it names nothing; None for a URL or a scope description.
-    shortcut: a value with spaces, or with neither a file extension nor a leading /, ./ or ../, is read as a
-    description (like the spec's `dashboards/exec-revenue`)."""
+    "missing") when it names nothing; None for a URL or a scope description. A value that names an existing
+    file is a path, whatever it looks like; one that names nothing is a missing path only if it looks like one
+    (a file extension, or a leading /, ./ or ../), else a description (like the spec's `dashboards/exec-revenue`)."""
     s = str(v or "")
-    if not s or re.search(r"\s", s) or re.match(r"[a-zA-Z][\w+.-]*:", s) or not (
-            s.startswith(("/", "./", "../")) or re.search(r"\.\w{1,8}$", s)):
+    if not s or re.match(r"[a-zA-Z][\w+.-]*:", s):
         return None
-    s = urllib.parse.unquote(s)
-    if s.startswith("/"):
-        return (r / s.lstrip("/"), "abs") if (r / s.lstrip("/")).exists() else (None, "missing")
-    return next(((c, st) for c, st in ((src.parent / s, "doc"), (r / s, "root")) if c.exists()), (None, "missing"))
+    u = urllib.parse.unquote(s)
+    cands = [(r / u.lstrip("/"), "abs")] if u.startswith("/") else [(src.parent / u, "doc"), (r / u, "root")]
+    if hit := next(((c, st) for c, st in cands if c.exists() and inside(c, KB_ROOT)), None):
+        return hit
+    if re.search(r"\s", s) or not (s.startswith(("/", "./", "../")) or re.search(r"\.\w{1,8}$", s)):
+        return None
+    return None, "missing"
 
 
 def path_fields(d: dict) -> list:
@@ -1143,19 +1158,19 @@ def init(apply: bool = False, bundle: str = "") -> dict:
     r = root(bundle, write=True, create=True)
     if (r / "index.md").exists():
         raise ValueError(f"{r / 'index.md'} exists | fix: this is already a bundle; run lint")
-    if (b := enclosing(r.parent)) != r and declares(b / "index.md") or nested(r):
+    if not inside(r, arch()) and ((b := enclosing(r.parent)) != r and declares(b / "index.md") or nested(r)):
         raise ValueError("a bundle here would nest | fix: bundles do not nest; init beside the other bundle")
     changes = {r / "index.md": f'---\nokf_version: "{OKF_VERSION}"\n---\n\n# {r.name}\n\n## All documents\n\n'
                                f"{index_block([])}\n"}
     if not (r / "log.md").exists():
         changes[r / "log.md"] = logged("# Log\n", "**Initialization**: Created the bundle.")
     out = commit(r, changes, apply)
-    ga = KB_ROOT / ".gitattributes"  # union: parallel log entries merge without conflict; `fix` reorders them
+    ga = KB_ROOT / ".gitattributes"  # union: parallel branches merge without conflict; `fix` tidies up after
     have = (read(ga) if ga.is_file() else "") or ""
-    if "log.md merge=union" not in have:
+    if add := [ln for ln in ("log.md merge=union", "index.md merge=union") if ln not in have]:
         if apply:
-            write(ga, (have.rstrip("\n") + "\n" if have.strip() else "") + "log.md merge=union\n")
-        out["gitattributes"] = "log.md merge=union"
+            write(ga, (have.rstrip("\n") + "\n" if have.strip() else "") + "\n".join(add) + "\n")
+        out["gitattributes"] = add
     return out
 
 
@@ -1617,11 +1632,19 @@ def history(d: Path, files: list) -> dict:
     return out
 
 
+class Author(BaseModel):
+    confirm: bool = Field(description="I wrote these concepts")
+    author: str = Field(default=os.environ.get("KB_USER", ""), description="Your id, recorded as human:<id>")
+
+
 @expose(idempotent=True)
-def provenance(apply: bool = False, skip: list[str] | None = None, bundle: str = "") -> dict:
-    """Fill a missing `generated: {by, at}` (§5.2) from git history: the last commit that changed the body, by
-    its AI trailer (<producer>/<name>), bot (process:) or author (human:<login | ASF id | email>). Marked
-    `basis: git-history` since it is inferred; trust tiers come only from `verified`, so this never raises one.
+async def provenance(apply: bool = False, skip: list[str] | None = None, ctx: Context = None, bundle: str = "") -> dict:
+    """Fill a missing `generated: {by, at}` (§5.2). From git history: the last commit that changed the body, by its
+    AI trailer (<producer>/<name>), bot (process:) or author (human:<login | ASF id | email>), marked `basis:
+    git-history` (inferred). Concepts git knows nothing about (untracked, or no repository): with apply=true the
+    person is asked who wrote them, once (a confirmation prompt over MCP; --attest at the terminal), and recorded
+    as `generated: {by: human:<id>, at: <file's last change>, basis: stated}`; otherwise they are listed in
+    `unknown`. Never sets a human from a caller. Trust tiers come only from `verified`, so this never raises one.
     Concepts that carry `generated` are left alone. skip: paths to leave without it. apply=False shows the diff."""
     r = root(bundle, write=apply)
     docs = [x for x in scan(r)[0] if x.meta is not None and "generated" not in x.meta and x.rel not in (skip or [])]
@@ -1629,8 +1652,29 @@ def provenance(apply: bool = False, skip: list[str] | None = None, bundle: str =
     found = {x.path: (x.text, h[x.path]) for x in docs if "by" in h.get(x.path, {})}
     changes = {p: put(t, "generated", {"by": v["by"], "at": v["at"], "basis": "git-history"})
                for p, (t, v) in found.items()}
-    out = commit(r, changes, apply, f"**Update**: Filled `generated` on {len(changes)} concept(s) from git history.")
-    return out | {"by_actor": dict(sorted(collections.Counter(v["by"] for _, v in found.values()).items()))}
+    unknown, who = [x for x in docs if x.path not in found], ATTEST
+    if unknown and apply and not who and not CLI and ctx is not None:
+        names = ", ".join(x.rel for x in unknown[:10]) + (", ..." if len(unknown) > 10 else "")
+        try:
+            res = await ctx.elicit(message=f"Git has no history for {len(unknown)} concept(s) in {kbpath(r)}: {names}. "
+                                   "Did you write them? This records you as their author (`generated`, basis: "
+                                   "stated). Decline if it was not you.", schema=Author)
+        except Exception:  # noqa: BLE001 (a client without confirmation prompts: the person can use the CLI)
+            res = None
+        rid = res.data.author.strip().removeprefix("human:") if res and res.action == "accept" and res.data.confirm else ""
+        who = f"human:{rid}" if rid and not re.search(r"\s", rid) else ""
+    if who:
+        for x in unknown:
+            at = dt.datetime.fromtimestamp(x.path.stat().st_mtime, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            changes[x.path] = put(x.text, "generated", {"by": who, "at": at, "basis": "stated"})
+    out = commit(r, changes, apply, f"**Update**: Filled `generated` on {len(changes)} concept(s)"
+                 + (f", {len(unknown)} stated by {who}." if who else " from git history."))
+    out |= {"by_actor": dict(sorted(collections.Counter(v["by"] for _, v in found.values()).items()))}
+    if unknown and not who:
+        out["unknown"] = {"files": [x.rel for x in unknown[:20]], "count": len(unknown),
+                          "fix": "git has no history for these: run with apply=true and answer the prompt, or at the "
+                                 "terminal `provenance apply=true --attest`"}
+    return out
 
 
 @expose(name="split")
@@ -1706,7 +1750,7 @@ def relocate(src: Path, dst: Path, rb_old: Path, rb_new: Path) -> dict:
     src's bundle root going from rb_old to rb_new: every document in the knowledgebase whose links or §6.2
     paths change, plus every moved one."""
     out = {}
-    for b in [KB_ROOT, *sorted(nested(KB_ROOT))]:
+    for b in [KB_ROOT, *sorted(nested(KB_ROOT)), *sorted(nested(arch()))]:
         docs, reserved = scan(b)
         for x in docs + reserved:
             if x.text is None:
@@ -1738,9 +1782,10 @@ def relocated(src: Path, dst: Path, home: Path, changes: dict, apply: bool, note
     for b, note in notes.items():  # a bundle whose files only moved still logs it
         if b not in groups and (lp := b / "log.md").is_file():
             write(lp, logged(read(lp) or "", note))
-    for p, n in indexes(KB_ROOT, scan(KB_ROOT)[0]).items():
-        if n != read(p):
-            write(p, n)
+    for top in (KB_ROOT, arch()):  # the knowledgebase index and the archive's
+        for p, n in indexes(top, scan(top)[0]).items():
+            if n != read(p):
+                write(p, n)
     return {"moved": f"{kbpath(src)} -> {kbpath(dst)}"} | merged(outs)
 
 
@@ -1765,71 +1810,64 @@ def rename_bundle(to: str, apply: bool = False, bundle: str = "") -> dict:
 
 
 def archive_root(apply: bool) -> Path:
-    """The archive bundle, started (on apply) when absent."""
-    a = (KB_ROOT / ARCHIVE).resolve()
-    if not declares(a / "index.md"):
-        if declares(KB_ROOT / "index.md"):
-            raise ValueError("the knowledgebase root is itself a bundle, so an archive beside it would nest | fix: "
-                             "keep bundles in subdirectories of the knowledgebase")
-        if apply:
-            init(apply=True, bundle=ARCHIVE)
+    """archive/, started (on apply) when absent: a knowledgebase of its own, its index.md listing its bundles."""
+    a = arch()
+    if apply and not (a / "index.md").is_file():
+        a.mkdir(exist_ok=True)
+        write(a / "index.md", "# Archive\n\nRetired bundles and concepts, kept for links and history. Read-only; "
+                               f"`unarchive` restores them.\n\n{bundle_block(a, set())}\n")
     return a
 
 
 @expose(destructive=True)
 def archive(file: str = "", apply: bool = False, bundle: str = "") -> dict:
-    """Move a concept, or (no file) the whole bundle= named, into the knowledgebase's archive bundle (`archive/`,
-    started when absent) at <bundle>/<path>, so `unarchive` can put it back. Links to it are rewritten and warn
-    afterwards (archived_link); status is left alone. A whole bundle keeps its log.md, and its index.md stops
-    declaring a bundle (§8). The archive is read-only to editing tools. apply=False shows the plan and diff."""
+    """Retire a concept, or (no file) the whole bundle= named, into the archive: `archive/`, a knowledgebase within
+    the knowledgebase (started when absent), at archive/<bundle>/<path>, so `unarchive` can put it back. Archived
+    bundles stay bundles; the live knowledgebase (lint, list, search, status, web) does not see them, and editing
+    tools refuse them. Links to it are rewritten and warn afterwards (archived_link); status is left alone.
+    apply=False shows the plan and diff."""
     a = archive_root(apply)
     if file:
         p, b = locate(file, bundle)
-        if b == KB_ROOT and not declares(b / "index.md"):
-            raise ValueError("only a concept in a bundle can be archived | fix: migrate it into a bundle first")
-        src, dst = p, a / kbpath(b) / rel(p, b)
+        home = a / (kbpath(b) if b != KB_ROOT else KB_ROOT.name)
+        src, dst = p, home / rel(p, b)
+        if apply and not declares(home / "index.md"):
+            init(apply=True, bundle=kbpath(home))
     else:
         if not bundle:
             raise ValueError("archive a whole bundle? | fix: pass bundle= explicitly (or file= for one concept)")
         src = b = root(bundle, write=True)
         if b == KB_ROOT or not declares(b / "index.md") or archived(b):
             raise ValueError(f"{kbpath(b)} is not a bundle beside others | fix: pass bundle= as `bundles` lists it")
-        dst = a / kbpath(b)
+        home = dst = a / kbpath(b)
     if dst.exists():
         raise ValueError(f"{kbpath(dst)} is already archived | fix: unarchive it first")
-    changes = relocate(src, dst, b, a)
-    if src == b:
-        ip = (b / "index.md").resolve()
-        changes[(ip, dst / "index.md")] = split(changes.get((ip, dst / "index.md")) or read(ip) or "")[1].lstrip("\n")
-    return relocated(src, dst, a, changes, apply, {a: f"**Update**: Archived {kbpath(src)}."})
+    return relocated(src, dst, home, relocate(src, dst, b, home), apply, {home: f"**Update**: Archived {kbpath(src)}."})
 
 
 @expose(destructive=True)
 def unarchive(path: str, apply: bool = False) -> dict:
     """Put an archived concept or bundle back where it came from: path is its place in the archive,
-    <bundle>/<path> for a concept (its bundle must exist) or <bundle> for a whole bundle (its index.md
-    declares okf_version again). apply=False shows the plan and diff."""
-    a = (KB_ROOT / ARCHIVE).resolve()
-    if not archived(a):
-        raise ValueError("there is no archive bundle | fix: nothing is archived")
+    <bundle>/<path> for a concept (its bundle must exist) or <bundle> for a whole bundle. apply=False shows the
+    plan and diff."""
+    a = arch()
+    if not (a / "index.md").is_file():
+        raise ValueError("there is no archive | fix: nothing is archived")
     src = confined(a, path if path.endswith(".md") or (a / path).is_dir() else path + ".md")
-    if src == a or not src.exists():
-        raise ValueError(f"{path!r} is not in the archive | fix: pass <bundle>/<path> or <bundle> as `list bundle={ARCHIVE}` shows")
-    dst = (KB_ROOT / rel(src, a)).resolve()
-    if src.is_dir():
+    top = a / rel(src, a).split("/")[0] if src != a else a
+    if src == a or not src.exists() or (src.is_dir() and src != top):
+        raise ValueError(f"{path!r} is not an archived concept or bundle | fix: pass <bundle>/<path>.md or <bundle>")
+    home = KB_ROOT if top.name == KB_ROOT.name and declares(KB_ROOT / "index.md") else KB_ROOT / top.name
+    dst = home / rel(src, top) if src != top else home
+    if src == top:
         free(dst, "rename the bundle that took its place, then retry")
-        changes = relocate(src, dst, a, dst)
-        ip = (src / "index.md").resolve()
-        changes[(ip, dst / "index.md")] = put(changes.get((ip, dst / "index.md")) or read(ip) or f"# {dst.name}\n",
-                                              "okf_version", OKF_VERSION)
-        note = {dst: f"**Update**: Unarchived the bundle {kbpath(dst)}."}
+        note = f"**Update**: Unarchived the bundle {kbpath(dst)}."
+    elif not declares(home / "index.md") or dst.exists():
+        raise ValueError(f"{kbpath(dst)} exists, or its bundle does not | fix: `unarchive {top.name}`, or init that "
+                         "bundle first")
     else:
-        b = owner(dst, KB_ROOT)
-        if not declares(b / "index.md") or dst.exists():
-            raise ValueError(f"{kbpath(dst)} exists, or its bundle does not | fix: `unarchive {rel(src, a).split('/')[0]}`, "
-                             "or init that bundle first")
-        changes, note = relocate(src, dst, a, b), {b: f"**Update**: Unarchived [{rel(dst, b)}](/{rel(dst, b)})."}
-    return relocated(src, dst, dst if src.is_dir() else owner(dst, KB_ROOT), changes, apply, note)
+        note = f"**Update**: Unarchived [{rel(dst, home)}](/{rel(dst, home)})."
+    return relocated(src, dst, home, relocate(src, dst, top, home), apply, {home: note})
 
 
 @expose(idempotent=True)
@@ -2237,7 +2275,7 @@ def cli(argv) -> int:
     if "--attest" in argv[1:]:  # CLI only, by design: an MCP caller cannot pass it
         argv = [a for a in argv if a != "--attest"]
         uid = os.environ.get("KB_USER") or git(Path.cwd(), "config", "user.email").stdout.strip()
-        if argv[0] not in REG or "by" not in inspect.signature(REG[argv[0]]).parameters:
+        if argv[0] not in REG or not {"by", "ctx"} & set(inspect.signature(REG[argv[0]]).parameters):
             print(f"error: --attest records who did it; {argv[0]} takes no `by`", file=sys.stderr)
             return 2
         if not uid:
@@ -2261,8 +2299,8 @@ def cli(argv) -> int:
         print("\nUsage: <tool> name=value ...   e.g. lint scope=okf format=github\n"
               "       lists: a,b or JSON; dicts: JSON; or pass one JSON object.\n"
               "       help <tool>: its arguments and what it does.\n"
-              "       --attest: record yourself (KB_USER, else git user.email) as human:<id> on create, verify\n"
-              "       and recheck_apply. Terminal only; the MCP server cannot.")
+              "       --attest: record yourself (KB_USER, else git user.email) as human:<id> on create, verify,\n"
+              "       recheck_apply and provenance. Terminal only; the MCP server cannot.")
         return 0 if argv[0] in ("help", "-h", "--help") else 2
     fn = REG[argv[0]]
     params = {k: p for k, p in inspect.signature(fn).parameters.items() if k != "ctx"}

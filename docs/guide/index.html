@@ -104,22 +104,24 @@ arguments fill the required ones in order (<code>move a.md b.md</code>); on <cod
 other <code>key=value</code> is frontmatter (<code>set a.md status=deprecated tags=[x,y]</code>).
 Write tools that touch many files default to <code>apply=false</code> and show a diff.</p>
 <p><code>--attest</code> records you, as <code>human:&lt;KB_USER&gt;</code> (else your git <code>user.email</code>), on
-<code>create</code> (<code>generated</code>), <code>verify</code> and <code>recheck_apply</code> (<code>verified</code>). It exists
+<code>create</code> and <code>provenance</code> (<code>generated</code>), <code>verify</code> and <code>recheck_apply</code>
+(<code>verified</code>). It exists
 only on the command line: no MCP call can pass it.</p>
 <p>Output is JSON; <code>format=text</code> prints one key per line and diffs as is.</p>
 <p>Exit codes: 0 ok, 1 findings, 2 usage error.</p>
 <h2 id="layout">Layout<a class="headerlink" href="#layout" title="Link to this section">#</a></h2>
 <pre class="highlight"><code>kb/                          the knowledgebase (KB_ROOT)
   index.md                   lists the bundles; no frontmatter
-  .gitattributes             log.md merge=union
+  .gitattributes             log.md and index.md merge=union
   eng/                       a bundle
     index.md                 okf_version, then the list of its concepts
     log.md                   its history (§9)
     runbooks/
       index.md               optional: this directory's concepts
       deploy.md              a concept
-  archive/                   the archive bundle (read-only to editing tools)
-    eng/old-runbook.md       archived from eng</code></pre>
+  archive/                   the archive: a knowledgebase of its own, set apart
+    index.md                 lists the archived bundles
+    eng/old-runbook.md       archived from eng (archive/eng is a bundle)</code></pre>
 <h3 id="indexmd">index.md<a class="headerlink" href="#indexmd" title="Link to this section">#</a></h3>
 <p>OKF §8: an index lists what is in its directory, for progressive disclosure.
 Every index has the same body shape, sections under headings with one entry
@@ -161,18 +163,25 @@ entry to the nearest <code>log.md</code> above the change, with a hidden unix-ti
 reads a concept's history: the entries linking to it in every <code>log.md</code> above it,
 and the git commits that changed it. <code>log</code> alone shows the bundle's recent
 entries.</p>
-<p><code>init</code> adds <code>log.md merge=union</code> to the knowledgebase's <code>.gitattributes</code>, so git
-keeps both sides when parallel branches log. After such a merge, <code>fix</code> merges
-duplicate date sections and orders stamped entries by time. A section with a
+<p><code>init</code> adds <code>log.md merge=union</code> and <code>index.md merge=union</code> to the
+knowledgebase's <code>.gitattributes</code>, so git keeps both sides when parallel
+branches log or index. After such a merge, <code>fix</code> merges duplicate log date
+sections, orders stamped entries by time, and rebuilds the generated index
+lists. A section with a
 hand-written, unstamped entry keeps its order.</p>
 <h3 id="the-archive">The archive<a class="headerlink" href="#the-archive" title="Link to this section">#</a></h3>
-<p><code>archive file=x.md bundle=eng</code> moves a concept to <code>archive/eng/x.md</code>.
-<code>archive bundle=eng</code> moves the whole bundle to <code>archive/eng/</code>, with its log;
-its <code>index.md</code> drops <code>okf_version</code>, since bundles do not nest. <code>unarchive
-eng/x.md</code> or <code>unarchive eng</code> puts them back. Links follow both ways, and lint
-warns on links into the archive (<code>archived_link</code>). Editing tools refuse
-archived concepts. That is the only enforcement: the files are plain files,
-so an editor or a commit can still change them.</p>
+<p><code>archive/</code> is a knowledgebase within the knowledgebase, and a special one. Its
+<code>index.md</code> lists its bundles, like the knowledgebase root's. <code>archive file=x.md
+bundle=eng</code> moves a concept to <code>archive/eng/x.md</code> (starting <code>archive/eng</code> as a
+bundle); <code>archive bundle=eng</code> moves the whole bundle to <code>archive/eng/</code>, still a
+bundle. <code>unarchive eng/x.md</code> or <code>unarchive eng</code> puts them back. Links follow
+both ways.</p>
+<p>The live knowledgebase does not see the archive: lint, list, search, status
+and web leave it out, nothing in it counts as nesting, and lint warns on links
+into it (<code>archived_link</code>). Editing tools refuse archived concepts. That is the
+only enforcement: the files are plain files, so an editor or a commit can still
+change them. It works whether the knowledgebase root is a set of bundles or a
+bundle itself.</p>
 <h2 id="register-with-an-mcp-client">Register with an MCP client<a class="headerlink" href="#register-with-an-mcp-client" title="Link to this section">#</a></h2>
 <p>Claude Code, for one bundle:</p>
 <pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/bundle -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
@@ -231,18 +240,13 @@ it does not push fixes (fork PRs get a read-only token anyway).</p>
 </ul>
 <h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Link to this section">#</a></h2>
 <ul>
-<li>Every write refreshes the generated index lists when they exist. In a busy
-  repo they conflict across PRs: take either side, then <code>fix apply=true</code>
-  rebuilds them.</li>
 <li>A human <code>verify</code> over MCP needs a client that supports elicitation
   (confirmation prompts); otherwise the human runs it from the CLI.</li>
 <li><code>move</code>, <code>migrate</code>, <code>split</code>, <code>rename</code>, <code>archive</code> and <code>unarchive</code> rewrite links
   (code blocks included; read the diff) and §6.2 path fields (<code>resource</code>,
-  <code>computation</code>, <code>executor</code>/<code>attester</code>, <code>sources[].resource</code>). A path field
-  with spaces, or with neither a file extension nor a leading <code>/</code>, <code>./</code> or
-  <code>../</code>, is read as a description and left alone.</li>
-<li>The archive needs bundles in subdirectories: a knowledgebase whose root is
-  itself a bundle has no place beside it for one.</li>
+  <code>computation</code>, <code>executor</code>/<code>attester</code>, <code>sources[].resource</code>). A value naming
+  an existing file is a path; one naming nothing is a path only if it has a
+  file extension or a leading <code>/</code>, <code>./</code> or <code>../</code>, else a scope description.</li>
 <li>OKF makes <code>okf_version</code> optional; here it is how a bundle is found. An
   undeclared bundle is any folder until you pass it as <code>bundle=</code>.</li>
 <li><code>ingest</code> does not convert other formats or check licenses. Its plan says so.</li>

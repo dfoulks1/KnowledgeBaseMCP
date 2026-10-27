@@ -112,10 +112,11 @@
       <article><h1 id="tools">Tools<a class="headerlink" href="#tools" title="Link to this section">#</a></h1>
 <p>Every tool, as <code>help &lt;tool&gt;</code> prints it.</p>
 <h2 id="archive">archive<a class="headerlink" href="#archive" title="Link to this section">#</a></h2>
-<pre class="highlight"><code class="language-text">archive: Move a concept, or (no file) the whole bundle= named, into the knowledgebase's archive bundle (`archive/`,
-started when absent) at &lt;bundle&gt;/&lt;path&gt;, so `unarchive` can put it back. Links to it are rewritten and warn
-afterwards (archived_link); status is left alone. A whole bundle keeps its log.md, and its index.md stops
-declaring a bundle (§8). The archive is read-only to editing tools. apply=False shows the plan and diff.
+<pre class="highlight"><code class="language-text">archive: Retire a concept, or (no file) the whole bundle= named, into the archive: `archive/`, a knowledgebase within
+the knowledgebase (started when absent), at archive/&lt;bundle&gt;/&lt;path&gt;, so `unarchive` can put it back. Archived
+bundles stay bundles; the live knowledgebase (lint, list, search, status, web) does not see them, and editing
+tools refuse them. Links to it are rewritten and warn afterwards (archived_link); status is left alone.
+apply=False shows the plan and diff.
 
 Arguments:
   file: str = ''
@@ -361,9 +362,12 @@ Arguments:
 
 format=json|text (any tool; text prints diffs as is); lint also github|sarif.</code></pre>
 <h2 id="provenance">provenance<a class="headerlink" href="#provenance" title="Link to this section">#</a></h2>
-<pre class="highlight"><code class="language-text">provenance: Fill a missing `generated: {by, at}` (§5.2) from git history: the last commit that changed the body, by
-its AI trailer (&lt;producer&gt;/&lt;name&gt;), bot (process:) or author (human:&lt;login | ASF id | email&gt;). Marked
-`basis: git-history` since it is inferred; trust tiers come only from `verified`, so this never raises one.
+<pre class="highlight"><code class="language-text">provenance: Fill a missing `generated: {by, at}` (§5.2). From git history: the last commit that changed the body, by its
+AI trailer (&lt;producer&gt;/&lt;name&gt;), bot (process:) or author (human:&lt;login | ASF id | email&gt;), marked `basis:
+git-history` (inferred). Concepts git knows nothing about (untracked, or no repository): with apply=true the
+person is asked who wrote them, once (a confirmation prompt over MCP; --attest at the terminal), and recorded
+as `generated: {by: human:&lt;id&gt;, at: &lt;file's last change&gt;, basis: stated}`; otherwise they are listed in
+`unknown`. Never sets a human from a caller. Trust tiers come only from `verified`, so this never raises one.
 Concepts that carry `generated` are left alone. skip: paths to leave without it. apply=False shows the diff.
 
 Arguments:
@@ -477,8 +481,8 @@ Arguments:
 format=json|text (any tool; text prints diffs as is); lint also github|sarif.</code></pre>
 <h2 id="unarchive">unarchive<a class="headerlink" href="#unarchive" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-text">unarchive: Put an archived concept or bundle back where it came from: path is its place in the archive,
-&lt;bundle&gt;/&lt;path&gt; for a concept (its bundle must exist) or &lt;bundle&gt; for a whole bundle (its index.md
-declares okf_version again). apply=False shows the plan and diff.
+&lt;bundle&gt;/&lt;path&gt; for a concept (its bundle must exist) or &lt;bundle&gt; for a whole bundle. apply=False shows the
+plan and diff.
 
 Arguments:
   path: str  (required)
