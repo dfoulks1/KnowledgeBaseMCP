@@ -69,6 +69,6 @@ graph LR
 ```
 
 Next: the [guide](guide.md) for layout and workflows, the [tools](tools.md)
-for every command.
+for every command, and the [OKF v0.2 specification][okf] it implements.
 
 [okf]: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md

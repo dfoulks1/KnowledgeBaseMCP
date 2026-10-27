@@ -59,5 +59,6 @@ nav:
   - Guide: guide.md
   - Tools: tools.md
   - Contributing: contributing.md
+  - OKF v0.2: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md
 
 plugins: []
