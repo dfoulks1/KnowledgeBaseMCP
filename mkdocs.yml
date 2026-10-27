@@ -17,8 +17,7 @@ edit_uri: edit/main/docs-src/
 docs_dir: docs-src
 site_dir: docs
 
-# Custom theme: a reference-work look (Literata, paper and ink), no framework.
-# Templates live in theme/, styles in docs-src/css/.
+# Custom theme on Bootstrap 5 (Jinja2 templates in theme/, styles in docs-src/css/).
 theme:
   name: null
   custom_dir: theme

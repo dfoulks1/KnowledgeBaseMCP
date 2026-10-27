@@ -1,64 +1,127 @@
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KnowledgeBaseMCP</title>
-  <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
-  <script>try { var t = localStorage.getItem('docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/pygments.css"><link rel="stylesheet" href="css/custom.css">
 </head>
 <body>
   
-<header class="running-head">
-  <a class="title" href="."><img src="img/logo.svg" alt="" width="44" height="44">KnowledgeBaseMCP</a>
-  <nav aria-label="Site">
-    
-      <a href="." aria-current="page">Home</a>
-    
-      <a href="guide/">Guide</a>
-    
-      <a href="tools/">Tools</a>
-    
-      <a href="contributing/">Contributing</a>
-    
-      <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">OKF v0.2</a>
-    
-    <a href="https://github.com/dfoulks1/KnowledgeBaseMCP" rel="noopener noreferrer">Source</a>
-    <button id="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark">&#9681;</button>
-  </nav>
-</header>
+<nav class="navbar navbar-expand-lg sticky-top site-nav">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href=".">
+      <img src="img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">KnowledgeBaseMCP
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#site-nav" aria-controls="site-nav"
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="site-nav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        
+          
+            <li class="nav-item">
+              <a class="nav-link active"
+                 aria-current="page"
+                 href=".">Home</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="guide/">Guide</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="tools/">Tools</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="contributing/">Contributing</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">OKF v0.2</a>
+            </li>
+          
+        
+      </ul>
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+               target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-github"></i> GitHub
+            </a>
+          </li>
+        
+        <li class="nav-item d-flex align-items-center">
+          <button class="btn btn-sm btn-outline-secondary ms-lg-2" id="theme-toggle"
+                  type="button" title="Toggle light/dark" aria-label="Toggle theme">
+            <i class="bi bi-circle-half"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
 
-  <div class="page">
-    
-
-    <main class="docs-content">
-      <article><p><img class="hero" src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a round knob" width="176" height="176"></p>
-<h1 id="knowledgebasemcp">KnowledgeBaseMCP<a class="headerlink" href="#knowledgebasemcp" title="Link to this section">#</a></h1>
-<div class="admonition note">
-<p class="admonition-title">AI-generated</p>
-<p>These pages were written with Claude Opus 5.5 and are under human review.</p>
+  <div class="container-fluid">
+    <div class="row">
+      <main class="col-12 col-xl-9 py-5 px-md-5 docs-content home">
+        
+        <article><div class="hero">
+  <img src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a round knob" width="136" height="136">
+  <h1 id="knowledgebasemcp">KnowledgeBaseMCP</h1>
+  <p class="lead">Keep an <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">Open Knowledge Format</a> knowledgebase in order: checked, maintained and imported, by agents and people alike. It cares how a concept is written, never what it says.</p>
+  <p>
+    <a class="btn btn-brand me-2" href="guide/">Get started</a>
+    <a class="btn btn-outline-secondary" href="https://github.com/dfoulks1/KnowledgeBaseMCP">View on GitHub</a>
+  </p>
 </div>
-<p>An MCP server and command line for <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">Open Knowledge Format</a> (OKF) v0.2
-knowledgebases: directories of Markdown concepts with YAML frontmatter,
-grouped into bundles. It checks, maintains and imports them. It cares how a
-concept is written, never what it says.</p>
-<p>One contract, three users:</p>
-<ul>
-<li><strong>An agent</strong> over MCP: every tool, with diffs before writes and a
-  confirmation prompt before anything records a human.</li>
-<li><strong>CI</strong>: <code>lint</code> with GitHub annotations or SARIF, a baseline for old
-  findings, <code>since=</code> for pull requests.</li>
-<li><strong>A person at a terminal</strong>, no AI involved: <code>help</code>, readable text output,
-  and <code>--attest</code> to sign your own reviews.</li>
-</ul>
-<p>Local files only. No network. Never writes to git. One Python file, run with
-<a href="https://docs.astral.sh/uv/">uv</a>.</p>
+
+<div class="row g-3 users my-4">
+  <div class="col-md-4"><div class="card p-3">
+    <h3>An agent, over MCP</h3>
+    <p>Every tool, with a diff before each write and a confirmation prompt before anything records a person.</p>
+  </div></div>
+  <div class="col-md-4"><div class="card p-3">
+    <h3>CI</h3>
+    <p><code>lint</code> as GitHub annotations or SARIF, a baseline for old findings, and <code>since=</code> for pull requests.</p>
+  </div></div>
+  <div class="col-md-4"><div class="card p-3">
+    <h3>A person at a terminal</h3>
+    <p>No AI needed: <code>help</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
+  </div></div>
+</div>
+
+<p class="note">Local files only. No network. Never writes to git. One Python file, run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and are under human review.</p>
+
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-sh"># start a bundle
 uv run KnowledgeBaseMCP.py init bundle=eng apply=true
@@ -130,39 +193,82 @@ From here, <code>lint</code> checks every file against the spec, <code>status</c
 needs a person next, and <code>heatmap</code> shows where the work is.</p>
 <p>Next: the <a href="guide/">guide</a> for layout and workflows, the <a href="tools/">tools</a>
 for every command, and the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">OKF v0.2 specification</a> it implements.</p></article>
+        
+          <hr class="my-4">
+          <div class="d-flex justify-content-between">
+            <span></span>
+            
+              <a class="btn btn-outline-secondary btn-sm" href="guide/">
+                Guide <i class="bi bi-arrow-right"></i></a>
+            
+          </div>
+        
+      </main>
+
       
-        <nav class="turn" aria-label="Pages">
-          <span></span>
-          <a href="guide/">Guide &rarr;</a>
-        </nav>
+        <aside class="col-xl-3 d-none d-xl-block py-4 docs-toc">
+          <div class="position-sticky" style="top: 5rem;">
+            <h6 class="text-uppercase small text-muted fw-bold mb-2">On this page</h6>
+            <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#quickstart">Quickstart</a>
       
-    </main>
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#what-a-knowledgebase-looks-like">What a knowledgebase looks like</a>
+      
+    </li>
+  
+</ul>
+          </div>
+        </aside>
+      
+    </div>
   </div>
 
-  <footer class="colophon">
-    <p>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</p>
+  <footer class="border-top mt-4 py-3">
+    <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
+      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Built with MkDocs + Bootstrap 5.</span>
+    </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
   <script>
     (function () {
+      // Restore saved theme before paint-sensitive work.
       var root = document.documentElement;
+      var saved = localStorage.getItem('docs-theme');
+      if (saved) root.setAttribute('data-bs-theme', saved);
+
+      // Make Markdown tables look like Bootstrap tables.
+      document.querySelectorAll('.docs-content table').forEach(function (t) {
+        t.classList.add('table', 'table-sm', 'table-striped', 'table-bordered', 'align-middle');
+        if (!t.parentElement.classList.contains('table-responsive')) {
+          var wrap = document.createElement('div');
+          wrap.className = 'table-responsive';
+          t.parentNode.insertBefore(wrap, t);
+          wrap.appendChild(t);
+        }
+      });
+
+      // Theme toggle (reload keeps mermaid in sync with the new theme).
       var btn = document.getElementById('theme-toggle');
       if (btn) btn.addEventListener('click', function () {
-        var dark = root.dataset.theme === 'dark' ||
-          (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
-        root.dataset.theme = dark ? 'light' : 'dark';
-        try { localStorage.setItem('docs-theme', root.dataset.theme); } catch (e) {}
-        location.reload();  // redraws mermaid in the new palette
+        var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-bs-theme', next);
+        localStorage.setItem('docs-theme', next);
+        location.reload();
       });
+
+      // Render mermaid: superfences emits <pre class="mermaid"><code>…</code></pre>.
       if (window.mermaid) {
-        var dark = root.dataset.theme === 'dark' ||
-          (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
-        mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: dark
-          ? { fontFamily: 'Literata, serif', primaryColor: '#2a2621', primaryTextColor: '#e8e0d2',
-              primaryBorderColor: '#8c7b63', lineColor: '#b59a74', clusterBkg: '#221f1b', clusterBorder: '#5c5144' }
-          : { fontFamily: 'Literata, serif', primaryColor: '#fffdf8', primaryTextColor: '#2b2620',
-              primaryBorderColor: '#8c7b63', lineColor: '#7a2e14', clusterBkg: '#f3ede1', clusterBorder: '#cdbfa6' } });
+        var dark = root.getAttribute('data-bs-theme') === 'dark';
+        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default' });
         document.querySelectorAll('pre.mermaid').forEach(function (pre) {
           var code = pre.querySelector('code');
           if (code) pre.textContent = code.textContent;

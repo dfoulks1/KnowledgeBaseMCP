@@ -1,26 +1,29 @@
-<img class="hero" src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a round knob" width="176" height="176">
+<div class="hero">
+  <img src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a round knob" width="136" height="136">
+  <h1 id="knowledgebasemcp">KnowledgeBaseMCP</h1>
+  <p class="lead">Keep an <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">Open Knowledge Format</a> knowledgebase in order: checked, maintained and imported, by agents and people alike. It cares how a concept is written, never what it says.</p>
+  <p>
+    <a class="btn btn-brand me-2" href="guide/">Get started</a>
+    <a class="btn btn-outline-secondary" href="https://github.com/dfoulks1/KnowledgeBaseMCP">View on GitHub</a>
+  </p>
+</div>
 
-# KnowledgeBaseMCP
+<div class="row g-3 users my-4">
+  <div class="col-md-4"><div class="card p-3">
+    <h3>An agent, over MCP</h3>
+    <p>Every tool, with a diff before each write and a confirmation prompt before anything records a person.</p>
+  </div></div>
+  <div class="col-md-4"><div class="card p-3">
+    <h3>CI</h3>
+    <p><code>lint</code> as GitHub annotations or SARIF, a baseline for old findings, and <code>since=</code> for pull requests.</p>
+  </div></div>
+  <div class="col-md-4"><div class="card p-3">
+    <h3>A person at a terminal</h3>
+    <p>No AI needed: <code>help</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
+  </div></div>
+</div>
 
-!!! note "AI-generated"
-    These pages were written with Claude Opus 5.5 and are under human review.
-
-An MCP server and command line for [Open Knowledge Format][okf] (OKF) v0.2
-knowledgebases: directories of Markdown concepts with YAML frontmatter,
-grouped into bundles. It checks, maintains and imports them. It cares how a
-concept is written, never what it says.
-
-One contract, three users:
-
-- **An agent** over MCP: every tool, with diffs before writes and a
-  confirmation prompt before anything records a human.
-- **CI**: `lint` with GitHub annotations or SARIF, a baseline for old
-  findings, `since=` for pull requests.
-- **A person at a terminal**, no AI involved: `help`, readable text output,
-  and `--attest` to sign your own reviews.
-
-Local files only. No network. Never writes to git. One Python file, run with
-[uv](https://docs.astral.sh/uv/).
+<p class="note">Local files only. No network. Never writes to git. One Python file, run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and are under human review.</p>
 
 ## Quickstart
 
