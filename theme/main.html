@@ -33,7 +33,7 @@
         <aside class="d-none d-lg-block docs-toc">
           <div class="position-sticky py-5" style="top: 3.5rem; max-height: calc(100vh - 3.5rem); overflow-y: auto;">
             <h6 class="text-uppercase small text-body-secondary fw-semibold mb-3">On this page</h6>
-            {{ render_toc(page.toc) }}
+            {% set top = page.toc | list %}{{ render_toc(top[0].children if top | length == 1 and top[0].children else top) }}
           </div>
         </aside>
       {% endif %}
