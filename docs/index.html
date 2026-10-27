@@ -106,24 +106,6 @@
   </p>
 </div>
 
-<div class="get-it">
-<h3 id="get-it">Get it<a class="headerlink" href="#get-it" title="Link to this section">#</a></h3>
-<p>One file. <a href="https://docs.astral.sh/uv/">uv</a> fetches its dependencies on the first run.</p>
-<pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
-uv run KnowledgeBaseMCP.py help</code></pre>
-<p>No uv yet? <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></p>
-<p>Then add it to your MCP client's servers file (<code>.mcp.json</code> for Claude Code;
-<a href="guide/#register-with-an-mcp-client">other clients</a>):</p>
-<pre class="highlight"><code class="language-json">{
-  "mcpServers": {
-    "knowledgebase": {
-      "command": "uv",
-      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
-      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
-    }
-  }
-}</code></pre>
-</div>
 <div class="row g-3 users my-4">
   <div class="col-md-4"><div class="card p-3">
     <h3>An agent, over MCP</h3>
@@ -142,6 +124,22 @@ uv run KnowledgeBaseMCP.py help</code></pre>
 <p class="note">Local files only. No network. Never writes to git. One Python file, run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and are under human review.</p>
 
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Link to this section">#</a></h2>
+<p>One file. <a href="https://docs.astral.sh/uv/">uv</a> fetches its dependencies on the first run.</p>
+<pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
+uv run KnowledgeBaseMCP.py help</code></pre>
+<p>No uv yet? <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></p>
+<p>Then add it to your MCP client's servers file (<code>.mcp.json</code> for Claude Code;
+<a href="guide/#register-with-an-mcp-client">other clients</a>):</p>
+<pre class="highlight"><code class="language-json">{
+  "mcpServers": {
+    "knowledgebase": {
+      "command": "uv",
+      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
+      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
+    }
+  }
+}</code></pre>
+<p>Or work from the terminal, no AI needed:</p>
 <pre class="highlight"><code class="language-sh"># start a bundle
 uv run KnowledgeBaseMCP.py init bundle=eng apply=true
 

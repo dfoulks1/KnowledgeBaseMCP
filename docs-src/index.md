@@ -8,9 +8,24 @@
   </p>
 </div>
 
-<div class="get-it" markdown="1">
+<div class="row g-3 users my-4">
+  <div class="col-md-4"><div class="card p-3">
+    <h3>An agent, over MCP</h3>
+    <p>Every tool, with a diff before each write and a confirmation prompt before anything records a person.</p>
+  </div></div>
+  <div class="col-md-4"><div class="card p-3">
+    <h3>CI</h3>
+    <p><code>lint</code> as GitHub annotations or SARIF, a baseline for old findings, and <code>since=</code> for pull requests.</p>
+  </div></div>
+  <div class="col-md-4"><div class="card p-3">
+    <h3>A person at a terminal</h3>
+    <p>No AI needed: <code>help</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
+  </div></div>
+</div>
 
-### Get it
+<p class="note">Local files only. No network. Never writes to git. One Python file, run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and are under human review.</p>
+
+## Quickstart
 
 One file. [uv](https://docs.astral.sh/uv/) fetches its dependencies on the first run.
 
@@ -36,26 +51,7 @@ Then add it to your MCP client's servers file (`.mcp.json` for Claude Code;
 }
 ```
 
-</div>
-
-<div class="row g-3 users my-4">
-  <div class="col-md-4"><div class="card p-3">
-    <h3>An agent, over MCP</h3>
-    <p>Every tool, with a diff before each write and a confirmation prompt before anything records a person.</p>
-  </div></div>
-  <div class="col-md-4"><div class="card p-3">
-    <h3>CI</h3>
-    <p><code>lint</code> as GitHub annotations or SARIF, a baseline for old findings, and <code>since=</code> for pull requests.</p>
-  </div></div>
-  <div class="col-md-4"><div class="card p-3">
-    <h3>A person at a terminal</h3>
-    <p>No AI needed: <code>help</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
-  </div></div>
-</div>
-
-<p class="note">Local files only. No network. Never writes to git. One Python file, run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and are under human review.</p>
-
-## Quickstart
+Or work from the terminal, no AI needed:
 
 ```sh
 # start a bundle

@@ -62,12 +62,8 @@ body { font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiase
 .users .card p { margin: 0; font-size: .95rem; color: var(--bs-secondary-color); }
 .home > article > p.note { text-align: center; font-size: .85rem; color: var(--bs-secondary-color); }
 
-/* Copy buttons and the "Get it" block */
+/* Copy buttons */
 pre.has-copy { position: relative; }
 .copy-btn { position: absolute; top: .5rem; right: .5rem; opacity: 0; transition: opacity .15s;
             font-family: var(--bs-body-font-family); border: 1px solid var(--bs-border-color); }
 pre.has-copy:hover .copy-btn, .copy-btn:focus { opacity: 1; }
-.get-it { max-width: 44rem; margin: 0 auto 2.5rem; }
-.get-it h3 { margin-top: 0; }
-.get-it pre.has-copy .copy-btn { opacity: 1; }
-.get-it pre { margin-bottom: 1rem; }
