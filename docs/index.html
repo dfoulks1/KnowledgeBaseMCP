@@ -77,21 +77,57 @@ uv run KnowledgeBaseMCP.py help move</code></pre>
 <pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/kb \
     -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
 <h2 id="what-a-knowledgebase-looks-like">What a knowledgebase looks like<a class="headerlink" href="#what-a-knowledgebase-looks-like" title="Link to this section">#</a></h2>
-<p><code>web format=mermaid</code> draws the links between bundles or concepts:</p>
+<p>A knowledgebase is a folder of bundles. A bundle is a folder of concepts, one
+Markdown file each. Two small bundles:</p>
+<pre class="highlight"><code class="language-text">kb/
+  index.md                 lists the bundles
+  eng/                     a bundle: its index.md declares okf_version "0.2"
+    index.md
+    log.md                 what changed, newest first
+    db.md
+    runbooks/ship.md
+    refs/pg.md
+  mkt/
+    index.md
+    log.md
+    launch.md</code></pre>
+<p>Each concept is frontmatter (what kind of thing it is, where its facts came
+from, who checked it) over an ordinary Markdown body. Here is <code>eng/db.md</code>:</p>
+<pre class="highlight"><code class="language-markdown">---
+type: Reference
+title: Database
+description: The PostgreSQL cluster behind every service.
+sources:
+  - id: pg
+    resource: refs/pg.md
+verified: { by: human:dfoulks, at: 2026-10-27T14:00:00Z }
+---
+
+We run PostgreSQL 16.4.[^pg] Deploys follow [the ship runbook](/runbooks/ship.md).
+
+[^pg]: PostgreSQL release notes</code></pre>
+<p>Concepts point at each other in two ways: a Markdown <strong>link</strong> in the body,
+and a <strong>citation</strong> in <code>sources</code>, which records where a fact came from. <code>web
+format=mermaid</code> draws both for the whole knowledgebase:</p>
 <pre class="mermaid"><code>graph LR
   subgraph eng
-    n0["db.md"]
-    n1["refs/pg.md"]
-    n2["runbooks/ship.md"]
+    db["db.md"]
+    ship["runbooks/ship.md"]
+    pg["refs/pg.md"]
   end
   subgraph mkt
-    n3["launch.md"]
+    launch["launch.md"]
   end
-  n0 -.-&gt;|cite| n1
-  n0 --&gt;|link| n2
-  n2 --&gt;|link| n0
-  n2 --&gt;|link| n3
-  n3 --&gt;|link| n0</code></pre>
+  db -.-&gt;|cites| pg
+  db --&gt;|links| ship
+  ship --&gt;|links| db
+  ship --&gt;|links| launch
+  launch --&gt;|links| db</code></pre>
+<p>Solid arrows are links; dotted ones are citations. The boxes are bundles, so
+an arrow that leaves its box crosses into another bundle. That is allowed,
+but lint flags it because the link breaks if one bundle is published alone.
+From here, <code>lint</code> checks every file against the spec, <code>status</code> says what
+needs a person next, and <code>heatmap</code> shows where the work is.</p>
 <p>Next: the <a href="guide/">guide</a> for layout and workflows, the <a href="tools/">tools</a>
 for every command, and the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">OKF v0.2 specification</a> it implements.</p></article>
       

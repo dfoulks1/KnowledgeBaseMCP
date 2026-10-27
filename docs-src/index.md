@@ -49,24 +49,69 @@ claude mcp add knowledgebase --env KB_ROOT=/path/to/kb \
 
 ## What a knowledgebase looks like
 
-`web format=mermaid` draws the links between bundles or concepts:
+A knowledgebase is a folder of bundles. A bundle is a folder of concepts, one
+Markdown file each. Two small bundles:
+
+```text
+kb/
+  index.md                 lists the bundles
+  eng/                     a bundle: its index.md declares okf_version "0.2"
+    index.md
+    log.md                 what changed, newest first
+    db.md
+    runbooks/ship.md
+    refs/pg.md
+  mkt/
+    index.md
+    log.md
+    launch.md
+```
+
+Each concept is frontmatter (what kind of thing it is, where its facts came
+from, who checked it) over an ordinary Markdown body. Here is `eng/db.md`:
+
+```markdown
+---
+type: Reference
+title: Database
+description: The PostgreSQL cluster behind every service.
+sources:
+  - id: pg
+    resource: refs/pg.md
+verified: { by: human:dfoulks, at: 2026-10-27T14:00:00Z }
+---
+
+We run PostgreSQL 16.4.[^pg] Deploys follow [the ship runbook](/runbooks/ship.md).
+
+[^pg]: PostgreSQL release notes
+```
+
+Concepts point at each other in two ways: a Markdown **link** in the body,
+and a **citation** in `sources`, which records where a fact came from. `web
+format=mermaid` draws both for the whole knowledgebase:
 
 ```mermaid
 graph LR
   subgraph eng
-    n0["db.md"]
-    n1["refs/pg.md"]
-    n2["runbooks/ship.md"]
+    db["db.md"]
+    ship["runbooks/ship.md"]
+    pg["refs/pg.md"]
   end
   subgraph mkt
-    n3["launch.md"]
+    launch["launch.md"]
   end
-  n0 -.->|cite| n1
-  n0 -->|link| n2
-  n2 -->|link| n0
-  n2 -->|link| n3
-  n3 -->|link| n0
+  db -.->|cites| pg
+  db -->|links| ship
+  ship -->|links| db
+  ship -->|links| launch
+  launch -->|links| db
 ```
+
+Solid arrows are links; dotted ones are citations. The boxes are bundles, so
+an arrow that leaves its box crosses into another bundle. That is allowed,
+but lint flags it because the link breaks if one bundle is published alone.
+From here, `lint` checks every file against the spec, `status` says what
+needs a person next, and `heatmap` shows where the work is.
 
 Next: the [guide](guide.md) for layout and workflows, the [tools](tools.md)
 for every command, and the [OKF v0.2 specification][okf] it implements.
