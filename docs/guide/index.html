@@ -90,12 +90,12 @@
             </ol>
           </nav>
         
-        <article><h1 id="guide">Guide<a class="headerlink" href="#guide" title="Permanent link">&para;</a></h1>
+        <article><h1 id="guide">Guide<a class="headerlink" href="#guide" title="Link to this section">#</a></h1>
 <div class="admonition note">
 <p class="admonition-title">AI-generated</p>
 <p>Drawn from the README, written with Claude Opus 5.5, under human review.</p>
 </div>
-<h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">&para;</a></h2>
+<h2 id="run">Run<a class="headerlink" href="#run" title="Link to this section">#</a></h2>
 <p>Requires <a href="https://docs.astral.sh/uv/">uv</a>.</p>
 <p>A knowledgebase is wherever you point the tool: <code>KB_ROOT</code>, else the current
 directory. It is one bundle at its root, or a set of sibling bundles. A
@@ -127,7 +127,7 @@ Write tools that touch many files default to <code>apply=false</code> and show a
 only on the command line: no MCP call can pass it.</p>
 <p>Output is JSON; <code>format=text</code> prints one key per line and diffs as is.</p>
 <p>Exit codes: 0 ok, 1 findings, 2 usage error.</p>
-<h2 id="layout">Layout<a class="headerlink" href="#layout" title="Permanent link">&para;</a></h2>
+<h2 id="layout">Layout<a class="headerlink" href="#layout" title="Link to this section">#</a></h2>
 <pre class="highlight"><code>kb/                          the knowledgebase (KB_ROOT)
   index.md                   lists the bundles; no frontmatter
   .gitattributes             log.md merge=union
@@ -139,7 +139,7 @@ only on the command line: no MCP call can pass it.</p>
       deploy.md              a concept
   archive/                   the archive bundle (read-only to editing tools)
     eng/old-runbook.md       archived from eng</code></pre>
-<h3 id="indexmd">index.md<a class="headerlink" href="#indexmd" title="Permanent link">&para;</a></h3>
+<h3 id="indexmd">index.md<a class="headerlink" href="#indexmd" title="Link to this section">#</a></h3>
 <p>OKF §8: an index lists what is in its directory, for progressive disclosure.
 Every index has the same body shape, sections under headings with one entry
 per item:</p>
@@ -170,7 +170,7 @@ Hand-written text is kept.
 <li>Being listed counts as being linked, so a listed concept is not an orphan.</li>
 <li><code>get</code> synthesizes a missing index from frontmatter (§8 allows this).</li>
 </ul>
-<h3 id="logmd">log.md<a class="headerlink" href="#logmd" title="Permanent link">&para;</a></h3>
+<h3 id="logmd">log.md<a class="headerlink" href="#logmd" title="Link to this section">#</a></h3>
 <p>OKF §9: date headings, newest first, one entry per line. Each tool write adds an
 entry to the nearest <code>log.md</code> above the change, with a hidden unix-time stamp:</p>
 <pre class="highlight"><code class="language-markdown">## 2026-10-27
@@ -184,7 +184,7 @@ entries.</p>
 keeps both sides when parallel branches log. After such a merge, <code>fix</code> merges
 duplicate date sections and orders stamped entries by time. A section with a
 hand-written, unstamped entry keeps its order.</p>
-<h3 id="the-archive">The archive<a class="headerlink" href="#the-archive" title="Permanent link">&para;</a></h3>
+<h3 id="the-archive">The archive<a class="headerlink" href="#the-archive" title="Link to this section">#</a></h3>
 <p><code>archive file=x.md bundle=eng</code> moves a concept to <code>archive/eng/x.md</code>.
 <code>archive bundle=eng</code> moves the whole bundle to <code>archive/eng/</code>, with its log;
 its <code>index.md</code> drops <code>okf_version</code>, since bundles do not nest. <code>unarchive
@@ -192,19 +192,19 @@ eng/x.md</code> or <code>unarchive eng</code> puts them back. Links follow both 
 warns on links into the archive (<code>archived_link</code>). Editing tools refuse
 archived concepts. That is the only enforcement: the files are plain files,
 so an editor or a commit can still change them.</p>
-<h2 id="register-with-an-mcp-client">Register with an MCP client<a class="headerlink" href="#register-with-an-mcp-client" title="Permanent link">&para;</a></h2>
+<h2 id="register-with-an-mcp-client">Register with an MCP client<a class="headerlink" href="#register-with-an-mcp-client" title="Link to this section">#</a></h2>
 <p>Claude Code, for one bundle:</p>
 <pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/bundle -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
 <p><code>KB_USER</code> prefills the reviewer id in <code>verify</code>'s confirmation prompt. The
 client loads the tool list at start. After editing the script, restart
 the client or reconnect the server (<code>/mcp</code> in Claude Code).</p>
-<h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Permanent link">&para;</a></h2>
+<h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint format=text      # what's wrong, each with a fix
 uv run KnowledgeBaseMCP.py fix apply=true        # mechanical repairs, then re-lint
 uv run KnowledgeBaseMCP.py lint format=text      # what's left needs you</code></pre>
 <p><code>scope=okf</code> limits the check to the spec; <code>scope=house</code> to hygiene (links,
 anchors, orphans, filenames, tags, generated indexes).</p>
-<h2 id="ci">CI<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h2>
+<h2 id="ci">CI<a class="headerlink" href="#ci" title="Link to this section">#</a></h2>
 <p>Vendor <code>KnowledgeBaseMCP.py</code> into the bundle's repo, then:</p>
 <pre class="highlight"><code class="language-yaml"># .github/workflows/okf.yml
 name: okf
@@ -234,7 +234,7 @@ it does not push fixes (fork PRs get a read-only token anyway).</p>
         entry: uv run KnowledgeBaseMCP.py lint format=text
         language: system
         pass_filenames: false</code></pre>
-<h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Permanent link">&para;</a></h2>
+<h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Link to this section">#</a></h2>
 <ul>
 <li><code>web</code> maps links and citations: bundles at the knowledgebase root, concepts
   in a bundle. <code>format=text</code> for the terminal, <code>format=mermaid</code> for anything

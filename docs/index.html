@@ -83,7 +83,7 @@
     <div class="row">
       <main class="col-12 col-xl-9 py-4 px-md-4 docs-content">
         
-        <article><h1 id="knowledgebasemcp">KnowledgeBaseMCP<a class="headerlink" href="#knowledgebasemcp" title="Permanent link">&para;</a></h1>
+        <article><h1 id="knowledgebasemcp">KnowledgeBaseMCP<a class="headerlink" href="#knowledgebasemcp" title="Link to this section">#</a></h1>
 <div class="admonition note">
 <p class="admonition-title">AI-generated</p>
 <p>These pages were written with Claude Opus 5.5 and are under human review.</p>
@@ -103,7 +103,7 @@ concept is written, never what it says.</p>
 </ul>
 <p>Local files only. No network. Never writes to git. One Python file, run with
 <a href="https://docs.astral.sh/uv/">uv</a>.</p>
-<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
+<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py init bundle=eng apply=true        # a bundle
 uv run KnowledgeBaseMCP.py create eng/runbooks/deploy type=Playbook description="How we deploy."
 uv run KnowledgeBaseMCP.py lint format=text                  # what's wrong, each with a fix
@@ -111,7 +111,7 @@ uv run KnowledgeBaseMCP.py fix apply=true                    # the mechanical re
 uv run KnowledgeBaseMCP.py help move                         # any tool: what it does, its arguments</code></pre>
 <p>Register it with Claude Code:</p>
 <pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/kb -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
-<h2 id="what-a-knowledgebase-looks-like">What a knowledgebase looks like<a class="headerlink" href="#what-a-knowledgebase-looks-like" title="Permanent link">&para;</a></h2>
+<h2 id="what-a-knowledgebase-looks-like">What a knowledgebase looks like<a class="headerlink" href="#what-a-knowledgebase-looks-like" title="Link to this section">#</a></h2>
 <p><code>web format=mermaid</code> draws the links between bundles or concepts:</p>
 <pre class="mermaid"><code>graph LR
   subgraph eng

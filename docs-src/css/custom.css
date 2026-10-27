@@ -2,3 +2,6 @@
 .docs-content pre { padding: .75rem; border-radius: .375rem; background: var(--bs-tertiary-bg); }
 .admonition { border-left: .25rem solid var(--bs-info); padding: .5rem 1rem; margin: 1rem 0; background: var(--bs-tertiary-bg); }
 .admonition-title { font-weight: 600; margin-bottom: .25rem; }
+.headerlink { margin-left: .4rem; color: var(--bs-secondary-color); text-decoration: none; opacity: 0; transition: opacity .15s; }
+:is(h1, h2, h3, h4, h5, h6):hover .headerlink, .headerlink:focus { opacity: .6; }
+.headerlink:hover { opacity: 1; color: var(--bs-link-color); }

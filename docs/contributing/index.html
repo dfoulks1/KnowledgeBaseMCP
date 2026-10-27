@@ -90,18 +90,18 @@
             </ol>
           </nav>
         
-        <article><h1 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h1>
+        <article><h1 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Link to this section">#</a></h1>
 <p>KnowledgeBaseMCP is a personal project, Apache-2.0 licensed, built under the
 <a href="https://www.apache.org/legal/generative-tooling.html">ASF generative-tooling guidelines</a>. AI assists; a human reviews before
 anything public-facing ships.</p>
-<h2 id="what-it-serves">What it serves<a class="headerlink" href="#what-it-serves" title="Permanent link">&para;</a></h2>
+<h2 id="what-it-serves">What it serves<a class="headerlink" href="#what-it-serves" title="Link to this section">#</a></h2>
 <p>Bundles in the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">Open Knowledge Format</a> (OKF). Everything a tool does is
 also doable by hand (edit the file, run <code>lint</code>). The tools make it cheaper and
 more consistent, not possible.</p>
-<h2 id="how-we-build">How we build<a class="headerlink" href="#how-we-build" title="Permanent link">&para;</a></h2>
+<h2 id="how-we-build">How we build<a class="headerlink" href="#how-we-build" title="Link to this section">#</a></h2>
 <p>One brief, then refinement. <code>prompts/rewrite-brief.md</code> is the current brief;
 use cases drive changes to it. Core stays one file.</p>
-<h2 id="asf-generative-tooling-compliance">ASF generative-tooling compliance<a class="headerlink" href="#asf-generative-tooling-compliance" title="Permanent link">&para;</a></h2>
+<h2 id="asf-generative-tooling-compliance">ASF generative-tooling compliance<a class="headerlink" href="#asf-generative-tooling-compliance" title="Link to this section">#</a></h2>
 <ul>
 <li>ICLA §§4/5/7/8 and conditions 2.1–2.3 apply.</li>
 <li>Third-party licensing must allow Apache-2.0 output. No GPL or
@@ -112,10 +112,10 @@ use cases drive changes to it. Core stays one file.</p>
   with, confirmed before committing, never fabricated. For example:</li>
 </ul>
 <pre class="highlight"><code>Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;</code></pre>
-<h2 id="running-the-checks">Running the checks<a class="headerlink" href="#running-the-checks" title="Permanent link">&para;</a></h2>
+<h2 id="running-the-checks">Running the checks<a class="headerlink" href="#running-the-checks" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint     # exits 1 on problems; use as a pre-merge gate
 uv run test_KnowledgeBaseMCP.py     # self-check against throwaway bundles</code></pre>
-<h2 id="docs-site">Docs site<a class="headerlink" href="#docs-site" title="Permanent link">&para;</a></h2>
+<h2 id="docs-site">Docs site<a class="headerlink" href="#docs-site" title="Link to this section">#</a></h2>
 <p><code>docs-src/</code> is the source and <code>docs/</code> the built site, committed so GitHub Pages
 serves it from <code>main</code> <code>/docs</code>. No CI builds it. After changing the README, a
 tool or <code>docs-src/</code>, rebuild locally and commit both:</p>

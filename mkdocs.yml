@@ -35,7 +35,8 @@ markdown_extensions:
   - md_in_html
   - tables
   - toc:
-      permalink: true
+      permalink: "#"
+      permalink_title: Link to this section
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
