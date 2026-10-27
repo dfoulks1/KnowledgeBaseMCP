@@ -13,7 +13,9 @@ body { font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiase
 .site-nav .nav-link { font-weight: 500; }
 .site-nav .nav-link.active { color: rgb(var(--bs-link-color-rgb)); }
 
-.docs-content { max-width: 50rem; min-width: 0; }
+.docs-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 992px) { .docs-grid.with-toc { grid-template-columns: 14rem minmax(0, 1fr); column-gap: 3rem; } }
+.docs-content { min-width: 0; max-width: 66rem; }
 .docs-content h1 { font-weight: 700; letter-spacing: -.02em; }
 .docs-content h2 { font-weight: 650; letter-spacing: -.01em; margin-top: 2.75rem; padding-top: .5rem; }
 .docs-content h3 { font-weight: 600; margin-top: 1.75rem; }
@@ -27,8 +29,6 @@ body { font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiase
 .highlight span { color: inherit !important; font-style: normal !important; }
 .highlight :is(.c, .c1, .cm, .ch, .cs, .go) { color: var(--bs-secondary-color) !important; }
 .highlight, .highlight pre { background: var(--bs-tertiary-bg) !important; }
-/* Prose-like listings (help text) wrap; shell commands keep their lines. */
-.language-text pre, .language-text code { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* Contents sidebar */
 .docs-toc ul { padding-left: 0; margin: 0; }

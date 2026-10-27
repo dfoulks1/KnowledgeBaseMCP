@@ -27,17 +27,17 @@
 <body>
   {% include "partials/navbar.html" %}
 
-  <div class="container-xl">
-    <div class="row g-lg-5">
+  <div class="container-xxl">
+    <div class="docs-grid{% if page and page.toc and not page.is_homepage %} with-toc{% endif %}">
       {% if page and page.toc and not page.is_homepage %}
-        <aside class="col-lg-3 d-none d-lg-block docs-toc">
+        <aside class="d-none d-lg-block docs-toc">
           <div class="position-sticky py-5" style="top: 3.5rem; max-height: calc(100vh - 3.5rem); overflow-y: auto;">
             <h6 class="text-uppercase small text-body-secondary fw-semibold mb-3">On this page</h6>
             {{ render_toc(page.toc) }}
           </div>
         </aside>
       {% endif %}
-      <main class="{% if page and page.is_homepage %}col-12 home{% else %}col-lg-9{% endif %} py-5 docs-content">
+      <main class="py-5 docs-content{% if page and page.is_homepage %} home{% endif %}">
         {% if page and not page.is_homepage %}
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb small">
