@@ -21,6 +21,21 @@ uv run KnowledgeBaseMCP.py help
 
 No uv yet? `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
+Then add it to your MCP client's servers file (`.mcp.json` for Claude Code;
+[other clients](guide.md#register-with-an-mcp-client)):
+
+```json
+{
+  "mcpServers": {
+    "knowledgebase": {
+      "command": "uv",
+      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
+      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
+    }
+  }
+}
+```
+
 </div>
 
 <div class="row g-3 users my-4">
@@ -56,13 +71,6 @@ uv run KnowledgeBaseMCP.py fix apply=true
 
 # any tool: what it does, its arguments
 uv run KnowledgeBaseMCP.py help move
-```
-
-Register it with Claude Code:
-
-```sh
-claude mcp add knowledgebase --env KB_ROOT=/path/to/kb \
-    -- uv run /path/to/KnowledgeBaseMCP.py
 ```
 
 ## What a knowledgebase looks like

@@ -154,14 +154,30 @@ bundle itself.
 <!-- --8<-- [start:register] -->
 ## Register with an MCP client
 
-Claude Code, for one bundle:
+Add this to your MCP client's servers file: `.mcp.json` in the project for
+Claude Code, `claude_desktop_config.json` for Claude Desktop, `.cursor/mcp.json`
+for Cursor. VS Code's `.vscode/mcp.json` takes the same entry under `"servers"`.
 
-```sh
-claude mcp add knowledgebase --env KB_ROOT=/path/to/bundle -- uv run /path/to/KnowledgeBaseMCP.py
+```json
+{
+  "mcpServers": {
+    "knowledgebase": {
+      "command": "uv",
+      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
+      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
+    }
+  }
+}
 ```
 
-`KB_USER` prefills the reviewer id in `verify`'s confirmation prompt. The
-client loads the tool list at start. After editing the script, restart
+`KB_ROOT` is the knowledgebase (else the client's working directory). `KB_USER`
+prefills your id in confirmation prompts. Or, in Claude Code:
+
+```sh
+claude mcp add knowledgebase --env KB_ROOT=/path/to/kb -- uv run /path/to/KnowledgeBaseMCP.py
+```
+
+The client loads the tool list at start. After editing the script, restart
 the client or reconnect the server (`/mcp` in Claude Code).
 
 <!-- --8<-- [end:register] -->

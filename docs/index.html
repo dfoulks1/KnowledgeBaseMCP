@@ -112,6 +112,17 @@
 <pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
 uv run KnowledgeBaseMCP.py help</code></pre>
 <p>No uv yet? <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></p>
+<p>Then add it to your MCP client's servers file (<code>.mcp.json</code> for Claude Code;
+<a href="guide/#register-with-an-mcp-client">other clients</a>):</p>
+<pre class="highlight"><code class="language-json">{
+  "mcpServers": {
+    "knowledgebase": {
+      "command": "uv",
+      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
+      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
+    }
+  }
+}</code></pre>
 </div>
 <div class="row g-3 users my-4">
   <div class="col-md-4"><div class="card p-3">
@@ -144,9 +155,6 @@ uv run KnowledgeBaseMCP.py fix apply=true
 
 # any tool: what it does, its arguments
 uv run KnowledgeBaseMCP.py help move</code></pre>
-<p>Register it with Claude Code:</p>
-<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/kb \
-    -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
 <h2 id="what-a-knowledgebase-looks-like">What a knowledgebase looks like<a class="headerlink" href="#what-a-knowledgebase-looks-like" title="Link to this section">#</a></h2>
 <p>A knowledgebase is a folder of bundles. A bundle is a folder of concepts, one
 Markdown file each. Two small bundles:</p>

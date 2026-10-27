@@ -70,3 +70,4 @@ pre.has-copy:hover .copy-btn, .copy-btn:focus { opacity: 1; }
 .get-it { max-width: 44rem; margin: 0 auto 2.5rem; }
 .get-it h3 { margin-top: 0; }
 .get-it pre.has-copy .copy-btn { opacity: 1; }
+.get-it pre { margin-bottom: 1rem; }

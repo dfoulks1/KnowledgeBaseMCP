@@ -277,10 +277,22 @@ only enforcement: the files are plain files, so an editor or a commit can still
 change them. It works whether the knowledgebase root is a set of bundles or a
 bundle itself.</p>
 <h2 id="register-with-an-mcp-client">Register with an MCP client<a class="headerlink" href="#register-with-an-mcp-client" title="Link to this section">#</a></h2>
-<p>Claude Code, for one bundle:</p>
-<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/bundle -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
-<p><code>KB_USER</code> prefills the reviewer id in <code>verify</code>'s confirmation prompt. The
-client loads the tool list at start. After editing the script, restart
+<p>Add this to your MCP client's servers file: <code>.mcp.json</code> in the project for
+Claude Code, <code>claude_desktop_config.json</code> for Claude Desktop, <code>.cursor/mcp.json</code>
+for Cursor. VS Code's <code>.vscode/mcp.json</code> takes the same entry under <code>"servers"</code>.</p>
+<pre class="highlight"><code class="language-json">{
+  "mcpServers": {
+    "knowledgebase": {
+      "command": "uv",
+      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
+      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
+    }
+  }
+}</code></pre>
+<p><code>KB_ROOT</code> is the knowledgebase (else the client's working directory). <code>KB_USER</code>
+prefills your id in confirmation prompts. Or, in Claude Code:</p>
+<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/kb -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
+<p>The client loads the tool list at start. After editing the script, restart
 the client or reconnect the server (<code>/mcp</code> in Claude Code).</p>
 <h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint format=text      # what's wrong, each with a fix
