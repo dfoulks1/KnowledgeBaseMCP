@@ -20,8 +20,8 @@ def prose(doc: str) -> str:
     return "`".join(html.escape(p, quote=False) if i % 2 == 0 else p for i, p in enumerate(parts))
 
 
-out = ["# Tools", "", "Every tool, from its own docstring. Run one as `uv run KnowledgeBaseMCP.py <tool> name=value ...`, "
-       "or see the same text with `help <tool>`.", ""]
+out = ["# Tools", "", ("Every tool, from its own docstring. Run one as `uv run KnowledgeBaseMCP.py <tool> "
+                       "name=value ...`, or see the same text with `help <tool>`."), ""]
 for name, fn in sorted(k.REG.items()):
     out += [f"## {name}", "", prose(fn.__doc__), ""]
     args = [(n, p) for n, p in inspect.signature(fn).parameters.items() if n != "ctx"]
