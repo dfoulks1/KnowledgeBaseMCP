@@ -2018,6 +2018,15 @@ def permalink(src: Path, top: Path):
     return lambda f, sha: f"https://{host}/{path}/blob/{sha}/{urllib.parse.quote(rel(f.resolve(), top))}"
 
 
+def remote(src: Path) -> str:
+    """The repository's `origin` URL as a record of where files came from, with any password dropped."""
+    url = git(src, "remote", "get-url", "origin").stdout.strip()
+    u = urllib.parse.urlsplit(url)
+    if u.hostname and "@" in u.netloc and (":" in u.netloc.split("@")[0] or u.scheme in ("http", "https")):
+        url = u._replace(netloc=u.hostname + (f":{u.port}" if u.port else "")).geturl()
+    return url
+
+
 @expose(idempotent=True, destructive=True)
 def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str = "draft", stale_days: int = 0,
            keep_okf: bool = False, apply: bool = False, limit: int = 50, offset: int = 0,
@@ -2055,7 +2064,7 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
     shallow = bool(g and g[1])
     hist = history(src, [f for f in md if f.is_file() and not f.is_symlink()]) if g and not shallow else {}
     head = git(src, "rev-parse", "HEAD").stdout.strip() if shallow else ""
-    link = permalink(src, g[0]) if g else None
+    link, where = (permalink(src, g[0]), remote(src)) if g else (None, "")
     skipped, items, changes, absolute = collections.Counter(), [], {}, []
     skips, pending, brought = [], [], set()
     skipped["not markdown"] = len(files) - len(md)
@@ -2089,7 +2098,8 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
         h = hist.get(f, {})
         new = t
         sha = h.get("sha") or head
-        origin = {"id": "origin", "resource": link(f, sha) if link else f"git:{sha}:{r_}"} if sha else None
+        origin = {"id": "origin", "resource": link(f, sha) if link else where or f"git:{sha}:{r_}",
+                  "title": f"{r_} at {sha[:12]}" + (f" of {where}" if where else "")} if sha else None
         if origin and h:
             origin["last_modified"] = h.get("at") or h["last_modified"]
         if is_okf:
@@ -2138,8 +2148,9 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
                                    "note": "these links will not resolve in the bundle; fix them after ingest (move helps)"},
             "license": {"files": sorted(p.name for p in src.iterdir() if re.match(r"(LICEN[CS]E|COPYING|NOTICE)", p.name, re.IGNORECASE)),
                         "checked": False},
-            **({"shallow": "truncated history: origin points at the cloned commit, and there is no authorship "
-                           "(`generated`); fetch full history for it"} if shallow else {}),
+            **({"shallow": "a shallow clone: each file's origin names the repository and the commit it was "
+                           "copied from; its history was not read, so there is no authorship (`generated`)"}
+               if shallow else {}),
             "secrets": {"skipped": sum(r["reason"].startswith("possible secret") for r in skips),
                         "note": "files holding credential-shaped strings are skipped; this checks current files "
                                 "only, so run gitleaks on the source's history too"},

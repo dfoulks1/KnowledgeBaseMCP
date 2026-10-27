@@ -585,6 +585,20 @@ subprocess.run(["git", "clone", "-q", "--depth", "1", f"file://{src}", str(kb / 
 assert "shallow" in raises(k.provenance, bundle="shallow")
 pl = k.ingest("shallow", bundle="fromshallow", keep_okf=True)  # no history: origin only, said so
 assert "shallow" in pl and set(pl["provenance"]) == {"partial"}, pl
+up = Path(tempfile.mkdtemp())  # a plain repo, shallow-cloned: origin documents the repository and the commit
+for c in (["init", "-q"], ["-c", "user.name=A", "-c", "user.email=a@x", "-c", "commit.gpgsign=false", "commit", "-q",
+                           "--allow-empty", "-m", "x"]):
+    subprocess.run(["git", *c], cwd=up, check=True, capture_output=True)
+(up / "plain.md").write_text("# Plain\n")
+subprocess.run(["git", "add", "."], cwd=up, check=True)
+subprocess.run(["git", "-c", "user.name=A", "-c", "user.email=a@x", "-c", "commit.gpgsign=false", "commit", "-qm", "y"],
+               cwd=up, check=True)
+subprocess.run(["git", "clone", "-q", "--depth", "1", f"file://{up}", str(kb / "shallow2")], check=True, capture_output=True)
+k.ingest("shallow2", bundle="fromshallow2", apply=True)
+o = k.meta((kb / "fromshallow2/plain.md").read_text())[0]["sources"][0]
+assert o["resource"] == f"file://{up}" and re.fullmatch(r"plain\.md at [0-9a-f]{12} of file://.+", o["title"]), o
+g("remote", "set-url", "origin", "https://user:tok@github.com/o/r.git")
+assert k.remote(src) == "https://github.com/o/r.git"
 
 # permalink: credentials and ports dropped; a local remote has no web URL.
 g("remote", "set-url", "origin", "ssh://git@host.example:2222/o/r.git")

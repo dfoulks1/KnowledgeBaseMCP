@@ -242,8 +242,8 @@ repos:
 - `ingest` reads directories, not tarballs or zips (§3); unpack them first.
 - Attested Computations are checked as written (§10); nothing is executed or
   attested here.
-- From a shallow clone, `ingest` records the cloned commit as the origin but no
-  authorship.
+- From a shallow clone, `ingest` documents where each file came from (the
+  repository and the commit) but reads no history, so it records no authorship.
 - Secret scanning (`lint`'s `secret`, and `ingest` skipping such files) matches
   common credential shapes in current files: private keys, cloud, chat and API
   tokens, JWTs, passwords in URLs. It is not exhaustive and does not read git

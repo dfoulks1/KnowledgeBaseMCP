@@ -247,8 +247,8 @@ it does not push fixes (fork PRs get a read-only token anyway).</p>
 <li><code>ingest</code> reads directories, not tarballs or zips (§3); unpack them first.</li>
 <li>Attested Computations are checked as written (§10); nothing is executed or
   attested here.</li>
-<li>From a shallow clone, <code>ingest</code> records the cloned commit as the origin but no
-  authorship.</li>
+<li>From a shallow clone, <code>ingest</code> documents where each file came from (the
+  repository and the commit) but reads no history, so it records no authorship.</li>
 <li>Secret scanning (<code>lint</code>'s <code>secret</code>, and <code>ingest</code> skipping such files) matches
   common credential shapes in current files: private keys, cloud, chat and API
   tokens, JWTs, passwords in URLs. It is not exhaustive and does not read git

@@ -276,7 +276,7 @@ bundle around the working directory; writes route to the file's own bundle;
 `verify promote`, `get files`, and warnings `cross_bundle`, `deprecated_link`,
 `source_changed`; `fix` normalizes tag case. §6.2 path fields move with
 `move`/`migrate`/`split` and lint as `dead_path`; symlinks are never followed;
-shallow-clone ingest records origin only; `permalink` drops credentials and
+shallow-clone ingest documents the repository and commit as origin (no history read); `permalink` drops credentials and
 ports and skips local remotes. Revisit `concept()` routing next.
 
 ## Defaults chosen without asking
