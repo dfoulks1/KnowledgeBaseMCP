@@ -1,0 +1,234 @@
+
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contributing · KnowledgeBaseMCP</title>
+  <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/pygments.css"><link rel="stylesheet" href="../css/custom.css">
+</head>
+<body>
+  
+<nav class="navbar navbar-expand-lg bg-dark sticky-top" data-bs-theme="dark">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="..">
+      <i class="bi bi-journal-code me-1"></i>KnowledgeBaseMCP
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#site-nav" aria-controls="site-nav"
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="site-nav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="..">Home</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../guide/">Guide</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../tools/">Tools</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link active"
+                 aria-current="page"
+                 href="./">Contributing</a>
+            </li>
+          
+        
+      </ul>
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+               target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-github"></i> GitHub
+            </a>
+          </li>
+        
+        <li class="nav-item d-flex align-items-center">
+          <button class="btn btn-sm btn-outline-light ms-lg-2" id="theme-toggle"
+                  type="button" title="Toggle light/dark" aria-label="Toggle theme">
+            <i class="bi bi-circle-half"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <main class="col-12 col-xl-9 py-4 px-md-4 docs-content">
+        
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+              <li class="breadcrumb-item"><a href="..">Home</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Contributing</li>
+            </ol>
+          </nav>
+        
+        <article><h1 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h1>
+<p>KnowledgeBaseMCP is a personal project, Apache-2.0 licensed, built under the
+<a href="https://www.apache.org/legal/generative-tooling.html">ASF generative-tooling guidelines</a>. AI assists; a human reviews before
+anything public-facing ships.</p>
+<h2 id="what-it-serves">What it serves<a class="headerlink" href="#what-it-serves" title="Permanent link">&para;</a></h2>
+<p>Bundles in the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">Open Knowledge Format</a> (OKF). Everything a tool does is
+also doable by hand (edit the file, run <code>lint</code>). The tools make it cheaper and
+more consistent, not possible.</p>
+<h2 id="how-we-build">How we build<a class="headerlink" href="#how-we-build" title="Permanent link">&para;</a></h2>
+<p>One brief, then refinement. <code>prompts/rewrite-brief.md</code> is the current brief;
+use cases drive changes to it. Core stays one file.</p>
+<h2 id="asf-generative-tooling-compliance">ASF generative-tooling compliance<a class="headerlink" href="#asf-generative-tooling-compliance" title="Permanent link">&para;</a></h2>
+<ul>
+<li>ICLA §§4/5/7/8 and conditions 2.1–2.3 apply.</li>
+<li>Third-party licensing must allow Apache-2.0 output. No GPL or
+  Apache-incompatible reproduced code.</li>
+<li>A human reviews AI-generated public-facing output before it ships; label it
+  AI-generated if unreviewed.</li>
+<li>Provenance trailer on commits: the exact string your tool is configured
+  with, confirmed before committing, never fabricated. For example:</li>
+</ul>
+<pre class="highlight"><code>Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;</code></pre>
+<h2 id="running-the-checks">Running the checks<a class="headerlink" href="#running-the-checks" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint     # exits 1 on problems; use as a pre-merge gate
+uv run test_KnowledgeBaseMCP.py     # self-check against throwaway bundles</code></pre>
+<h2 id="docs-site">Docs site<a class="headerlink" href="#docs-site" title="Permanent link">&para;</a></h2>
+<p><code>docs-src/</code> is the source and <code>docs/</code> the built site, committed so GitHub Pages
+serves it from <code>main</code> <code>/docs</code>. No CI builds it. After changing the README, a
+tool or <code>docs-src/</code>, rebuild locally and commit both:</p>
+<pre class="highlight"><code class="language-sh">{ printf '# Tools\n\nEvery tool, as `help &lt;tool&gt;` prints it.\n\n'
+  for t in $(uv run KnowledgeBaseMCP.py help | sed '/^$/q' | awk '{print $1}'); do
+    printf '## %s\n\n```text\n' "$t"; uv run KnowledgeBaseMCP.py help "$t"; printf '```\n\n'
+  done; } &gt; docs-src/tools.md
+uvx --with pymdown-extensions mkdocs build</code></pre></article>
+        
+          <hr class="my-4">
+          <div class="d-flex justify-content-between">
+            
+              <a class="btn btn-outline-secondary btn-sm" href="../tools/">
+                <i class="bi bi-arrow-left"></i> Tools</a>
+            
+            
+          </div>
+        
+      </main>
+
+      
+        <aside class="col-xl-3 d-none d-xl-block py-4 docs-toc">
+          <div class="position-sticky" style="top: 5rem;">
+            <h6 class="text-uppercase small text-muted fw-bold mb-2">On this page</h6>
+            <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#contributing">Contributing</a>
+      <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#what-it-serves">What it serves</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#how-we-build">How we build</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#asf-generative-tooling-compliance">ASF generative-tooling compliance</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#running-the-checks">Running the checks</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#docs-site">Docs site</a>
+      
+    </li>
+  
+</ul>
+    </li>
+  
+</ul>
+          </div>
+        </aside>
+      
+    </div>
+  </div>
+
+  <footer class="border-top mt-4 py-3">
+    <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
+      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Built with MkDocs + Bootstrap 5.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    (function () {
+      // Restore saved theme before paint-sensitive work.
+      var root = document.documentElement;
+      var saved = localStorage.getItem('docs-theme');
+      if (saved) root.setAttribute('data-bs-theme', saved);
+
+      // Make Markdown tables look like Bootstrap tables.
+      document.querySelectorAll('.docs-content table').forEach(function (t) {
+        t.classList.add('table', 'table-sm', 'table-striped', 'table-bordered', 'align-middle');
+        if (!t.parentElement.classList.contains('table-responsive')) {
+          var wrap = document.createElement('div');
+          wrap.className = 'table-responsive';
+          t.parentNode.insertBefore(wrap, t);
+          wrap.appendChild(t);
+        }
+      });
+
+      // Theme toggle (reload keeps mermaid in sync with the new theme).
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-bs-theme', next);
+        localStorage.setItem('docs-theme', next);
+        location.reload();
+      });
+
+      // Render mermaid: superfences emits <pre class="mermaid"><code>…</code></pre>.
+      if (window.mermaid) {
+        var dark = root.getAttribute('data-bs-theme') === 'dark';
+        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default' });
+        document.querySelectorAll('pre.mermaid').forEach(function (pre) {
+          var code = pre.querySelector('code');
+          if (code) pre.textContent = code.textContent;
+        });
+        try { mermaid.run({ querySelector: 'pre.mermaid' }); } catch (e) {}
+      }
+    })();
+  </script>
+</body>
+</html>

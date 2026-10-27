@@ -1,9 +1,9 @@
-site_name: KnowledgeBaseMCP — Dev Docs
+site_name: KnowledgeBaseMCP
 site_description: >-
-  Development documentation for KnowledgeBaseMCP, an MCP server fronting an
-  Open Knowledge Format document store.
+  An MCP server and command line for Open Knowledge Format (OKF) v0.2
+  knowledgebases, for agents and people alike.
 site_author: KnowledgeBaseMCP contributors
-copyright: KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines
+copyright: KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review
 # Update to the published base URL once hosting is finalized.
 site_url: https://dfoulks1.github.io/KnowledgeBaseMCP/
 
@@ -53,16 +53,10 @@ markdown_extensions:
         - ..
       check_paths: true
 
-# No Software Map: this is a single-file MCP server, not a distributed
-# multi-component system, so there is no component graph to draw.
 nav:
   - Home: index.md
-  - AI Contribution Guide: ai-contribution.md
-  - Prompt System: prompt-system.md
-  - Architecture: architecture.md
-  - SBOM: sbom.md
-  - Development Progress: progress.md
-  - Policy Compliance: policy-compliance.md
+  - Guide: guide.md
+  - Tools: tools.md
+  - Contributing: contributing.md
 
-plugins:
-  - search
+plugins: []

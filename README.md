@@ -11,6 +11,7 @@ with no AI.
 Personal project. Apache-2.0, built under the [ASF generative-tooling
 guidelines][asf-gt].
 
+<!-- --8<-- [start:run] -->
 ## Run
 
 Requires [uv](https://docs.astral.sh/uv/).
@@ -54,6 +55,8 @@ Output is JSON; `format=text` prints one key per line and diffs as is.
 
 Exit codes: 0 ok, 1 findings, 2 usage error.
 
+<!-- --8<-- [end:run] -->
+<!-- --8<-- [start:layout] -->
 ## Layout
 
 ```
@@ -136,6 +139,8 @@ warns on links into the archive (`archived_link`). Editing tools refuse
 archived concepts. That is the only enforcement: the files are plain files,
 so an editor or a commit can still change them.
 
+<!-- --8<-- [end:layout] -->
+<!-- --8<-- [start:register] -->
 ## Register with an MCP client
 
 Claude Code, for one bundle:
@@ -148,6 +153,8 @@ claude mcp add knowledgebase --env KB_ROOT=/path/to/bundle -- uv run /path/to/Kn
 client loads the tool list at start. After editing the script, restart
 the client or reconnect the server (`/mcp` in Claude Code).
 
+<!-- --8<-- [end:register] -->
+<!-- --8<-- [start:ci] -->
 ## Before you push
 
 ```sh
@@ -199,6 +206,8 @@ repos:
         pass_filenames: false
 ```
 
+<!-- --8<-- [end:ci] -->
+<!-- --8<-- [start:limits] -->
 ## Known limits
 
 - `web` maps links and citations: bundles at the knowledgebase root, concepts
@@ -238,6 +247,7 @@ repos:
 - `ingest` does not convert other formats, scan for secrets or check
   licenses. Its plan says so.
 
+<!-- --8<-- [end:limits] -->
 ## Self-check
 
 ```sh

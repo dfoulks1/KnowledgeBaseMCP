@@ -1,0 +1,408 @@
+
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guide · KnowledgeBaseMCP</title>
+  <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/pygments.css"><link rel="stylesheet" href="../css/custom.css">
+</head>
+<body>
+  
+<nav class="navbar navbar-expand-lg bg-dark sticky-top" data-bs-theme="dark">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="..">
+      <i class="bi bi-journal-code me-1"></i>KnowledgeBaseMCP
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#site-nav" aria-controls="site-nav"
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="site-nav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="..">Home</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link active"
+                 aria-current="page"
+                 href="./">Guide</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../tools/">Tools</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../contributing/">Contributing</a>
+            </li>
+          
+        
+      </ul>
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+               target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-github"></i> GitHub
+            </a>
+          </li>
+        
+        <li class="nav-item d-flex align-items-center">
+          <button class="btn btn-sm btn-outline-light ms-lg-2" id="theme-toggle"
+                  type="button" title="Toggle light/dark" aria-label="Toggle theme">
+            <i class="bi bi-circle-half"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <main class="col-12 col-xl-9 py-4 px-md-4 docs-content">
+        
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+              <li class="breadcrumb-item"><a href="..">Home</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Guide</li>
+            </ol>
+          </nav>
+        
+        <article><h1 id="guide">Guide<a class="headerlink" href="#guide" title="Permanent link">&para;</a></h1>
+<div class="admonition note">
+<p class="admonition-title">AI-generated</p>
+<p>Drawn from the README, written with Claude Opus 5.5, under human review.</p>
+</div>
+<h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">&para;</a></h2>
+<p>Requires <a href="https://docs.astral.sh/uv/">uv</a>.</p>
+<p>A knowledgebase is wherever you point the tool: <code>KB_ROOT</code>, else the current
+directory. It is one bundle at its root, or a set of sibling bundles. A
+directory whose <code>index.md</code> declares <code>okf_version</code> is a bundle root; bundles do
+not nest. An <code>index.md</code> at the knowledgebase root lists its bundles (<code>index
+apply=true</code> there writes it), and tools find the root from inside a bundle
+through it. <code>bundles</code> lists them, <code>split</code> makes a directory its own bundle,
+<code>rename</code> moves or renames one, <code>migrate</code> moves a concept between bundles,
+<code>archive</code> and <code>unarchive</code> retire and restore a concept or a whole bundle,
+<code>ingest keep_okf=true</code> merges one in, and <code>upgrade</code> converts OKF v0.1.</p>
+<p>Tools follow where you are: in a bundle, that bundle; at the knowledgebase
+root, every bundle (<code>lint</code>, <code>fix</code>, <code>baseline</code>, <code>status</code>, <code>list</code>, <code>search</code>,
+<code>recheck_plan</code>). Name files or directories to lint just those
+(<code>lint notes/a.md docs/</code>). Files are named the OKF way: a bundle and the
+path within it (<code>bundle=eng file=runbooks/deploy.md</code>), in every input and
+output. On the command line, without <code>bundle=</code>, paths are relative to where
+you are. Write tools act in the bundle the file belongs to. In a git work
+tree, files git ignores are skipped.</p>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py help                 # every tool, one line each
+uv run KnowledgeBaseMCP.py help move            # one tool: what it does, its arguments
+uv run KnowledgeBaseMCP.py lint format=text
+uv run KnowledgeBaseMCP.py init apply=true       # start a new bundle</code></pre>
+<p>Any tool runs as <code>&lt;name&gt; name=value ...</code> or <code>&lt;name&gt; '&lt;json object&gt;'</code>. Bare
+arguments fill the required ones in order (<code>move a.md b.md</code>); on <code>set</code>, any
+other <code>key=value</code> is frontmatter (<code>set a.md status=deprecated tags=[x,y]</code>).
+Write tools that touch many files default to <code>apply=false</code> and show a diff.</p>
+<p><code>--attest</code> records you, as <code>human:&lt;KB_USER&gt;</code> (else your git <code>user.email</code>), on
+<code>create</code> (<code>generated</code>), <code>verify</code> and <code>recheck_apply</code> (<code>verified</code>). It exists
+only on the command line: no MCP call can pass it.</p>
+<p>Output is JSON; <code>format=text</code> prints one key per line and diffs as is.</p>
+<p>Exit codes: 0 ok, 1 findings, 2 usage error.</p>
+<h2 id="layout">Layout<a class="headerlink" href="#layout" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code>kb/                          the knowledgebase (KB_ROOT)
+  index.md                   lists the bundles; no frontmatter
+  .gitattributes             log.md merge=union
+  eng/                       a bundle
+    index.md                 okf_version, then the list of its concepts
+    log.md                   its history (§9)
+    runbooks/
+      index.md               optional: this directory's concepts
+      deploy.md              a concept
+  archive/                   the archive bundle (read-only to editing tools)
+    eng/old-runbook.md       archived from eng</code></pre>
+<h3 id="indexmd">index.md<a class="headerlink" href="#indexmd" title="Permanent link">&para;</a></h3>
+<p>OKF §8: an index lists what is in its directory, for progressive disclosure.
+Every index has the same body shape, sections under headings with one entry
+per item:</p>
+<pre class="highlight"><code class="language-markdown"># Engineering
+
+Hand-written text is kept.
+
+&lt;!-- kb-index:start (generated by KnowledgeBaseMCP index; do not edit between the markers) --&gt;
+
+### runbooks
+
+* [Deploy](./runbooks/deploy.md) - How we deploy.
+
+&lt;!-- kb-index:end --&gt;</code></pre>
+<ul>
+<li>The tool owns what is between the markers and rebuilds it from frontmatter
+  (title, else first heading, else file name; <code>description</code>, else the first
+  sentence). Write anything else around them.</li>
+<li><strong>Knowledgebase root:</strong> no frontmatter (it is not a bundle). The list has one
+  entry per bundle, titled by that bundle's first heading. Tools find the
+  knowledgebase by walking up from a bundle to the nearest <code>index.md</code> that links
+  to it.</li>
+<li><strong>Bundle root:</strong> frontmatter holds only <code>okf_version: "0.2"</code>, which is what
+  makes the directory a bundle (§12). The list covers every concept, a section
+  per top-level folder.</li>
+<li><strong>Any other directory:</strong> no frontmatter. The list covers that directory's
+  concepts and subdirectories (<code>index dirs=true</code> writes one everywhere).</li>
+<li>Being listed counts as being linked, so a listed concept is not an orphan.</li>
+<li><code>get</code> synthesizes a missing index from frontmatter (§8 allows this).</li>
+</ul>
+<h3 id="logmd">log.md<a class="headerlink" href="#logmd" title="Permanent link">&para;</a></h3>
+<p>OKF §9: date headings, newest first, one entry per line. Each tool write adds an
+entry to the nearest <code>log.md</code> above the change, with a hidden unix-time stamp:</p>
+<pre class="highlight"><code class="language-markdown">## 2026-10-27
+
+* &lt;!-- 1761588000 --&gt; **Update**: Moved deploy.md to [ship.md](/runbooks/ship.md).</code></pre>
+<p><code>record "note"</code> writes one by hand (link the concept it is about). <code>log file=x.md</code>
+reads a concept's history: the entries linking to it in every <code>log.md</code> above it,
+and the git commits that changed it. <code>log</code> alone shows the bundle's recent
+entries.</p>
+<p><code>init</code> adds <code>log.md merge=union</code> to the knowledgebase's <code>.gitattributes</code>, so git
+keeps both sides when parallel branches log. After such a merge, <code>fix</code> merges
+duplicate date sections and orders stamped entries by time. A section with a
+hand-written, unstamped entry keeps its order.</p>
+<h3 id="the-archive">The archive<a class="headerlink" href="#the-archive" title="Permanent link">&para;</a></h3>
+<p><code>archive file=x.md bundle=eng</code> moves a concept to <code>archive/eng/x.md</code>.
+<code>archive bundle=eng</code> moves the whole bundle to <code>archive/eng/</code>, with its log;
+its <code>index.md</code> drops <code>okf_version</code>, since bundles do not nest. <code>unarchive
+eng/x.md</code> or <code>unarchive eng</code> puts them back. Links follow both ways, and lint
+warns on links into the archive (<code>archived_link</code>). Editing tools refuse
+archived concepts. That is the only enforcement: the files are plain files,
+so an editor or a commit can still change them.</p>
+<h2 id="register-with-an-mcp-client">Register with an MCP client<a class="headerlink" href="#register-with-an-mcp-client" title="Permanent link">&para;</a></h2>
+<p>Claude Code, for one bundle:</p>
+<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/bundle -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
+<p><code>KB_USER</code> prefills the reviewer id in <code>verify</code>'s confirmation prompt. The
+client loads the tool list at start. After editing the script, restart
+the client or reconnect the server (<code>/mcp</code> in Claude Code).</p>
+<h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint format=text      # what's wrong, each with a fix
+uv run KnowledgeBaseMCP.py fix apply=true        # mechanical repairs, then re-lint
+uv run KnowledgeBaseMCP.py lint format=text      # what's left needs you</code></pre>
+<p><code>scope=okf</code> limits the check to the spec; <code>scope=house</code> to hygiene (links,
+anchors, orphans, filenames, tags, generated indexes).</p>
+<h2 id="ci">CI<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h2>
+<p>Vendor <code>KnowledgeBaseMCP.py</code> into the bundle's repo, then:</p>
+<pre class="highlight"><code class="language-yaml"># .github/workflows/okf.yml
+name: okf
+on: [push, pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # provenance needs full history
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run KnowledgeBaseMCP.py lint scope=okf format=github</code></pre>
+<p>Findings show as annotations on the PR. <code>format=sarif</code> suits code scanning.
+On PRs, <code>since=origin/${{ github.base_ref }}</code> limits findings to the files the PR
+changed.
+On a large existing collection, commit a <code>baseline apply=true</code> snapshot and
+run <code>lint baseline=.okf-baseline.json</code>, so only new findings fail. The
+snapshot sits at the knowledgebase root and matches from any directory. CI lints;
+it does not push fixes (fork PRs get a read-only token anyway).</p>
+<p>pre-commit, lint only (a hook that edits files leaves the commit unstaged):</p>
+<pre class="highlight"><code class="language-yaml">repos:
+  - repo: local
+    hooks:
+      - id: okf-lint
+        name: OKF lint
+        entry: uv run KnowledgeBaseMCP.py lint format=text
+        language: system
+        pass_filenames: false</code></pre>
+<h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>web</code> maps links and citations: bundles at the knowledgebase root, concepts
+  in a bundle. <code>format=text</code> for the terminal, <code>format=mermaid</code> for anything
+  that draws Mermaid (GitHub, GitLab). In a bundle it shows links into other
+  bundles, not links from them.</li>
+<li><code>heatmap days=30</code> ranks concepts by how many commits changed them (the ones
+  most likely to collide across branches) and by how many people did; who
+  changes the most; and concepts only one person has ever touched. It needs git
+  history; index.md and log.md are left out.</li>
+<li><code>status</code> also lists what needs a person next: longest since review, oldest
+  drafts, concepts without sources, the longest concepts, and what goes stale
+  within <code>due_days</code>.</li>
+<li>Every write refreshes the generated index lists when they exist. In a busy
+  repo they conflict across PRs: take either side, then <code>fix apply=true</code>
+  rebuilds them.</li>
+<li>Provenance from git history is inferred (<code>basis: git-history</code>). Actors may
+  contain email addresses.</li>
+<li>A <code>sources[].via</code> call is what the agent says it ran, not proof.</li>
+<li>A human <code>verify</code> over MCP needs a client that supports elicitation
+  (confirmation prompts); otherwise the human runs it from the CLI.</li>
+<li><code>move</code>, <code>migrate</code>, <code>split</code>, <code>rename</code>, <code>archive</code> and <code>unarchive</code> rewrite links (code blocks included; read the diff)
+  and §6.2 path fields (<code>resource</code>, <code>computation</code>, <code>executor</code>/<code>attester</code>,
+  <code>sources[].resource</code>). A path field with spaces, or with neither a file
+  extension nor a leading <code>/</code>, <code>./</code> or <code>../</code>, is read as a description and
+  left alone.</li>
+<li>Symlinks are never followed.</li>
+<li>The archive needs bundles in subdirectories: a knowledgebase whose root is
+  itself a bundle has no place beside it for one.</li>
+<li>OKF makes <code>okf_version</code> optional; here it is how a bundle is found. An
+  undeclared bundle is any folder until you pass it as <code>bundle=</code>.</li>
+<li><code>ingest</code> reads directories, not tarballs or zips (§3); unpack them first.</li>
+<li>Attested Computations are checked as written (§10); nothing is executed or
+  attested here.</li>
+<li>From a shallow clone, <code>ingest</code> records the cloned commit as the origin but no
+  authorship.</li>
+<li><code>ingest</code> does not convert other formats, scan for secrets or check
+  licenses. Its plan says so.</li>
+</ul></article>
+        
+          <hr class="my-4">
+          <div class="d-flex justify-content-between">
+            
+              <a class="btn btn-outline-secondary btn-sm" href="..">
+                <i class="bi bi-arrow-left"></i> Home</a>
+            
+            
+              <a class="btn btn-outline-secondary btn-sm" href="../tools/">
+                Tools <i class="bi bi-arrow-right"></i></a>
+            
+          </div>
+        
+      </main>
+
+      
+        <aside class="col-xl-3 d-none d-xl-block py-4 docs-toc">
+          <div class="position-sticky" style="top: 5rem;">
+            <h6 class="text-uppercase small text-muted fw-bold mb-2">On this page</h6>
+            <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#guide">Guide</a>
+      <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#run">Run</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#layout">Layout</a>
+      <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#indexmd">index.md</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#logmd">log.md</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#the-archive">The archive</a>
+      
+    </li>
+  
+</ul>
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#register-with-an-mcp-client">Register with an MCP client</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#before-you-push">Before you push</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#ci">CI</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#known-limits">Known limits</a>
+      
+    </li>
+  
+</ul>
+    </li>
+  
+</ul>
+          </div>
+        </aside>
+      
+    </div>
+  </div>
+
+  <footer class="border-top mt-4 py-3">
+    <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
+      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Built with MkDocs + Bootstrap 5.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    (function () {
+      // Restore saved theme before paint-sensitive work.
+      var root = document.documentElement;
+      var saved = localStorage.getItem('docs-theme');
+      if (saved) root.setAttribute('data-bs-theme', saved);
+
+      // Make Markdown tables look like Bootstrap tables.
+      document.querySelectorAll('.docs-content table').forEach(function (t) {
+        t.classList.add('table', 'table-sm', 'table-striped', 'table-bordered', 'align-middle');
+        if (!t.parentElement.classList.contains('table-responsive')) {
+          var wrap = document.createElement('div');
+          wrap.className = 'table-responsive';
+          t.parentNode.insertBefore(wrap, t);
+          wrap.appendChild(t);
+        }
+      });
+
+      // Theme toggle (reload keeps mermaid in sync with the new theme).
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-bs-theme', next);
+        localStorage.setItem('docs-theme', next);
+        location.reload();
+      });
+
+      // Render mermaid: superfences emits <pre class="mermaid"><code>…</code></pre>.
+      if (window.mermaid) {
+        var dark = root.getAttribute('data-bs-theme') === 'dark';
+        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default' });
+        document.querySelectorAll('pre.mermaid').forEach(function (pre) {
+          var code = pre.querySelector('code');
+          if (code) pre.textContent = code.textContent;
+        });
+        try { mermaid.run({ querySelector: 'pre.mermaid' }); } catch (e) {}
+      }
+    })();
+  </script>
+</body>
+</html>
