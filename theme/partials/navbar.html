@@ -3,7 +3,7 @@
   Links go through the `url` filter so they resolve from any page depth.
 #}
 <header class="running-head">
-  <a class="title" href="{{ nav.homepage.url | url }}">{{ config.site_name }}</a>
+  <a class="title" href="{{ nav.homepage.url | url }}"><img src="{{ 'img/logo.svg' | url }}" alt="" width="44" height="44">{{ config.site_name }}</a>
   <nav aria-label="Site">
     {% for nav_item in nav %}
       <a href="{{ nav_item.url | url }}"{% if nav_item.active %} aria-current="page"{% endif %}>{{ nav_item.title }}</a>

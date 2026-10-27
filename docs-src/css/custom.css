@@ -34,7 +34,9 @@ a:hover { text-decoration-thickness: 2px; }
 .running-head .title, .running-head nav a, .label {
   font-variant: small-caps; letter-spacing: .08em; text-transform: lowercase;
 }
-.running-head .title { color: var(--ink); text-decoration: none; font-size: 1.15rem; font-weight: 600; }
+.running-head .title { display: inline-flex; align-items: center; gap: .55rem; color: var(--ink); text-decoration: none; font-size: 1.15rem; font-weight: 600; }
+.running-head .title img { display: block; }
+.hero { display: block; margin: 0 auto 1.25rem; width: 11rem; height: auto; }
 .running-head nav { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1.2rem; }
 .running-head nav a { color: var(--ink-2); text-decoration: none; }
 .running-head nav a:hover, .running-head nav a[aria-current] { color: var(--accent); }

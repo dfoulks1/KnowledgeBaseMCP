@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Not found · {{ config.site_name }}</title>
   <script>try { var t = localStorage.getItem('docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="icon" href="{{ 'img/logo.svg' | url }}" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
   {% for path in config.extra_css %}<link rel="stylesheet" href="{{ path | url }}">{% endfor %}
 </head>
