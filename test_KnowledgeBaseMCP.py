@@ -578,6 +578,10 @@ assert {f["file"] for f in L["findings"]} == {"new.md"} and not L["ok"]
 assert k.lint(bundle="src", since="HEAD~1", limit=0)["total"] > L["total"]
 assert "unknown ref" in raises(k.lint, bundle="src", since="nope")
 assert "git work tree" in raises(k.lint, since="HEAD")
+assert "warning" in k.heatmap() and k.heatmap()["files"] == []  # no git: says so, does not fail
+(kb / "box.tar.gz").write_bytes(b"x")
+assert "unpack it first" in raises(k.ingest, "box.tar.gz")
+(kb / "box.tar.gz").unlink()
 (src / "new.md").unlink()
 
 subprocess.run(["git", "clone", "-q", "--depth", "1", f"file://{src}", str(kb / "shallow")], check=True,

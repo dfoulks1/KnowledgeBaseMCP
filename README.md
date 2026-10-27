@@ -208,46 +208,36 @@ repos:
 
 <!-- --8<-- [end:ci] -->
 <!-- --8<-- [start:limits] -->
-## Known limits
+## Reading the knowledgebase
 
 - `web` maps links and citations: bundles at the knowledgebase root, concepts
   in a bundle. `format=text` for the terminal, `format=mermaid` for anything
-  that draws Mermaid (GitHub, GitLab). In a bundle it shows links into other
-  bundles, not links from them.
+  that draws Mermaid (GitHub, GitLab).
 - `heatmap days=30` ranks concepts by how many commits changed them (the ones
   most likely to collide across branches) and by how many people did; who
-  changes the most; and concepts only one person has ever touched. It needs git
-  history; index.md and log.md are left out.
-- `status` also lists what needs a person next: longest since review, oldest
+  changes the most; and concepts only one person has ever touched. index.md and
+  log.md are left out.
+- `status` lists what needs a person next: longest since review, oldest
   drafts, concepts without sources, the longest concepts, and what goes stale
   within `due_days`.
+- `log file=x.md` is a concept's history.
+
+## Known limits
+
 - Every write refreshes the generated index lists when they exist. In a busy
   repo they conflict across PRs: take either side, then `fix apply=true`
   rebuilds them.
-- Provenance from git history is inferred (`basis: git-history`). Actors may
-  contain email addresses.
-- A `sources[].via` call is what the agent says it ran, not proof.
 - A human `verify` over MCP needs a client that supports elicitation
   (confirmation prompts); otherwise the human runs it from the CLI.
-- `move`, `migrate`, `split`, `rename`, `archive` and `unarchive` rewrite links (code blocks included; read the diff)
-  and §6.2 path fields (`resource`, `computation`, `executor`/`attester`,
-  `sources[].resource`). A path field with spaces, or with neither a file
-  extension nor a leading `/`, `./` or `../`, is read as a description and
-  left alone.
-- Symlinks are never followed.
+- `move`, `migrate`, `split`, `rename`, `archive` and `unarchive` rewrite links
+  (code blocks included; read the diff) and §6.2 path fields (`resource`,
+  `computation`, `executor`/`attester`, `sources[].resource`). A path field
+  with spaces, or with neither a file extension nor a leading `/`, `./` or
+  `../`, is read as a description and left alone.
 - The archive needs bundles in subdirectories: a knowledgebase whose root is
   itself a bundle has no place beside it for one.
 - OKF makes `okf_version` optional; here it is how a bundle is found. An
   undeclared bundle is any folder until you pass it as `bundle=`.
-- `ingest` reads directories, not tarballs or zips (§3); unpack them first.
-- Attested Computations are checked as written (§10); nothing is executed or
-  attested here.
-- From a shallow clone, `ingest` documents where each file came from (the
-  repository and the commit) but reads no history, so it records no authorship.
-- Secret scanning (`lint`'s `secret`, and `ingest` skipping such files) matches
-  common credential shapes in current files: private keys, cloud, chat and API
-  tokens, JWTs, passwords in URLs. It is not exhaustive and does not read git
-  history; run [gitleaks](https://github.com/gitleaks/gitleaks) for that.
 - `ingest` does not convert other formats or check licenses. Its plan says so.
 
 <!-- --8<-- [end:limits] -->

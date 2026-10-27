@@ -1882,7 +1882,9 @@ def heatmap(days: int = 30, limit: int = 10, bundle: str = "") -> dict:
     r = root(bundle)
     g = repo(r)
     if not g:
-        raise ValueError("heatmap reads git history | fix: run it inside the knowledgebase's repository")
+        return {"days": days, "bundles": [], "files": [], "authors": [], "single_author": [],
+                "warning": "heatmap reads git history, and this knowledgebase is not in a git repository; "
+                           "nothing to show"}
 
     def changes(*since):  # {concept path: Counter(author)}
         out, who = collections.defaultdict(collections.Counter), ""
@@ -2044,6 +2046,9 @@ def ingest(source: str, bundle: str = "", rules: dict | None = None, status: str
     (`secrets` in the plan); run gitleaks on the source's history too."""
     src = Path(source).expanduser()
     src = (src if src.is_absolute() else KB_ROOT / src).resolve()
+    if src.is_file() and re.search(r"\.(zip|tar|tgz|tbz2|txz|tar\.(gz|bz2|xz|zst))$", src.name, re.IGNORECASE):
+        raise ValueError(f"{source} is an archive, and ingest reads folders | fix: unpack it first (`tar -xf` or "
+                         "`unzip` into an empty folder), then ingest that folder")
     if not src.is_dir():
         raise ValueError(f"{source} is not a directory | fix: clone or unpack the source locally first")
     if status and status not in STATUSES:

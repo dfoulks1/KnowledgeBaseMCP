@@ -60,6 +60,8 @@
   
     <li><a href="#ci">CI</a></li>
   
+    <li><a href="#reading-the-knowledgebase">Reading the knowledgebase</a></li>
+  
     <li><a href="#known-limits">Known limits</a></li>
   
 </ol></li>
@@ -213,46 +215,36 @@ it does not push fixes (fork PRs get a read-only token anyway).</p>
         entry: uv run KnowledgeBaseMCP.py lint format=text
         language: system
         pass_filenames: false</code></pre>
-<h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Link to this section">#</a></h2>
+<h2 id="reading-the-knowledgebase">Reading the knowledgebase<a class="headerlink" href="#reading-the-knowledgebase" title="Link to this section">#</a></h2>
 <ul>
 <li><code>web</code> maps links and citations: bundles at the knowledgebase root, concepts
   in a bundle. <code>format=text</code> for the terminal, <code>format=mermaid</code> for anything
-  that draws Mermaid (GitHub, GitLab). In a bundle it shows links into other
-  bundles, not links from them.</li>
+  that draws Mermaid (GitHub, GitLab).</li>
 <li><code>heatmap days=30</code> ranks concepts by how many commits changed them (the ones
   most likely to collide across branches) and by how many people did; who
-  changes the most; and concepts only one person has ever touched. It needs git
-  history; index.md and log.md are left out.</li>
-<li><code>status</code> also lists what needs a person next: longest since review, oldest
+  changes the most; and concepts only one person has ever touched. index.md and
+  log.md are left out.</li>
+<li><code>status</code> lists what needs a person next: longest since review, oldest
   drafts, concepts without sources, the longest concepts, and what goes stale
   within <code>due_days</code>.</li>
+<li><code>log file=x.md</code> is a concept's history.</li>
+</ul>
+<h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Link to this section">#</a></h2>
+<ul>
 <li>Every write refreshes the generated index lists when they exist. In a busy
   repo they conflict across PRs: take either side, then <code>fix apply=true</code>
   rebuilds them.</li>
-<li>Provenance from git history is inferred (<code>basis: git-history</code>). Actors may
-  contain email addresses.</li>
-<li>A <code>sources[].via</code> call is what the agent says it ran, not proof.</li>
 <li>A human <code>verify</code> over MCP needs a client that supports elicitation
   (confirmation prompts); otherwise the human runs it from the CLI.</li>
-<li><code>move</code>, <code>migrate</code>, <code>split</code>, <code>rename</code>, <code>archive</code> and <code>unarchive</code> rewrite links (code blocks included; read the diff)
-  and §6.2 path fields (<code>resource</code>, <code>computation</code>, <code>executor</code>/<code>attester</code>,
-  <code>sources[].resource</code>). A path field with spaces, or with neither a file
-  extension nor a leading <code>/</code>, <code>./</code> or <code>../</code>, is read as a description and
-  left alone.</li>
-<li>Symlinks are never followed.</li>
+<li><code>move</code>, <code>migrate</code>, <code>split</code>, <code>rename</code>, <code>archive</code> and <code>unarchive</code> rewrite links
+  (code blocks included; read the diff) and §6.2 path fields (<code>resource</code>,
+  <code>computation</code>, <code>executor</code>/<code>attester</code>, <code>sources[].resource</code>). A path field
+  with spaces, or with neither a file extension nor a leading <code>/</code>, <code>./</code> or
+  <code>../</code>, is read as a description and left alone.</li>
 <li>The archive needs bundles in subdirectories: a knowledgebase whose root is
   itself a bundle has no place beside it for one.</li>
 <li>OKF makes <code>okf_version</code> optional; here it is how a bundle is found. An
   undeclared bundle is any folder until you pass it as <code>bundle=</code>.</li>
-<li><code>ingest</code> reads directories, not tarballs or zips (§3); unpack them first.</li>
-<li>Attested Computations are checked as written (§10); nothing is executed or
-  attested here.</li>
-<li>From a shallow clone, <code>ingest</code> documents where each file came from (the
-  repository and the commit) but reads no history, so it records no authorship.</li>
-<li>Secret scanning (<code>lint</code>'s <code>secret</code>, and <code>ingest</code> skipping such files) matches
-  common credential shapes in current files: private keys, cloud, chat and API
-  tokens, JWTs, passwords in URLs. It is not exhaustive and does not read git
-  history; run <a href="https://github.com/gitleaks/gitleaks">gitleaks</a> for that.</li>
 <li><code>ingest</code> does not convert other formats or check licenses. Its plan says so.</li>
 </ul></article>
       
