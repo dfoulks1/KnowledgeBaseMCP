@@ -125,6 +125,11 @@
     </li>
   
     <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#dirs">dirs</a>
+      
+    </li>
+  
+    <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#fix">fix</a>
       
     </li>
@@ -241,6 +246,11 @@
   
     <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#verify">verify</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#vocab">vocab</a>
       
     </li>
   
@@ -478,6 +488,25 @@ uv run KnowledgeBaseMCP.py archive bundle=mkt apply=true</code></pre>
 <td><code>str</code></td>
 <td><code>''</code></td>
 </tr>
+<tr>
+<td><code>bundle</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="dirs">dirs<a class="headerlink" href="#dirs" title="Link to this section">#</a></h2>
+<p>The map: each directory holding concepts and how many. Small; read it before search or get.</p>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py dirs format=text</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>bundle</code></td>
 <td><code>str</code></td>
@@ -727,9 +756,10 @@ uv run KnowledgeBaseMCP.py ingest ~/old-wiki bundle=wiki apply=true</code></pre>
 </tbody>
 </table>
 <h2 id="lint">lint<a class="headerlink" href="#lint" title="Link to this section">#</a></h2>
-<p>Check the bundle against OKF v0.2. Run it before and after any change, and in CI. Each finding: kind; scope (okf = the spec, house = hygiene); severity (error fails, warning does not); file; message; fix (what to do); fixable (true: <code>fix</code> clears it). conformant: §11 holds for what was linted (frontmatter parses, <code>type</code> set, index.md and log.md well formed). ok: no errors in scope. scope: all | okf | house. baseline: path of a <code>baseline</code> snapshot; only new findings count. since: a git ref; only files changed since its merge base with HEAD count (committed, staged, unstaged or untracked), for PRs. Each finding names its bundle and its file within it (§2). all=true: this directory and every bundle in it, with a summary per bundle. Without bundle=, it lints where the user is: the bundle around the working directory and everything in it (at the knowledgebase root, everything). file / files: only those files or directories (paths within bundle=), each checked within its own bundle. limit=0 returns every finding. A kbmcp.nolint file lists paths lint skips, in .gitignore syntax.</p>
+<p>Check the bundle against OKF v0.2. Run it before and after any change, and in CI. Each finding: kind; scope (okf = the spec, house = hygiene); severity (error fails, warning does not); file; message; fix (what to do); fixable (true: <code>fix</code> clears it). conformant: §11 holds for what was linted (frontmatter parses, <code>type</code> set, index.md and log.md well formed). ok: no errors in scope. scope: all | okf | house. baseline: path of a <code>baseline</code> snapshot; only new findings count. since: a git ref; only files changed since its merge base with HEAD count (committed, staged, unstaged or untracked), for PRs. Each finding names its bundle and its file within it (§2). all=true: this directory and every bundle in it, with a summary per bundle. Without bundle=, it lints where the user is: the bundle around the working directory and everything in it (at the knowledgebase root, everything). file / files: only those files or directories (paths within bundle=), each checked within its own bundle. limit=0 returns every finding. A kbmcp.nolint file lists paths lint skips, in .gitignore syntax; a file holding the line <code>&lt;!-- kbmcp-nolint --&gt;</code> skips itself. only / ignore: finding kinds to keep or drop, like only=stub.</p>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint format=text
 uv run KnowledgeBaseMCP.py lint eng/runbooks/ format=text
+uv run KnowledgeBaseMCP.py lint only=stub,island format=text
 uv run KnowledgeBaseMCP.py lint scope=okf since=origin/main format=github</code></pre>
 <table>
 <thead>
@@ -777,6 +807,16 @@ uv run KnowledgeBaseMCP.py lint scope=okf since=origin/main format=github</code>
 </tr>
 <tr>
 <td><code>files</code></td>
+<td><code>Union</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>only</code></td>
+<td><code>Union</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>ignore</code></td>
 <td><code>Union</code></td>
 <td><code>None</code></td>
 </tr>
@@ -1105,8 +1145,9 @@ uv run KnowledgeBaseMCP.py provenance apply=true --attest</code></pre>
 </tbody>
 </table>
 <h2 id="search">search<a class="headerlink" href="#search" title="Link to this section">#</a></h2>
-<p>Case-insensitive text search over concepts; each hit is {bundle, file, line, text}.</p>
-<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py search postgres format=text</code></pre>
+<p>Concepts holding every word of query (case-insensitive, anywhere in the concept), best first. Each field a word matches adds its weight to the score: title 5, id 4, tags 3, type 2, description 2, body 1. Each hit: {bundle, file, title, type, score, matched (the fields), line, text (the first line holding a word, body first)}. Filters: type, tag, dir (a directory in the bundle); fields limits where words are looked for.</p>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py search postgres format=text
+uv run KnowledgeBaseMCP.py search deploy rollback type=Playbook dir=runbooks format=text</code></pre>
 <table>
 <thead>
 <tr>
@@ -1120,6 +1161,26 @@ uv run KnowledgeBaseMCP.py provenance apply=true --attest</code></pre>
 <td><code>query</code></td>
 <td><code>str</code></td>
 <td>required</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>tag</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>dir</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>fields</code></td>
+<td><code>Union</code></td>
+<td><code>None</code></td>
 </tr>
 <tr>
 <td><code>limit</code></td>
@@ -1207,7 +1268,7 @@ uv run KnowledgeBaseMCP.py provenance apply=true --attest</code></pre>
 </tbody>
 </table>
 <h2 id="status">status<a class="headerlink" href="#status" title="Link to this section">#</a></h2>
-<p>Bundle summary: concepts by type, by status (absent = stable, §5.4), by trust tier (§5.3), stale count (<code>stale_after</code> passed, §5.5), unparseable files, declared okf_version, conformance and lint totals; and the upkeep queues, five oldest or largest each: review (days since last <code>verified</code>), drafts (days since <code>generated.at</code>), sources (concepts with and without), words (total, longest: split candidates), due (<code>stale_after</code> within due_days). At a knowledgebase root without bundle=, <code>bundles</code> holds the same for each bundle.</p>
+<p>Bundle summary: concepts by type, by status (absent = stable, §5.4), by trust tier (§5.3), stale count (<code>stale_after</code> passed, §5.5), unparseable files, declared okf_version, conformance and lint totals; and the upkeep queues, five oldest or largest each: review (days since last <code>verified</code>), drafts (days since <code>generated.at</code>), sources (concepts with and without), words (total, longest: split candidates), due (<code>stale_after</code> within due_days); hubs (most linked-to concepts) and wanted (missing pages links point at, most wanted first). At a knowledgebase root without bundle=, <code>bundles</code> holds the same for each bundle.</p>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py status format=text</code></pre>
 <table>
 <thead>
@@ -1306,6 +1367,25 @@ uv run KnowledgeBaseMCP.py upgrade apply=true</code></pre>
 <td><code>bool</code></td>
 <td><code>False</code></td>
 </tr>
+<tr>
+<td><code>bundle</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="vocab">vocab<a class="headerlink" href="#vocab" title="Link to this section">#</a></h2>
+<p>Tags and types in use, most used first: the words <code>search</code>, <code>list</code> and <code>set</code> filter on.</p>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py vocab format=text</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>bundle</code></td>
 <td><code>str</code></td>

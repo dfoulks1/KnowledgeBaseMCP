@@ -299,7 +299,9 @@ the client or reconnect the server (<code>/mcp</code> in Claude Code).</p>
 uv run KnowledgeBaseMCP.py fix apply=true        # mechanical repairs, then re-lint
 uv run KnowledgeBaseMCP.py lint format=text      # what's left needs you</code></pre>
 <p><code>scope=okf</code> limits the check to the spec; <code>scope=house</code> to hygiene (links,
-anchors, orphans, filenames, tags, generated indexes).</p>
+anchors, orphans, islands, stubs, duplicate titles, reference links,
+filenames, tags, generated indexes). <code>only=</code> and <code>ignore=</code> keep or drop finding
+kinds: <code>lint only=stub,island</code>.</p>
 <h2 id="ci">CI<a class="headerlink" href="#ci" title="Link to this section">#</a></h2>
 <p>Vendor <code>KnowledgeBaseMCP.py</code> into the bundle's repo, then:</p>
 <pre class="highlight"><code class="language-yaml"># .github/workflows/okf.yml
@@ -324,7 +326,8 @@ it does not push fixes (fork PRs get a read-only token anyway).</p>
 <p>To skip files outright, list them in a <code>kbmcp.nolint</code> file. It works like
 <code>.gitignore</code>: it may sit in any directory, patterns are relative to it, the
 last match wins and <code>!</code> re-includes. At the knowledgebase root it covers every
-bundle. Skipped files are still read, so links to them resolve.</p>
+bundle. Skipped files are still read, so links to them resolve. One file can
+skip itself with the line <code>&lt;!-- kbmcp-nolint --&gt;</code>.</p>
 <pre class="highlight"><code class="language-gitignore"># kbmcp.nolint: agent instructions are not concepts
 AGENTS*
 CLAUDE.md
@@ -340,6 +343,16 @@ CLAUDE.md
         pass_filenames: false</code></pre>
 <h2 id="reading-the-knowledgebase">Reading the knowledgebase<a class="headerlink" href="#reading-the-knowledgebase" title="Link to this section">#</a></h2>
 <ul>
+<li>Find things in three steps, each small: <code>dirs</code> maps the bundle (each
+  directory and how many concepts it holds); <code>search</code> ranks concepts by where
+  every word matches (title, then id, tags, type, description, body), with
+  <code>type=</code>, <code>tag=</code> and <code>dir=</code> filters; <code>get</code> reads only the top hit. <code>vocab</code>
+  lists the tags and types in use, the words those filters take.</li>
+</ul>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py dirs format=text
+uv run KnowledgeBaseMCP.py search deploy rollback dir=runbooks format=text
+uv run KnowledgeBaseMCP.py get runbooks/deploy.md format=text</code></pre>
+<ul>
 <li><code>web</code> maps links and citations: bundles at the knowledgebase root, concepts
   in a bundle. <code>format=text</code> for the terminal, <code>format=mermaid</code> for anything
   that draws Mermaid (GitHub, GitLab).</li>
@@ -349,7 +362,8 @@ CLAUDE.md
   log.md are left out.</li>
 <li><code>status</code> lists what needs a person next: longest since review, oldest
   drafts, concepts without sources, the longest concepts, and what goes stale
-  within <code>due_days</code>.</li>
+  within <code>due_days</code>; the most linked-to concepts (<code>hubs</code>); and the pages links
+  want that do not exist yet (<code>wanted</code>), most wanted first.</li>
 <li><code>log file=x.md</code> is a concept's history.</li>
 </ul>
 <h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Link to this section">#</a></h2>

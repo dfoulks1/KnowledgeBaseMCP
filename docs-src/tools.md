@@ -88,6 +88,18 @@ uv run KnowledgeBaseMCP.py create runbooks/deploy type=Playbook description="How
 | `by` | `str` | `''` |
 | `bundle` | `str` | `''` |
 
+## dirs
+
+The map: each directory holding concepts and how many. Small; read it before search or get.
+
+```sh
+uv run KnowledgeBaseMCP.py dirs format=text
+```
+
+| Argument | Type | Default |
+|---|---|---|
+| `bundle` | `str` | `''` |
+
 ## fix
 
 Mechanical repairs, nothing that needs judgment: strip frontmatter from index.md files (§8; the root keeps okf_version), rebuild generated index lists, give each tag its most common spelling, and put log.md sections and entries back in order after a merge (§9). apply=False shows the diff (CLI exit 1 if there is work); apply=True writes, re-lints and returns `remaining` (CLI exit 1 if errors remain). Like lint, it defaults to where the user is and every bundle there; all=false keeps to one bundle.
@@ -198,11 +210,12 @@ uv run KnowledgeBaseMCP.py links db.md bundle=eng format=text
 
 ## lint
 
-Check the bundle against OKF v0.2. Run it before and after any change, and in CI. Each finding: kind; scope (okf = the spec, house = hygiene); severity (error fails, warning does not); file; message; fix (what to do); fixable (true: `fix` clears it). conformant: §11 holds for what was linted (frontmatter parses, `type` set, index.md and log.md well formed). ok: no errors in scope. scope: all | okf | house. baseline: path of a `baseline` snapshot; only new findings count. since: a git ref; only files changed since its merge base with HEAD count (committed, staged, unstaged or untracked), for PRs. Each finding names its bundle and its file within it (§2). all=true: this directory and every bundle in it, with a summary per bundle. Without bundle=, it lints where the user is: the bundle around the working directory and everything in it (at the knowledgebase root, everything). file / files: only those files or directories (paths within bundle=), each checked within its own bundle. limit=0 returns every finding. A kbmcp.nolint file lists paths lint skips, in .gitignore syntax.
+Check the bundle against OKF v0.2. Run it before and after any change, and in CI. Each finding: kind; scope (okf = the spec, house = hygiene); severity (error fails, warning does not); file; message; fix (what to do); fixable (true: `fix` clears it). conformant: §11 holds for what was linted (frontmatter parses, `type` set, index.md and log.md well formed). ok: no errors in scope. scope: all | okf | house. baseline: path of a `baseline` snapshot; only new findings count. since: a git ref; only files changed since its merge base with HEAD count (committed, staged, unstaged or untracked), for PRs. Each finding names its bundle and its file within it (§2). all=true: this directory and every bundle in it, with a summary per bundle. Without bundle=, it lints where the user is: the bundle around the working directory and everything in it (at the knowledgebase root, everything). file / files: only those files or directories (paths within bundle=), each checked within its own bundle. limit=0 returns every finding. A kbmcp.nolint file lists paths lint skips, in .gitignore syntax; a file holding the line `<!-- kbmcp-nolint -->` skips itself. only / ignore: finding kinds to keep or drop, like only=stub.
 
 ```sh
 uv run KnowledgeBaseMCP.py lint format=text
 uv run KnowledgeBaseMCP.py lint eng/runbooks/ format=text
+uv run KnowledgeBaseMCP.py lint only=stub,island format=text
 uv run KnowledgeBaseMCP.py lint scope=okf since=origin/main format=github
 ```
 
@@ -216,6 +229,8 @@ uv run KnowledgeBaseMCP.py lint scope=okf since=origin/main format=github
 | `all` | `Union` | `None` |
 | `file` | `str` | `''` |
 | `files` | `Union` | `None` |
+| `only` | `Union` | `None` |
+| `ignore` | `Union` | `None` |
 | `bundle` | `str` | `''` |
 
 ## list
@@ -358,15 +373,20 @@ uv run KnowledgeBaseMCP.py rename marketing bundle=mkt apply=true
 
 ## search
 
-Case-insensitive text search over concepts; each hit is {bundle, file, line, text}.
+Concepts holding every word of query (case-insensitive, anywhere in the concept), best first. Each field a word matches adds its weight to the score: title 5, id 4, tags 3, type 2, description 2, body 1. Each hit: {bundle, file, title, type, score, matched (the fields), line, text (the first line holding a word, body first)}. Filters: type, tag, dir (a directory in the bundle); fields limits where words are looked for.
 
 ```sh
 uv run KnowledgeBaseMCP.py search postgres format=text
+uv run KnowledgeBaseMCP.py search deploy rollback type=Playbook dir=runbooks format=text
 ```
 
 | Argument | Type | Default |
 |---|---|---|
 | `query` | `str` | required |
+| `type` | `str` | `''` |
+| `tag` | `str` | `''` |
+| `dir` | `str` | `''` |
+| `fields` | `Union` | `None` |
 | `limit` | `int` | `30` |
 | `offset` | `int` | `0` |
 | `bundle` | `str` | `''` |
@@ -403,7 +423,7 @@ uv run KnowledgeBaseMCP.py split notes apply=true
 
 ## status
 
-Bundle summary: concepts by type, by status (absent = stable, §5.4), by trust tier (§5.3), stale count (`stale_after` passed, §5.5), unparseable files, declared okf_version, conformance and lint totals; and the upkeep queues, five oldest or largest each: review (days since last `verified`), drafts (days since `generated.at`), sources (concepts with and without), words (total, longest: split candidates), due (`stale_after` within due_days). At a knowledgebase root without bundle=, `bundles` holds the same for each bundle.
+Bundle summary: concepts by type, by status (absent = stable, §5.4), by trust tier (§5.3), stale count (`stale_after` passed, §5.5), unparseable files, declared okf_version, conformance and lint totals; and the upkeep queues, five oldest or largest each: review (days since last `verified`), drafts (days since `generated.at`), sources (concepts with and without), words (total, longest: split candidates), due (`stale_after` within due_days); hubs (most linked-to concepts) and wanted (missing pages links point at, most wanted first). At a knowledgebase root without bundle=, `bundles` holds the same for each bundle.
 
 ```sh
 uv run KnowledgeBaseMCP.py status format=text
@@ -454,6 +474,18 @@ uv run KnowledgeBaseMCP.py verify db.md bundle=eng --attest promote=true
 | `file` | `str` | required |
 | `by` | `str` | `''` |
 | `promote` | `bool` | `False` |
+| `bundle` | `str` | `''` |
+
+## vocab
+
+Tags and types in use, most used first: the words `search`, `list` and `set` filter on.
+
+```sh
+uv run KnowledgeBaseMCP.py vocab format=text
+```
+
+| Argument | Type | Default |
+|---|---|---|
 | `bundle` | `str` | `''` |
 
 ## web

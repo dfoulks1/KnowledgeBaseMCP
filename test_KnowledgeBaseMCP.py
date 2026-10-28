@@ -176,6 +176,9 @@ assert {f["file"] for f in k.lint(bundle="bad", limit=0)["findings"]} == {"draft
 (kb / "bad/drafts/kbmcp.nolint").write_text("/keep.md\n")
 assert k.lint(bundle="bad")["total"] == 0 and k.lint(bundle="bad")["ok"]
 assert k.lint(bundle="bad", file="drafts/keep.md")["total"] == 0
+(kb / "bad/inline.md").write_text("no frontmatter\n<!-- kbmcp-nolint -->\n")
+(kb / "bad/quoted.md").write_text("no frontmatter, mentions `<!-- kbmcp-nolint -->`\n")
+assert {f["file"] for f in k.lint(bundle="bad", limit=0)["findings"]} == {"quoted.md"}
 assert all(k.glob_rx(p) for p in ("**/a", "a/**", "[!x]", r"\#x"))
 shutil.rmtree(kb / "bad")
 
@@ -429,14 +432,14 @@ assert (ws / ".gitattributes").read_text() == "log.md merge=union\nindex.md merg
 k.index(apply=True, bundle="a")
 k.index(apply=True, bundle="b")
 os.chdir(ws / "a/sub")
-L = k.lint(limit=0)
+L = k.lint(limit=0, ignore=["stub"])
 assert set(L["bundles"]) == {"a"} and {(f["bundle"], f["file"], f["kind"]) for f in L["findings"]} == {("a", "n.md", "cross_bundle")}, L
 code, out = cli("get", "file=c.md")  # CLI paths are relative to where you are
 assert code == 0 and (json.loads(out)["bundle"], json.loads(out)["file"]) == ("a", "sub/c.md")
 os.chdir(ws)
 L = k.lint(limit=0)
 assert set(L["bundles"]) == {".", "a", "b"} and L["ok"], L
-assert {("a", "n.md"), ("b", "m.md")} <= {(c["bundle"], c["file"]) for c in k.list_()["concepts"]} and any(h["bundle"] == "b" for h in k.search("description")["hits"])
+assert {("a", "n.md"), ("b", "m.md")} <= {(c["bundle"], c["file"]) for c in k.list_()["concepts"]} and any(h["bundle"] == "b" for h in k.search("m.md")["hits"])
 assert set(k.status()["bundles"]) == {"a", "b"} and "bundles" not in k.status(bundle="a")
 st = k.status(bundle="a")
 assert st["sources"] == {"with": 1, "without": 1} and st["words"]["longest"][0]["words"] >= 1 and st["due"] == []
@@ -656,5 +659,47 @@ g("remote", "set-url", "origin", "git@github.com:o/r.git")
 assert k.permalink(src, src.resolve())(src / "bot.md", "abc") == "https://github.com/o/r/blob/abc/bot.md"
 g("remote", "set-url", "origin", f"file://{src}")
 assert k.permalink(src, src.resolve()) is None
+
+# Ranked search, dirs, vocab, demand; new lint kinds and only/ignore.
+saved, rk = k.KB_ROOT, Path(tempfile.mkdtemp()).resolve()
+k.KB_ROOT = rk
+k.init(apply=True)
+long = "Plenty of words here, comfortably past the stub threshold for body text."
+(rk / "ops").mkdir()
+(rk / "ops/deploy.md").write_text(f"---\ntype: Playbook\ntitle: Deploy\ndescription: How we ship.\ntags: [ops]\n---\n"
+                                  f"{long}\nRollback with care. [r](rollback.md) [w](wanted.md) [me](deploy.md)\n")
+(rk / "ops/rollback.md").write_text(f"---\ntype: Playbook\ntitle: Rollback\ndescription: Undo a deploy.\ntags: [ops]\n"
+                                    f"---\n{long}\n[d](deploy.md) [w](wanted.md) [x][gone] [u]: http://u.example\n")
+(rk / "faq.md").write_text(f"---\ntype: Note\ntitle: Deploy\ndescription: Questions.\n---\n{long} deploy [d](ops/deploy.md)\n")
+(rk / "tiny.md").write_text("---\ntype: Note\ndescription: Tiny.\n---\n# Tiny\n\nShort.\n")
+(rk / "seed.md").write_text("---\ntype: Note\nstatus: draft\ndescription: Seed.\n---\nShort.\n")
+k.index(apply=True)
+h = k.search("deploy")["hits"]
+assert [x["file"] for x in h[:2]] == ["ops/deploy.md", "faq.md"] and h[0]["score"] > h[1]["score"] > h[-1]["score"], h
+assert h[0]["matched"][:2] == ["title", "id"] and h[0]["line"] == 8 and "(deploy.md)" in h[0]["text"]  # body first
+assert [x["file"] for x in k.search("deploy care")["hits"]] == ["ops/deploy.md"]  # every word, any field
+assert {x["file"] for x in k.search("deploy", type="Playbook", dir="ops")["hits"]} == {"ops/deploy.md", "ops/rollback.md"}
+assert [x["file"] for x in k.search("deploy", fields=["title"])["hits"]] == ["faq.md", "ops/deploy.md"]
+assert k.search("deploy", tag="nope")["total"] == 0
+raises(k.search, "")
+raises(k.search, "x", fields=["nope"])
+assert {(d["dir"], d["concepts"]) for d in k.dirs()["dirs"]} == {(".", 3), ("ops", 2)}
+assert k.vocab() == {"tags": {"ops": 2}, "types": {"Note": 3, "Playbook": 2}}
+st = k.status()
+assert st["wanted"] == [{"file": "ops/wanted.md", "links": 2}] and {"file": "ops/rollback.md", "links": 1} in st["hubs"]
+kinds_of = lambda **kw: {(f["file"], f["kind"]) for f in k.lint(limit=0, **kw)["findings"]}
+L = kinds_of()
+assert {("tiny.md", "stub"), ("ops/deploy.md", "self_link"), ("ops/rollback.md", "undefined_ref"),
+        ("faq.md", "duplicate_title"), ("ops/deploy.md", "duplicate_title")} <= L, L
+assert ("seed.md", "stub") not in L and not any(x == "unused_ref" for _, x in L)  # [u]: mid-line is no definition
+(rk / "island1.md").write_text(f"---\ntype: Note\ndescription: I.\n---\n{long} [2](island2.md)\n\n[u]: http://u.example\n")
+(rk / "island2.md").write_text(f"---\ntype: Note\ndescription: I.\n---\n{long} [1](island1.md)\n")
+L = kinds_of()
+assert ("island1.md", "island") in L and ("island1.md", "unused_ref") in L and not any(x == "island" and f.startswith("ops") for f, x in L), L
+assert {x for _, x in kinds_of(only=["stub"])} == {"stub"} and "stub" not in {x for _, x in kinds_of(ignore=["stub"])}
+raises(k.lint, only=["nope"])
+src = Path(k.__file__).read_text()
+assert set(re.findall(r'finding\(\s*"(\w+)"', src)) | set(k.ERR) | {"island"} <= k.KINDS
+k.KB_ROOT = saved
 
 print("ok")

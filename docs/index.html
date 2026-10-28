@@ -117,7 +117,7 @@
   </div></div>
   <div class="col-md-4"><div class="card p-3">
     <h3>A person at a terminal</h3>
-    <p>No AI needed: <code>help</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
+    <p>No AI needed: <code>help</code>, ranked <code>search</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
   </div></div>
 </div>
 
@@ -146,6 +146,10 @@ uv run KnowledgeBaseMCP.py init bundle=eng apply=true
 # write a concept
 uv run KnowledgeBaseMCP.py create eng/runbooks/deploy \
     type=Playbook description="How we deploy."
+
+# find it: the map, then the best matches
+uv run KnowledgeBaseMCP.py dirs format=text
+uv run KnowledgeBaseMCP.py search deploy format=text
 
 # what's wrong, each with a fix; then the mechanical repairs
 uv run KnowledgeBaseMCP.py lint format=text
@@ -203,8 +207,10 @@ format=mermaid</code> draws both for the whole knowledgebase:</p>
 <p>Solid arrows are links; dotted ones are citations. The boxes are bundles, so
 an arrow that leaves its box crosses into another bundle. That is allowed,
 but lint flags it because the link breaks if one bundle is published alone.
-From here, <code>lint</code> checks every file against the spec, <code>status</code> says what
-needs a person next, and <code>heatmap</code> shows where the work is.</p>
+From here, <code>dirs</code> and <code>search</code> find a concept, <code>lint</code> checks every file
+against the spec, <code>status</code> says what needs a person next (including the
+pages links want that nobody has written), and <code>heatmap</code> shows where the
+work is.</p>
 <p>Next: the <a href="guide/">guide</a> for layout and workflows, the <a href="tools/">tools</a>
 for every command, and the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">OKF v0.2 specification</a> it implements.</p></article>
         

@@ -191,7 +191,9 @@ uv run KnowledgeBaseMCP.py lint format=text      # what's left needs you
 ```
 
 `scope=okf` limits the check to the spec; `scope=house` to hygiene (links,
-anchors, orphans, filenames, tags, generated indexes).
+anchors, orphans, islands, stubs, duplicate titles, reference links,
+filenames, tags, generated indexes). `only=` and `ignore=` keep or drop finding
+kinds: `lint only=stub,island`.
 
 ## CI
 
@@ -223,7 +225,8 @@ it does not push fixes (fork PRs get a read-only token anyway).
 To skip files outright, list them in a `kbmcp.nolint` file. It works like
 `.gitignore`: it may sit in any directory, patterns are relative to it, the
 last match wins and `!` re-includes. At the knowledgebase root it covers every
-bundle. Skipped files are still read, so links to them resolve.
+bundle. Skipped files are still read, so links to them resolve. One file can
+skip itself with the line `<!-- kbmcp-nolint -->`.
 
 ```gitignore
 # kbmcp.nolint: agent instructions are not concepts
@@ -249,6 +252,18 @@ repos:
 <!-- --8<-- [start:limits] -->
 ## Reading the knowledgebase
 
+- Find things in three steps, each small: `dirs` maps the bundle (each
+  directory and how many concepts it holds); `search` ranks concepts by where
+  every word matches (title, then id, tags, type, description, body), with
+  `type=`, `tag=` and `dir=` filters; `get` reads only the top hit. `vocab`
+  lists the tags and types in use, the words those filters take.
+
+  ```sh
+  uv run KnowledgeBaseMCP.py dirs format=text
+  uv run KnowledgeBaseMCP.py search deploy rollback dir=runbooks format=text
+  uv run KnowledgeBaseMCP.py get runbooks/deploy.md format=text
+  ```
+
 - `web` maps links and citations: bundles at the knowledgebase root, concepts
   in a bundle. `format=text` for the terminal, `format=mermaid` for anything
   that draws Mermaid (GitHub, GitLab).
@@ -258,7 +273,8 @@ repos:
   log.md are left out.
 - `status` lists what needs a person next: longest since review, oldest
   drafts, concepts without sources, the longest concepts, and what goes stale
-  within `due_days`.
+  within `due_days`; the most linked-to concepts (`hubs`); and the pages links
+  want that do not exist yet (`wanted`), most wanted first.
 - `log file=x.md` is a concept's history.
 
 ## Known limits

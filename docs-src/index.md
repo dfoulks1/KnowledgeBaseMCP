@@ -19,7 +19,7 @@
   </div></div>
   <div class="col-md-4"><div class="card p-3">
     <h3>A person at a terminal</h3>
-    <p>No AI needed: <code>help</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
+    <p>No AI needed: <code>help</code>, ranked <code>search</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
   </div></div>
 </div>
 
@@ -60,6 +60,10 @@ uv run KnowledgeBaseMCP.py init bundle=eng apply=true
 # write a concept
 uv run KnowledgeBaseMCP.py create eng/runbooks/deploy \
     type=Playbook description="How we deploy."
+
+# find it: the map, then the best matches
+uv run KnowledgeBaseMCP.py dirs format=text
+uv run KnowledgeBaseMCP.py search deploy format=text
 
 # what's wrong, each with a fix; then the mechanical repairs
 uv run KnowledgeBaseMCP.py lint format=text
@@ -132,8 +136,10 @@ graph LR
 Solid arrows are links; dotted ones are citations. The boxes are bundles, so
 an arrow that leaves its box crosses into another bundle. That is allowed,
 but lint flags it because the link breaks if one bundle is published alone.
-From here, `lint` checks every file against the spec, `status` says what
-needs a person next, and `heatmap` shows where the work is.
+From here, `dirs` and `search` find a concept, `lint` checks every file
+against the spec, `status` says what needs a person next (including the
+pages links want that nobody has written), and `heatmap` shows where the
+work is.
 
 Next: the [guide](guide.md) for layout and workflows, the [tools](tools.md)
 for every command, and the [OKF v0.2 specification][okf] it implements.

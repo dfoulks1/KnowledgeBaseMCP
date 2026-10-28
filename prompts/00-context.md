@@ -27,7 +27,7 @@ work cheaper and more consistent, not possible.
 
 ## Tools
 
-Read: `lint`, `status`, `list`, `links`, `search`, `get`, `recheck_plan`, `heatmap`, `web`, `log`,
+Read: `lint`, `status`, `list`, `links`, `dirs`, `search`, `vocab`, `get`, `recheck_plan`, `heatmap`, `web`, `log`,
 `bundles`; the spec as resource `okf://spec`.
 Write: `init`, `create`, `set`, `move`, `migrate`, `split`, `rename`, `archive`,
 `unarchive`, `record`, `fix`, `index`,
