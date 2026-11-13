@@ -42,6 +42,22 @@
             <li class="nav-item">
               <a class="nav-link "
                  
+                 href="../getting-started/">Getting started</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../understanding-okf/">Understanding OKF</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
                  href="../guide/">Guide</a>
             </li>
           
@@ -1041,7 +1057,7 @@ uv run KnowledgeBaseMCP.py lint scope=okf since=origin/main format=github</code>
 </tbody>
 </table>
 <h2 id="passages">passages<a class="headerlink" href="#passages" title="Link to this section">#</a></h2>
-<p>The passages that best answer query, for you to read and cite. Each concept is cut into one passage per heading section, ranked by BM25 (rarer words count more; any word may match, no stemming), with the heading path, title, tags, type and description counting too. Concepts many others link to rank a little higher (hubs). With semantic on, passages are also matched by meaning (embeddings) and the two rankings are fused. Each hit: {bundle, file, line, heading, score, title, type, status, tier (trust, §5.3), stale, links (inbound), text}. Answer from the text, cite the file and line, and say so when tier is unverified or stale. No hit: gap is true, so tell the user the knowledgebase has nothing, rather than guess. Filters as in search. Everything is indexed in one SQLite file (index in kbmcp.yaml), updated from the files that changed, or only by <code>reindex</code> when build is manual; semantic mode also downloads its model once.</p>
+<p>The passages that best answer query, for you to read and cite. Each concept is cut into one passage per heading section, ranked by BM25 (rarer words count more; any word may match, no stemming), with the heading path, title, tags, type and description counting too. Concepts many others link to rank a little higher (hubs). With semantic on, passages are also matched by meaning (embeddings) and the two rankings are fused. Each hit: {bundle, file, line, heading, match (percent of the best hit's score: the top hit is 100, so it says how the others compare, not how good the best one is), title, type, status, tier (trust, §5.3), stale, links (inbound), text}. Answer from the text, cite the file and line, and say so when tier is unverified or stale. No hit: gap is true, so tell the user the knowledgebase has nothing, rather than guess. Filters as in search. Everything is indexed in one SQLite file (index in kbmcp.yaml), updated from the files that changed, or only by <code>reindex</code> when build is manual; semantic mode also downloads its model once.</p>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text
 uv run KnowledgeBaseMCP.py passages rollback tag=ops limit=3</code></pre>
 <table>

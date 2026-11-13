@@ -59,8 +59,8 @@ Then add it to your MCP client's servers file (`.mcp.json` for Claude Code;
 A `kbmcp.yaml` marks the base of a knowledgebase: the server finds it from the
 project folder up (or take `--config path`), and it sets your id, what the
 knowledgebase is about, and the search settings. It is local config, kept out of git (`config apply=true` writes one and ignores it); everyone has their own ([the guide](guide.md#run) has every key). To give an agent fewer
-tools, register the server with a role: `researcher` (find and read),
-`scribe` (write) or `curator` (upkeep). [The guide](guide.md#roles-a-smaller-tool-list-per-agent) has the lists.
+tools, register the server with a role: `read` (find and read, about 1,150 tokens),
+`structure`, `write` or `lifecycle` (curate the collection). [The guide](guide.md#roles-a-smaller-tool-list-per-agent) has the lists.
 
 Or work from the terminal, no AI needed:
 
@@ -157,7 +157,9 @@ against the spec, `status` says what needs a person next (including the
 pages links want that nobody has written), and `heatmap` shows where the
 work is.
 
-Next: the [guide](guide.md) for layout and workflows, the [tools](tools.md)
+Next: [getting started](getting-started.md) for a ten-minute walkthrough,
+[understanding OKF](understanding-okf.md) for what the format is and why it is built this way,
+the [guide](guide.md) for layout and workflows, the [tools](tools.md)
 for every command, and the [OKF v0.2 specification][okf] it implements.
 
 [okf]: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md

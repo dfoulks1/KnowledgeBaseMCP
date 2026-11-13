@@ -830,17 +830,17 @@ def server(yaml_text="", *argv, **env):
     (cfg / "kbmcp.yaml").write_text(yaml_text)
     e = {kk: v for kk, v in os.environ.items() if kk != "KB_ROLE"} | {"PYTHONPATH": str(HERE)} | env
     return subprocess.run([sys.executable, "-c", list_tools, *argv], cwd=cfg, env=e, capture_output=True, text=True, check=False)
-r = server("", "--role", "researcher")
-assert set(r.stdout.split()) == k.ROLES["researcher"], r
-r = server("", KB_ROLE="scribe,curator")
-assert set(r.stdout.split()) == k.ROLES["scribe"] | k.ROLES["curator"], r
-r = server("roles: [researcher]\n")  # the others are off: only researcher is offered
-assert set(r.stdout.split()) == k.ROLES["researcher"], r
-r = server("roles: [researcher]\n", "--role=curator")  # asking for a role that is off refuses
+r = server("", "--role", "read")
+assert set(r.stdout.split()) == k.ROLES["read"] == {"dirs", "get", "passages", "search"}, r
+r = server("", KB_ROLE="write,lifecycle")
+assert set(r.stdout.split()) == k.ROLES["write"] | k.ROLES["lifecycle"], r
+r = server("roles: [read]\n")  # the others are off: only read is offered
+assert set(r.stdout.split()) == k.ROLES["read"], r
+r = server("roles: [read]\n", "--role=lifecycle")  # asking for a role that is off refuses
 assert r.returncode and "off in kbmcp.yaml" in r.stderr, r
 r = server("roles: [wizard]\n")
 assert r.returncode and "unknown role wizard" in r.stderr, r
-assert k.opt_arg(["--role", "scribe", "lint"], "--role") == ("scribe", ["lint"]) and k.opt_arg(["--role=a"], "--role") == ("a", [])
+assert k.opt_arg(["--role", "write", "lint"], "--role") == ("write", ["lint"]) and k.opt_arg(["--role=a"], "--role") == ("a", [])
 # the config file marks the knowledgebase: found from the working directory or named by --config; KB_ROOT is refused.
 probe = "import sys; sys.argv = ['x', *sys.argv[1:]]; import KnowledgeBaseMCP as k; print(k.KB_ROOT); print(k.INSTRUCTIONS)"
 def where(cwd, *argv, **env):
@@ -912,6 +912,20 @@ k.KB_ROOT = saved_root
 (rk / "plain.md").write_text("No frontmatter here, but it links [to a concept](seed.md).\n")
 assert ("plain.md", "no_frontmatter") in kinds_of()
 (rk / "plain.md").unlink()
+# passages: match is a percent of the best hit (a lone hit is 100); the "land it by PR" hint needs a git work tree.
+M = k.passages("quokka", dir="hub")["hits"]
+assert M[0]["match"] == 100 and all(isinstance(h["match"], int) and 0 <= h["match"] <= 100 for h in M) and "score" not in M[0], M
+assert [h["match"] for h in k.passages("zorblax nothingelse")["hits"]] in ([], [100])
+(rk / "solo.md").write_text("---\ntype: Note\ndescription: x\n---\nA lone ocelot sentence.\n")
+assert [h["match"] for h in k.passages("ocelot")["hits"]] == [100]
+(rk / "solo.md").unlink()
+assert "next" not in k.create("hintless", type="Note")  # rk is not a git work tree
+(rk / "hintless.md").unlink()
+gr2 = Path(tempfile.mkdtemp()).resolve()
+subprocess.run(["git", "init", "-q", str(gr2)], check=True)
+k.KB_ROOT = gr2
+assert "next" in k.init(apply=True)  # a git work tree: there is a diff to review
+k.KB_ROOT = rk
 k.KB_ROOT = saved
 
 print("ok")

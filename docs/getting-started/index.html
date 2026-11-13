@@ -1,0 +1,461 @@
+
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Getting started · KnowledgeBaseMCP</title>
+  <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
+  <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/pygments.css"><link rel="stylesheet" href="../css/custom.css">
+</head>
+<body>
+  
+<nav class="navbar navbar-expand-lg sticky-top site-nav">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="..">
+      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">KnowledgeBaseMCP
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#site-nav" aria-controls="site-nav"
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="site-nav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="..">Home</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link active"
+                 aria-current="page"
+                 href="./">Getting started</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../understanding-okf/">Understanding OKF</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../guide/">Guide</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../tools/">Tools</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../contributing/">Contributing</a>
+            </li>
+          
+        
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle "
+                 href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                AI source material
+              </a>
+              <ul class="dropdown-menu">
+                
+                  <li>
+                    <a class="dropdown-item "
+                       href="../prompts/00-context/">Context</a>
+                  </li>
+                
+                  <li>
+                    <a class="dropdown-item "
+                       href="../prompts/rewrite-brief/">Rewrite brief</a>
+                  </li>
+                
+              </ul>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">OKF v0.2</a>
+            </li>
+          
+        
+      </ul>
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+               target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-github"></i> GitHub
+            </a>
+          </li>
+        
+        <li class="nav-item d-flex align-items-center">
+          <button class="btn btn-sm btn-outline-secondary ms-lg-2" id="theme-toggle"
+                  type="button" title="Toggle light/dark" aria-label="Toggle theme">
+            <i class="bi bi-circle-half"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  <div class="container-fluid px-3 px-lg-4">
+    <div class="docs-grid with-toc">
+      
+        <aside class="d-none d-lg-block docs-toc">
+          <div class="position-sticky py-5" style="top: 3.5rem; max-height: calc(100vh - 3.5rem); overflow-y: auto;">
+            <h6 class="text-uppercase small text-body-secondary fw-semibold mb-3">On this page</h6>
+            <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#what-this-is-in-plain-words">What this is, in plain words</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#1-install-uv">1. Install uv</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#2-make-a-knowledgebase">2. Make a knowledgebase</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#3-ask-it-a-question">3. Ask it a question</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#4-let-it-catch-mistakes">4. Let it catch mistakes</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#5-say-where-a-fact-came-from-and-who-checked-it">5. Say where a fact came from, and who checked it</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#6-connect-an-ai-assistant">6. Connect an AI assistant</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#7-keep-it-checked-automatically">7. Keep it checked automatically</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#if-something-goes-wrong">If something goes wrong</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#where-next">Where next</a>
+      
+    </li>
+  
+</ul>
+          </div>
+        </aside>
+      
+      <main class="py-5 docs-content">
+        
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+              <li class="breadcrumb-item"><a href="..">Home</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Getting started</li>
+            </ol>
+          </nav>
+        
+        <article><h1 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Link to this section">#</a></h1>
+<div class="admonition note">
+<p class="admonition-title">AI-generated</p>
+<p>Written with Claude Opus 5.5 and Claude Sonnet 5.5, under human review. Every command and output on this page was run for real.</p>
+</div>
+<p>In about ten minutes you will have a small knowledgebase on your own disk, ask it a question and get an answer
+with the file and line to cite, catch a mistake with the checker, record where a fact came from and who checked
+it, and connect an AI assistant to it. You do not need to know anything about AI tooling to start, and nothing
+here sends your notes anywhere.</p>
+<h2 id="what-this-is-in-plain-words">What this is, in plain words<a class="headerlink" href="#what-this-is-in-plain-words" title="Link to this section">#</a></h2>
+<p>A <strong>knowledgebase</strong> here is a folder of Markdown files, one idea per file. Each file starts with a short header
+of facts about it: what kind of thing it is, a one-line description, where it came from, who checked it. The
+file format is called <a href="../understanding-okf/">Open Knowledge Format</a> (OKF), and it is deliberately plain: if you
+can open a text file, you can read it, and if you use git, you can version it.</p>
+<p>KnowledgeBaseMCP is the tool that looks after such a folder. It does three jobs, for three kinds of user:</p>
+<ul>
+<li><strong>A person at a terminal</strong> can search the notes, check them, and keep them tidy. No AI involved.</li>
+<li><strong>An AI assistant</strong> (through MCP, the protocol assistants use to call tools) can look things up in the notes
+  and answer from them, saying which file and line it used and how far to trust it.</li>
+<li><strong>CI</strong>, your automated checks, can fail a change that leaves the notes in a bad shape.</li>
+</ul>
+<p>It cares about <em>how a note is written</em>, never about <em>what it says</em>. It will tell you a note has no header, a link
+is broken or a fact has no source. It will not tell you the fact is wrong. That judgement stays with people.</p>
+<h2 id="1-install-uv">1. Install uv<a class="headerlink" href="#1-install-uv" title="Link to this section">#</a></h2>
+<p>The tool runs through <a href="https://docs.astral.sh/uv/">uv</a>, a fast Python launcher. If you do not have it:</p>
+<pre class="highlight"><code class="language-sh">curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
+<p>There is nothing else to install and nothing to clone. This line runs the tool straight from its repository,
+fetching what it needs the first time. Make a shortcut so the rest of this page is short:</p>
+<pre class="highlight"><code class="language-sh">alias kb='uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp'
+kb help          # every tool, one line each (35 of them)</code></pre>
+<h2 id="2-make-a-knowledgebase">2. Make a knowledgebase<a class="headerlink" href="#2-make-a-knowledgebase" title="Link to this section">#</a></h2>
+<p>Make an empty folder and start a knowledgebase in it:</p>
+<pre class="highlight"><code class="language-sh">mkdir notes &amp;&amp; cd notes
+kb init apply=true format=text</code></pre>
+<p>Most commands that change files show you a plan first and only act when you add <code>apply=true</code>. Here is what
+<code>init</code> wrote:</p>
+<pre class="highlight"><code class="language-text">edited: {".": ["index.md", "log.md"]}
+gitattributes: ["log.md merge=union", "index.md merge=union"]</code></pre>
+<p><code>index.md</code> is a generated table of contents for the folder, and <code>log.md</code> is its history, newest first. Now
+write two notes. Each has a few real sentences, because a note with an empty body gives the search nothing to
+find:</p>
+<pre class="highlight"><code class="language-sh">kb create deploy type=Playbook title="Deploy" description="How we ship a release." tags=ops \
+   body='Run the deploy script, then check the dashboard. If something looks wrong, follow [the rollback steps](rollback.md).' format=text
+
+kb create rollback type=Playbook title="Rollback" description="How to undo a bad release." tags=ops \
+   body='To roll back a release, redeploy the previous tag, then confirm the dashboard is green. Back to [Deploy](deploy.md).' format=text</code></pre>
+<p>Open <code>deploy.md</code> in any editor. This is the whole file, and the whole format:</p>
+<pre class="highlight"><code class="language-markdown">---
+type: Playbook
+title: Deploy
+description: How we ship a release.
+tags:
+- ops
+---
+
+# Deploy
+
+Run the deploy script, then check the dashboard. If something looks wrong, follow [the rollback steps](rollback.md).</code></pre>
+<p>The part between the <code>---</code> lines is the header (OKF calls it <em>frontmatter</em>); the rest is ordinary Markdown. The
+only header line OKF insists on is <code>type</code>. You can edit these files by hand at any time: the tool is a
+convenience, not a gatekeeper.</p>
+<h2 id="3-ask-it-a-question">3. Ask it a question<a class="headerlink" href="#3-ask-it-a-question" title="Link to this section">#</a></h2>
+<pre class="highlight"><code class="language-sh">kb passages 'how do I undo a bad release' format=text</code></pre>
+<pre class="highlight"><code class="language-text">total: 2
+gap: false
+hits:
+  - file: rollback.md, line: 10, heading: Rollback, match: 100, tier: unverified, stale: false, text: To roll back a release, redeploy the previous tag, ...
+  - file: deploy.md, line: 10, heading: Deploy, match: 58, tier: unverified, stale: false, text: Run the deploy script, then check the dashboard. ...</code></pre>
+<p><code>passages</code> cuts every note into sections at its headings and returns the sections that best answer the
+question, best first. For each one you get:</p>
+<ul>
+<li><strong>file and line</strong>, so an answer can say exactly where it came from;</li>
+<li><strong>match</strong>, a percentage of the <em>best hit's</em> score. The top hit is always 100, so read it as "how the others
+  compare", not "how good the best one is";</li>
+<li><strong>tier</strong> and <strong>stale</strong>, so a reader knows whether anyone has checked the passage and whether it has expired
+  (section 5);</li>
+<li><strong>gap: true</strong> when nothing matches at all. That is a real answer: the knowledgebase has nothing on the
+  subject, and an assistant should say so, not guess.</li>
+</ul>
+<p>Search is by words (rarer words count more), so "undo" finds the note whose description says "undo". It does not
+know that "revert" means "undo". If you want that, <a href="../guide/#reading-the-knowledgebase">semantic search</a> matches
+by meaning, at the cost of a model download. Other ways in: <code>dirs</code> (a map of what is there), <code>search</code> (whole
+notes by words), <code>get</code> (read one note) and <code>list</code> (filter by type, tag, status or trust).</p>
+<h2 id="4-let-it-catch-mistakes">4. Let it catch mistakes<a class="headerlink" href="#4-let-it-catch-mistakes" title="Link to this section">#</a></h2>
+<pre class="highlight"><code class="language-sh">kb lint format=text</code></pre>
+<pre class="highlight"><code class="language-text">knowledgebasemcp lint: ok: 2 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True</code></pre>
+<p><code>lint</code> checks every file against the format and some house rules (broken links, empty notes, notes nothing links
+to, duplicate titles, secrets that look like keys). It always ends with that one verdict line, pass or fail, so
+you can see it ran. Now drop in a file with no header:</p>
+<pre class="highlight"><code class="language-sh">echo 'just some notes, no header' &gt; scratch.md
+kb lint format=text</code></pre>
+<pre class="highlight"><code class="language-text">scratch.md: error: no_frontmatter: no frontmatter (§4) | fix: start the file with a `---` block holding at least `type:`
+knowledgebasemcp lint: FAILED: 3 concept(s) in 1 bundle(s) checked, 1 finding(s), conformant: False</code></pre>
+<p>Every finding names the file, what is wrong and how to fix it, and the command exits with a failure code, which
+is what makes it useful in CI. Some problems are purely mechanical (a stale table of contents, inconsistent tag
+spelling), and <code>kb fix apply=true</code> repairs those for you. Delete <code>scratch.md</code> before going on.</p>
+<h2 id="5-say-where-a-fact-came-from-and-who-checked-it">5. Say where a fact came from, and who checked it<a class="headerlink" href="#5-say-where-a-fact-came-from-and-who-checked-it" title="Link to this section">#</a></h2>
+<p>Notes get trusted too easily or not at all. OKF gives you two small, honest tools for that:</p>
+<pre class="highlight"><code class="language-sh">kb cite deploy.md resource=https://example.com/runbook title="Ops runbook" format=text
+kb verify deploy.md by=process:docs-check format=text</code></pre>
+<p><code>cite</code> records a source and prints a footnote tag, <code>[^runbook]</code>, to put next to the claim it backs. <code>verify</code>
+records that someone or something confirmed the note, and when. Both write to the header:</p>
+<pre class="highlight"><code class="language-yaml">sources:
+- id: runbook
+  resource: https://example.com/runbook
+  title: Ops runbook
+  retrieved_at: 2026-11-13T15:49:32Z
+verified:
+- by: process:docs-check
+  at: 2026-11-13T15:49:32Z</code></pre>
+<p>The trust tier comes only from who verified: nobody means <strong>unverified</strong>, a script or agent means
+<strong>machine-confirmed</strong>, and a person (<code>human:&lt;id&gt;</code>) means <strong>human-reviewed</strong>. <code>passages</code> shows the tier on every
+hit, and <code>kb list tier=unverified</code> finds what still needs a person. A person's review is recorded only with
+that person's own confirmation (a prompt over MCP, or <code>--attest</code> at your terminal), never by an AI on your
+behalf. These tiers are advisory labels, not access control. If
+a note should expire, set <code>stale_after</code> in its header, and <code>passages</code> will flag it once the date passes.</p>
+<h2 id="6-connect-an-ai-assistant">6. Connect an AI assistant<a class="headerlink" href="#6-connect-an-ai-assistant" title="Link to this section">#</a></h2>
+<p>First, give the knowledgebase a settings file. <code>kbmcp.yaml</code> sits at the root of the knowledgebase and is what
+tells any server where it is:</p>
+<pre class="highlight"><code class="language-sh">kb config apply=true format=text</code></pre>
+<p>It writes a file where every setting is commented out at its default, and adds <code>kbmcp.yaml</code> to your
+<code>.gitignore</code> if the folder is a git repository, because it is local to you. Uncomment <code>about:</code> and write a
+sentence on what this knowledgebase holds. That matters most when you load several at once, because the
+assistant is told it.</p>
+<p>Then add the tool to your assistant's servers file (<code>.mcp.json</code> in your project for Claude Code; the same entry
+works in <code>claude_desktop_config.json</code> for Claude Desktop and <code>.cursor/mcp.json</code> for Cursor):</p>
+<pre class="highlight"><code class="language-json">{
+  "mcpServers": {
+    "notes": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp",
+               "--config", "/full/path/to/notes/kbmcp.yaml"]
+    }
+  }
+}</code></pre>
+<p>Restart the assistant (in Claude Code, <code>/mcp</code> reconnects). It now has the tools and a short instruction on how to
+use them: look at <code>dirs</code>, then <code>passages</code>, then <code>get</code> only what it needs, cite the file and line, and say so
+when the answer is a gap or the passage is unverified or stale.</p>
+<p>All 35 tools cost an assistant about 9,300 tokens of tool descriptions before it has said a word. Give each
+assistant only what it needs by adding <code>"--role", "read"</code> (find and read only: <code>dirs</code>, <code>get</code>, <code>passages</code> and
+<code>search</code>, about 1,150 tokens, safe to auto-approve), or <code>write</code> (write concepts), <code>structure</code> (maps and
+organization) or <code>lifecycle</code> (curate the collection). You can register the same
+knowledgebase several times, one per role, and you can load several different knowledgebases side by side, each
+with its own <code>--config</code>. <a href="../guide/#roles-a-smaller-tool-list-per-agent">The guide</a> has the tool lists.</p>
+<h2 id="7-keep-it-checked-automatically">7. Keep it checked automatically<a class="headerlink" href="#7-keep-it-checked-automatically" title="Link to this section">#</a></h2>
+<p>The easiest habit is a check on every commit. With <a href="https://pre-commit.com/">pre-commit</a>, add this to
+<code>.pre-commit-config.yaml</code>:</p>
+<pre class="highlight"><code class="language-yaml">repos:
+  - repo: local
+    hooks:
+      - id: okf-lint
+        name: OKF lint
+        entry: uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp lint format=text
+        language: system
+        pass_filenames: false
+        verbose: true</code></pre>
+<p><code>verbose: true</code> is what makes pre-commit print the verdict line even when the check passes. For pull requests,
+<code>lint</code> can also write GitHub annotations or SARIF, keep a baseline so only new problems fail the build, and check
+only what changed: see <a href="../guide/#ci">the guide</a>.</p>
+<h2 id="if-something-goes-wrong">If something goes wrong<a class="headerlink" href="#if-something-goes-wrong" title="Link to this section">#</a></h2>
+<ul>
+<li><strong><code>KB_ROOT is no longer read</code></strong>: the old environment variable is gone. Put the folder's <code>kbmcp.yaml</code> where the
+  tool runs, or name it with <code>--config</code>.</li>
+<li><strong><code>uvx</code> runs an old build while you test local changes</strong>: add <code>--no-cache</code>.</li>
+<li><strong><code>passages</code> says <code>gap: true</code> for something you know is there</strong>: search is by words and has no stemming, so
+  "rolling" does not match "roll". Try the note's own words, or turn on semantic search.</li>
+<li><strong>A note exists but <code>passages</code> cannot find it</strong>: it may be an empty stub. <code>lint</code> warns about notes with almost
+  no body.</li>
+</ul>
+<h2 id="where-next">Where next<a class="headerlink" href="#where-next" title="Link to this section">#</a></h2>
+<ul>
+<li><a href="../understanding-okf/">Understanding OKF</a>: what the format is and why it is built this way.</li>
+<li><a href="../guide/">The guide</a>: layout, the archive, several bundles, CI, and every setting in <code>kbmcp.yaml</code>.</li>
+<li><a href="../tools/">Tools</a>: every command, with its arguments and examples.</li>
+</ul></article>
+        
+          <hr class="my-5">
+          <div class="d-flex justify-content-between gap-3">
+            
+              <a class="btn btn-outline-secondary" href="..">&larr; Home</a>
+            
+            
+              <a class="btn btn-outline-secondary" href="../understanding-okf/">Understanding OKF &rarr;</a>
+            
+          </div>
+        
+      </main>
+    </div>
+  </div>
+
+  <footer class="border-top mt-4 py-3">
+    <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
+      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Built with MkDocs + Bootstrap 5.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script>
+    (function () {
+      // Restore saved theme before paint-sensitive work.
+      var root = document.documentElement;
+      var saved = localStorage.getItem('docs-theme');
+      if (saved) root.setAttribute('data-bs-theme', saved);
+
+      // Make Markdown tables look like Bootstrap tables.
+      document.querySelectorAll('.docs-content table').forEach(function (t) {
+        t.classList.add('table', 'table-sm', 'table-striped', 'table-bordered', 'align-middle');
+        if (!t.parentElement.classList.contains('table-responsive')) {
+          var wrap = document.createElement('div');
+          wrap.className = 'table-responsive';
+          t.parentNode.insertBefore(wrap, t);
+          wrap.appendChild(t);
+        }
+      });
+
+      // A Copy button on every listing.
+      document.querySelectorAll('.docs-content pre').forEach(function (pre) {
+        if (pre.classList.contains('mermaid')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-light copy-btn';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', function () {
+          var code = pre.querySelector('code') || pre;
+          navigator.clipboard.writeText(code.innerText.replace(/\n$/, '')).then(function () {
+            btn.textContent = 'Copied';
+            setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+          });
+        });
+        pre.classList.add('has-copy');
+        pre.appendChild(btn);
+      });
+
+      // Theme toggle (reload keeps mermaid in sync with the new theme).
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-bs-theme', next);
+        localStorage.setItem('docs-theme', next);
+        location.reload();
+      });
+
+      // Render mermaid: superfences emits <pre class="mermaid"><code>…</code></pre>.
+      if (window.mermaid) {
+        var dark = root.getAttribute('data-bs-theme') === 'dark';
+        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default' });
+        document.querySelectorAll('pre.mermaid').forEach(function (pre) {
+          var code = pre.querySelector('code');
+          if (code) pre.textContent = code.textContent;
+        });
+        try { mermaid.run({ querySelector: 'pre.mermaid' }); } catch (e) {}
+      }
+    })();
+  </script>
+</body>
+</html>

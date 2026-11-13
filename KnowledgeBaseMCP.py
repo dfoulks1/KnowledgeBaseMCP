@@ -1,14 +1,14 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["mcp>=1.10,<2", "pyyaml"]
+# dependencies = ["mcp>=1.10,<2", "pyyaml", "fastembed"]
 # ///
 """KnowledgeBaseMCP: an MCP server (stdio) and CLI for Open Knowledge Format (OKF) v0.2 bundles.
 
 Checks, maintains and imports OKF concepts: how they are written, never what they say. SPEC.md in this
 repo is the normative reference. Local files only: no network (semantic search downloads a model once, if turned on), never writes to git.
 
-Server:  uv run KnowledgeBaseMCP.py [--config kbmcp.yaml] [--role researcher,scribe,curator]
+Server:  uv run KnowledgeBaseMCP.py [--config kbmcp.yaml] [--role read,write,structure,lifecycle]
          (the knowledgebase: `root` in kbmcp.yaml, found from the current directory or named by --config)
 By hand: uv run KnowledgeBaseMCP.py lint [scope=okf] [format=text|json|github|sarif]
          uv run KnowledgeBaseMCP.py help                  (every tool, one line each)
@@ -48,18 +48,19 @@ CONFIG = "kbmcp.yaml"  # the repo's own settings; env vars win over it
 DEFAULTS = {  # kbmcp.yaml keys beyond root, user and ai_producers; each is checked for type
     "passages": True,  # false removes the passages and reindex tools
     "hubs": True,  # concepts many others link to rank a little higher
-    "semantic": False,  # also match by meaning (embeddings: needs fastembed, downloads the model once)
+    "semantic": False,  # also match by meaning (embeddings by fastembed; the model downloads once, ~65 MB)
     "semantic_model": "BAAI/bge-small-en-v1.5",
     "min_similarity": 0.6,  # a passage must be at least this close in meaning
     "index": ".kbmcp/index.db",  # one SQLite file for passages, BM25, links and vectors; "" keeps it in memory
     "build": "auto",  # auto: passages keeps the index current; manual: only `reindex` does, passages just reads
-    "roles": ["researcher", "scribe", "curator"],  # which roles the MCP server may offer; drop one to turn it off
+    "roles": ["read", "write", "structure", "lifecycle"],  # which roles the MCP server may offer; drop one to turn it off
     "about": ""}  # a sentence for the agent: what this knowledgebase holds (matters with several loaded)
 ROLES = {  # who needs which tools; the MCP server offers the union of its roles (the CLI always has them all)
-    "researcher": {"bundles", "dirs", "get", "heatmap", "links", "list", "log", "passages", "search", "status", "vocab", "web"},
-    "scribe": {"cite", "create", "lint", "move", "record", "recheck_apply", "recheck_plan", "set", "verify"},
-    "curator": {"archive", "baseline", "fix", "index", "ingest", "init", "lint", "migrate", "provenance", "reindex",
-                "rename", "split", "unarchive", "upgrade", "config"}}
+    "read": {"dirs", "get", "passages", "search"},  # find and read: the smallest set that can answer a question
+    "structure": {"bundles", "dirs", "heatmap", "links", "list", "log", "migrate", "status", "vocab", "web"},
+    "write": {"cite", "create", "lint", "move", "record", "recheck_apply", "recheck_plan", "set", "verify"},
+    "lifecycle": {"archive", "baseline", "config", "fix", "index", "ingest", "init", "lint", "provenance", "reindex",
+                  "rename", "split", "unarchive", "upgrade"}}
 CONFIG_KEYS = {"user", "ai_producers", *DEFAULTS}
 EXAMPLE_CONFIG = """\
 # kbmcp.yaml: settings for this knowledgebase. It sits at the knowledgebase root (not in a bundle), which is
@@ -76,8 +77,8 @@ EXAMPLE_CONFIG = """\
 # ai_producers: [zed]
 
 # The MCP server may offer these roles (--role or KB_ROLE picks among them); drop one to turn it off.
-# researcher finds and reads, scribe writes concepts, curator does upkeep and structure.
-# roles: [researcher, scribe, curator]
+# read finds and reads, write writes concepts, structure maps and organizes, lifecycle curates the collection.
+# roles: [read, write, structure, lifecycle]
 
 # false removes the passages and reindex tools.
 # passages: true
@@ -85,8 +86,8 @@ EXAMPLE_CONFIG = """\
 # Concepts many others link to rank a little higher in passages.
 # hubs: true
 
-# Also match passages by meaning. Needs fastembed (`uv run --with fastembed`, or knowledgebasemcp[semantic]);
-# the model downloads once and the vectors are kept in the index.
+# Also match passages by meaning. Nothing to install: fastembed ships with the tool. The model (~65 MB)
+# downloads on first use into ~/.cache/knowledgebasemcp/models, and the vectors are kept in the index.
 # semantic: false
 # semantic_model: BAAI/bge-small-en-v1.5
 # min_similarity: 0.6
@@ -755,15 +756,19 @@ def commit(r: Path, changes: dict, apply: bool, note="") -> dict:
         if note and lp.is_file():
             write(lp, logged(read(lp) or "", note))
             names.append(rel(lp, r))
-    return {"edited": {kbpath(r): sorted(set(names))} if names else {}, "next": "review the diff, then land it via a branch and PR"}
+    return {"edited": {kbpath(r): sorted(set(names))} if names else {}} | landed(r)
+
+
+def landed(r: Path) -> dict:
+    """The hint to land a change by branch and PR: only inside a git work tree, where there is a diff to review."""
+    return {"next": "review the diff, then land it via a branch and PR"} if repo(r) else {}
 
 
 def merged(outs: list) -> dict:
     """One result from commits in several bundles."""
     key = "edited" if any("edited" in o for o in outs) else "would_edit"
     out = {key: {b: ns for o in outs for b, ns in o.get(key, {}).items() if ns}}
-    return out | ({"next": "review the diff, then land it via a branch and PR"} if key == "edited"
-                  else {"diff": "".join(o["diff"] for o in outs)})
+    return out | (landed(KB_ROOT) if key == "edited" else {"diff": "".join(o["diff"] for o in outs)})
 
 
 def pathed(v, src: Path, r: Path):
@@ -1465,14 +1470,15 @@ def chunks(text: str, title: str) -> list:
 
 
 def embedder(model: str):
-    """texts -> unit vectors, by fastembed (optional dependency; the model downloads on first use)."""
+    """texts -> unit vectors, by fastembed. The model downloads on first use into ~/.cache/knowledgebasemcp/models
+    (fastembed's own default is the system temp folder, which a reboot or cleanup empties)."""
     if model not in EMBEDDERS:
         try:
             from fastembed import TextEmbedding
         except ImportError:
-            raise ValueError("semantic search needs fastembed | fix: run with `uv run --with fastembed`, install "
-                             "knowledgebasemcp[semantic], or set semantic: false in kbmcp.yaml")
-        m = TextEmbedding(model)
+            raise ValueError("fastembed is missing | fix: reinstall knowledgebasemcp, or set semantic: false in kbmcp.yaml")
+        cache = Path(os.environ.get("XDG_CACHE_HOME") or "~/.cache").expanduser() / "knowledgebasemcp" / "models"
+        m = TextEmbedding(model, cache_dir=str(cache))
         EMBEDDERS[model] = lambda texts: [list(map(float, v)) for v in m.embed(texts)]
     return EMBEDDERS[model]
 
@@ -1605,7 +1611,8 @@ def passages(query: str, type: str = "", tag: str = "", dir: str = "", limit: in
     passage per heading section, ranked by BM25 (rarer words count more; any word may match, no stemming), with
     the heading path, title, tags, type and description counting too. Concepts many others link to rank a little
     higher (hubs). With semantic on, passages are also matched by meaning (embeddings) and
-    the two rankings are fused. Each hit: {bundle, file, line, heading, score, title, type, status, tier (trust,
+    the two rankings are fused. Each hit: {bundle, file, line, heading, match (percent of the best hit's score: the top
+    hit is 100, so it says how the others compare, not how good the best one is), title, type, status, tier (trust,
     §5.3), stale, links (inbound), text}. Answer from the text, cite the file and line, and say so when tier is
     unverified or stale. No hit: gap is true, so tell the user the knowledgebase has nothing, rather than guess.
     Filters as in search. Everything is indexed in one SQLite file (index in kbmcp.yaml), updated from the
@@ -1657,11 +1664,12 @@ def passages(query: str, type: str = "", tag: str = "", dir: str = "", limit: in
         det = {i: d for i, *d in con.execute(
             f"SELECT c.id, c.line, c.heading, c.text, f.title, f.meta FROM chunks c JOIN files f ON f.key = c.key "
             f"WHERE c.id IN ({','.join('?' * len(top))})", [i for _, i in top])} if top else {}
-    hits = []
+    hits, best = [], scored[0][0] if scored else 0  # match: a percent of the best hit, so a lone hit is 100
     for sc, i in top:
         line, head, body, title, m = det[i]
         d, (b, rl, _, _, key) = json.loads(m), rows[i]
-        hits.append({"bundle": b, "file": rl, "line": line, "heading": head, "score": round(sc, 5), "title": title,
+        hits.append({"bundle": b, "file": rl, "line": line, "heading": head,
+                     "match": 100 if best <= 0 else round(100 * sc / best), "title": title,
                      "type": d.get("type"), "status": d.get("status") or "stable", "tier": trust_tier(d),
                      "stale": is_stale(d), "links": links.get(key, 0), "text": body})
     return {"total": len(scored), "gap": not scored, "hits": hits}  # shortcut: no stemming

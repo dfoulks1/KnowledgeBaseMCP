@@ -1,0 +1,470 @@
+
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Understanding OKF · KnowledgeBaseMCP</title>
+  <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
+  <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/pygments.css"><link rel="stylesheet" href="../css/custom.css">
+</head>
+<body>
+  
+<nav class="navbar navbar-expand-lg sticky-top site-nav">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="..">
+      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">KnowledgeBaseMCP
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#site-nav" aria-controls="site-nav"
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="site-nav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="..">Home</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../getting-started/">Getting started</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link active"
+                 aria-current="page"
+                 href="./">Understanding OKF</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../guide/">Guide</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../tools/">Tools</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../contributing/">Contributing</a>
+            </li>
+          
+        
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle "
+                 href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                AI source material
+              </a>
+              <ul class="dropdown-menu">
+                
+                  <li>
+                    <a class="dropdown-item "
+                       href="../prompts/00-context/">Context</a>
+                  </li>
+                
+                  <li>
+                    <a class="dropdown-item "
+                       href="../prompts/rewrite-brief/">Rewrite brief</a>
+                  </li>
+                
+              </ul>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">OKF v0.2</a>
+            </li>
+          
+        
+      </ul>
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+               target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-github"></i> GitHub
+            </a>
+          </li>
+        
+        <li class="nav-item d-flex align-items-center">
+          <button class="btn btn-sm btn-outline-secondary ms-lg-2" id="theme-toggle"
+                  type="button" title="Toggle light/dark" aria-label="Toggle theme">
+            <i class="bi bi-circle-half"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  <div class="container-fluid px-3 px-lg-4">
+    <div class="docs-grid with-toc">
+      
+        <aside class="d-none d-lg-block docs-toc">
+          <div class="position-sticky py-5" style="top: 3.5rem; max-height: calc(100vh - 3.5rem); overflow-y: auto;">
+            <h6 class="text-uppercase small text-body-secondary fw-semibold mb-3">On this page</h6>
+            <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#what-okf-is">What OKF is</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#why-a-format-at-all">Why a format at all?</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#the-pieces">The pieces</a>
+      <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#a-concept">A concept</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#the-header-fields">The header fields</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#trust-tiers">Trust tiers</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#links-and-citations">Links and citations</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#bundles-indexmd-and-logmd">Bundles, index.md and log.md</a>
+      
+    </li>
+  
+</ul>
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#why-it-is-good">Why it is good</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#what-it-does-not-do">What it does not do</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#where-knowledgebasemcp-fits">Where KnowledgeBaseMCP fits</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#read-on">Read on</a>
+      
+    </li>
+  
+</ul>
+          </div>
+        </aside>
+      
+      <main class="py-5 docs-content">
+        
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+              <li class="breadcrumb-item"><a href="..">Home</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Understanding OKF</li>
+            </ol>
+          </nav>
+        
+        <article><h1 id="understanding-okf">Understanding OKF<a class="headerlink" href="#understanding-okf" title="Link to this section">#</a></h1>
+<div class="admonition note">
+<p class="admonition-title">AI-generated</p>
+<p>Written with Claude Opus 5.5 and Claude Sonnet 5.5, under human review. It explains the format in plain words and points at <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">the specification</a> for the exact rules; where the two differ, the specification wins.</p>
+</div>
+<h2 id="what-okf-is">What OKF is<a class="headerlink" href="#what-okf-is" title="Link to this section">#</a></h2>
+<p><strong>Open Knowledge Format</strong> (OKF) is a way of writing down what you know so that people and AI assistants can both
+use it. The whole format is this: <strong>a folder of Markdown files, each starting with a short block of facts about
+the file.</strong> The specification calls that block <em>frontmatter</em> and writes it in YAML. That is the entire
+technology. There is no database, no server, no registry of allowed types and no required software. In the
+specification's own words: if you can <code>cat</code> a file you can read OKF, and if you can <code>git clone</code> a repository you
+can ship it.</p>
+<p>OKF is published as a specification (this site follows version 0.2) in the <code>knowledge-catalog</code> repository on
+GitHub. KnowledgeBaseMCP is one tool that implements it: it writes, checks and searches OKF folders. Nothing in
+the format depends on this tool, which is the point.</p>
+<h2 id="why-a-format-at-all">Why a format at all?<a class="headerlink" href="#why-a-format-at-all" title="Link to this section">#</a></h2>
+<p>A pile of Markdown notes is already easy to read. The trouble starts when the pile grows, other people add to it,
+and AI assistants begin to <em>write</em> parts of it. Then readers need answers a plain note does not give:</p>
+<ol>
+<li><strong>Where did this come from?</strong> (provenance)</li>
+<li><strong>Has anyone checked it, and was it a person or a script?</strong> (trust)</li>
+<li><strong>Is it still true?</strong> (freshness)</li>
+<li><strong>Is this the current version, or an old draft?</strong> (lifecycle)</li>
+</ol>
+<p>Without a convention, every team invents its own answers, and no tool can rely on them. OKF fixes a <em>small</em> set of
+conventions for exactly these questions and leaves everything else to you.</p>
+<h2 id="the-pieces">The pieces<a class="headerlink" href="#the-pieces" title="Link to this section">#</a></h2>
+<h3 id="a-concept">A concept<a class="headerlink" href="#a-concept" title="Link to this section">#</a></h3>
+<p>A <strong>concept</strong> is one Markdown file about one thing: a procedure, a database table, a metric, a decision, a
+glossary term. Here is a complete one:</p>
+<pre class="highlight"><code class="language-markdown">---
+type: Playbook
+title: Deploy
+description: How we ship a release.
+tags: [ops]
+sources:
+  - id: runbook
+    resource: https://example.com/runbook
+    title: Ops runbook
+verified: { by: human:ann, at: 2026-11-13T15:00:00Z }
+status: stable
+stale_after: 2027-05-13T00:00:00Z
+---
+
+# Deploy
+
+Run the deploy script, then check the dashboard.[^runbook] If something looks
+wrong, follow [the rollback steps](rollback.md).
+
+[^runbook]: Ops runbook</code></pre>
+<p>The block between the two <code>---</code> lines is the <strong>frontmatter</strong>. Everything after it is ordinary Markdown: headings,
+lists, tables, code. The spec asks writers to prefer structure (headings, lists, tables) over loose prose,
+because structure helps both a reader skimming and an assistant retrieving.</p>
+<h3 id="the-header-fields">The header fields<a class="headerlink" href="#the-header-fields" title="Link to this section">#</a></h3>
+<p>Only one is required. <code>type</code> says what kind of thing the file is (<code>Playbook</code>, <code>Reference</code>, <code>Metric</code> and so on).
+Types are not registered anywhere: pick words that explain themselves, and readers must cope with ones they have
+not seen. A file with nothing but <code>type</code> is fully valid.</p>
+<p>The others are recommended or optional, in three families:</p>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Fields</th>
+<th>Answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Describing</strong></td>
+<td><code>title</code>, <code>description</code> (one sentence), <code>tags</code>, <code>resource</code> (a URI for the thing it describes)</td>
+<td>What is this, for indexes and search results</td>
+</tr>
+<tr>
+<td><strong>Provenance and trust</strong></td>
+<td><code>sources</code> (what it was built from), <code>generated</code> (who or what wrote the current text, and when), <code>verified</code> (who confirmed it, and when)</td>
+<td>Where it came from and how far to trust it</td>
+</tr>
+<tr>
+<td><strong>Lifecycle</strong></td>
+<td><code>status</code> (<code>draft</code>, <code>stable</code>, <code>deprecated</code>; absent means stable), <code>stale_after</code> (a date after which the content counts as stale)</td>
+<td>Is it current</td>
+</tr>
+</tbody>
+</table>
+<p>Every date is ISO 8601 with an explicit UTC offset, such as <code>2026-11-13T15:00:00Z</code>. Anything else you add is
+yours: tools must keep keys they do not understand and must not reject a file for having them.</p>
+<h3 id="trust-tiers">Trust tiers<a class="headerlink" href="#trust-tiers" title="Link to this section">#</a></h3>
+<p>The tier is <em>derived</em>, never typed in. Look at who is in <code>verified</code>:</p>
+<ul>
+<li>nobody: <strong>unverified</strong>;</li>
+<li>only scripts, processes or agents: <strong>machine-confirmed</strong>;</li>
+<li>at least one person: <strong>human-reviewed</strong>.</li>
+</ul>
+<p>Who is who is decided by a naming convention for <strong>actors</strong>: <code>human:&lt;id&gt;</code> for a person (<code>human:ann</code>),
+<code>process:&lt;id&gt;</code> for an automated process (<code>process:finance-nightly</code>), and <code>&lt;producer&gt;/&lt;version&gt;</code> for an agent or
+tool (<code>reference_agent/gemini-2.5-pro</code>). Because the tier keys off the <code>human:</code> prefix, anything a person wrote or
+confirmed must use it. Two things to keep in mind: <code>generated</code> and <code>verified</code> are kept apart on purpose, because
+who <em>wrote</em> a note need not be who <em>checked</em> it; and tiers are advisory labels, not access control.</p>
+<h3 id="links-and-citations">Links and citations<a class="headerlink" href="#links-and-citations" title="Link to this section">#</a></h3>
+<p>Concepts point at each other with ordinary Markdown links, either relative (<code>[the rollback steps](rollback.md)</code>)
+or from the bundle root with a leading slash (<code>/runbooks/rollback.md</code>, which survives moving files around inside
+a folder). A link says "these are related"; the sentence around it says how. A broken link is allowed by the
+format: it may simply be knowledge nobody has written yet. (KnowledgeBaseMCP's <code>status</code> lists the pages that
+links ask for and nobody has written.)</p>
+<p>A <strong>citation</strong> is different: it records where a <em>fact</em> came from. It lives in <code>sources</code>, and the claim in the text
+points at it with a Markdown footnote (<code>[^runbook]</code>). Links are for navigation, citations are for lineage.</p>
+<h3 id="bundles-indexmd-and-logmd">Bundles, <code>index.md</code> and <code>log.md</code><a class="headerlink" href="#bundles-indexmd-and-logmd" title="Link to this section">#</a></h3>
+<p>A <strong>bundle</strong> is a folder of concepts, with subfolders as you like. Two filenames are reserved at any level:</p>
+<ul>
+<li><strong><code>index.md</code></strong> lists what is in a folder, with each concept's one-line description, so a reader (or an
+  assistant) can see what is available before opening anything. The spec calls this <em>progressive disclosure</em>. At
+  the top of a bundle it may carry one frontmatter key, <code>okf_version</code>. OKF makes it optional; KnowledgeBaseMCP
+  uses it to recognise a folder as a bundle. Tools may generate <code>index.md</code>, and KnowledgeBaseMCP's <code>index</code> does.</li>
+<li><strong><code>log.md</code></strong> is the history of changes to that folder, newest first, grouped by date.</li>
+</ul>
+<p>A bundle can travel as a git repository (recommended, for the history and the diffs), a zip, or a subfolder of a
+bigger repository. The word <strong>knowledgebase</strong>, as this site uses it, is not part of OKF: it means a bundle, or a
+folder of bundles, that KnowledgeBaseMCP manages together.</p>
+<h2 id="why-it-is-good">Why it is good<a class="headerlink" href="#why-it-is-good" title="Link to this section">#</a></h2>
+<p>These are the properties that follow from the format itself.</p>
+<ul>
+<li><strong>Readable with no tools.</strong> It is text. Open a file, read it. If this project vanished tomorrow, you would keep
+  every note, in a form any editor shows you. The way out of the format is "stop using the tool".</li>
+<li><strong>Diffable and reviewable.</strong> Because it is plain text in a folder, git shows exactly what changed, who changed
+  it and when, and a pull request can review a knowledge change like a code change.</li>
+<li><strong>Portable.</strong> No schema registry or central authority, so a bundle moves between teams, tools and years
+  without a conversion step.</li>
+<li><strong>Written for agents without a special SDK.</strong> An assistant can read the files directly, and the structure
+  (headings, a one-line description, tags, a type) is what a retrieval tool needs to cut a note into useful
+  pieces and rank them.</li>
+<li><strong>Honest about trust.</strong> Provenance, verification and freshness are part of the file, not a separate system.
+  A reader, human or machine, can tell a checked fact from an unchecked one, and a current one from an expired
+  one, <em>at the moment of reading</em>.</li>
+<li><strong>Minimal on purpose.</strong> Only <code>type</code> is required, unknown fields are tolerated, and there is no fixed list of
+  concept types. You can start with a few notes and add structure as you need it.</li>
+</ul>
+<h2 id="what-it-does-not-do">What it does not do<a class="headerlink" href="#what-it-does-not-do" title="Link to this section">#</a></h2>
+<p>It is worth being plain about the limits.</p>
+<ul>
+<li><strong>It does not check that anything is true.</strong> <code>verified</code> records that someone or something <em>said</em> they checked.
+  The format makes the claim visible; it cannot make it correct.</li>
+<li><strong>It does not control access.</strong> Trust tiers and statuses are signals for readers, not permissions.</li>
+<li><strong>It is not a database or a search engine.</strong> It prescribes no storage, serving or query system. Finding things
+  is up to the tool you use on top.</li>
+<li><strong>It does not define your vocabulary.</strong> Concept types, tags and structure are yours to choose and keep
+  consistent. (<code>vocab</code> in KnowledgeBaseMCP lists what you actually use, so spellings do not drift.)</li>
+<li><strong>It will not replace domain schemas.</strong> Where an asset already has a precise schema (an API description, a
+  table definition), OKF points at it with <code>resource</code>; it does not copy it.</li>
+</ul>
+<h2 id="where-knowledgebasemcp-fits">Where KnowledgeBaseMCP fits<a class="headerlink" href="#where-knowledgebasemcp-fits" title="Link to this section">#</a></h2>
+<p>OKF is the format; KnowledgeBaseMCP is a way to keep a folder of it healthy. It cares how a concept is written,
+never what it says:</p>
+<ul>
+<li><strong><code>lint</code></strong> checks every file against the specification's conformance rules plus house rules (broken links,
+  empty notes, orphans, duplicate titles, key-shaped secrets), and <code>fix</code> repairs the mechanical ones.</li>
+<li><strong><code>index</code></strong> regenerates the tables of contents from the concepts' own descriptions.</li>
+<li><strong><code>cite</code>, <code>verify</code>, <code>provenance</code></strong> write the provenance and trust fields correctly. A person's review is recorded
+  only with that person's own confirmation (a prompt over MCP, or <code>--attest</code> at their terminal), never by an
+  assistant on their behalf.</li>
+<li><strong><code>passages</code>, <code>search</code>, <code>dirs</code>, <code>get</code></strong> find and read, and <code>passages</code> returns each section with its file, line,
+  trust tier and staleness, so an answer can show its sources and say when it is on thin ice.</li>
+<li><strong><code>status</code></strong> says what needs a person next: the oldest unreviewed notes, drafts, notes with no sources, what
+  goes stale soon.</li>
+</ul>
+<p>The practical effect is that a knowledgebase kept this way can answer a question <em>and</em> say how far to trust the
+answer. That is the whole idea.</p>
+<h2 id="read-on">Read on<a class="headerlink" href="#read-on" title="Link to this section">#</a></h2>
+<ul>
+<li><a href="../getting-started/">Getting started</a>: build one in ten minutes.</li>
+<li><a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">The specification</a>: the exact rules, including attested computations, which this page leaves out.</li>
+<li><a href="../guide/">The guide</a>: layout, the archive, several bundles, CI and settings.</li>
+</ul></article>
+        
+          <hr class="my-5">
+          <div class="d-flex justify-content-between gap-3">
+            
+              <a class="btn btn-outline-secondary" href="../getting-started/">&larr; Getting started</a>
+            
+            
+              <a class="btn btn-outline-secondary" href="../guide/">Guide &rarr;</a>
+            
+          </div>
+        
+      </main>
+    </div>
+  </div>
+
+  <footer class="border-top mt-4 py-3">
+    <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
+      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Built with MkDocs + Bootstrap 5.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script>
+    (function () {
+      // Restore saved theme before paint-sensitive work.
+      var root = document.documentElement;
+      var saved = localStorage.getItem('docs-theme');
+      if (saved) root.setAttribute('data-bs-theme', saved);
+
+      // Make Markdown tables look like Bootstrap tables.
+      document.querySelectorAll('.docs-content table').forEach(function (t) {
+        t.classList.add('table', 'table-sm', 'table-striped', 'table-bordered', 'align-middle');
+        if (!t.parentElement.classList.contains('table-responsive')) {
+          var wrap = document.createElement('div');
+          wrap.className = 'table-responsive';
+          t.parentNode.insertBefore(wrap, t);
+          wrap.appendChild(t);
+        }
+      });
+
+      // A Copy button on every listing.
+      document.querySelectorAll('.docs-content pre').forEach(function (pre) {
+        if (pre.classList.contains('mermaid')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-light copy-btn';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', function () {
+          var code = pre.querySelector('code') || pre;
+          navigator.clipboard.writeText(code.innerText.replace(/\n$/, '')).then(function () {
+            btn.textContent = 'Copied';
+            setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+          });
+        });
+        pre.classList.add('has-copy');
+        pre.appendChild(btn);
+      });
+
+      // Theme toggle (reload keeps mermaid in sync with the new theme).
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-bs-theme', next);
+        localStorage.setItem('docs-theme', next);
+        location.reload();
+      });
+
+      // Render mermaid: superfences emits <pre class="mermaid"><code>…</code></pre>.
+      if (window.mermaid) {
+        var dark = root.getAttribute('data-bs-theme') === 'dark';
+        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default' });
+        document.querySelectorAll('pre.mermaid').forEach(function (pre) {
+          var code = pre.querySelector('code');
+          if (code) pre.textContent = code.textContent;
+        });
+        try { mermaid.run({ querySelector: 'pre.mermaid' }); } catch (e) {}
+      }
+    })();
+  </script>
+</body>
+</html>

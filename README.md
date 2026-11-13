@@ -62,13 +62,13 @@ user: your-id         # prefills your id in confirmation prompts (KB_USER)
 ai_producers: [zed]   # extra AI names for the provenance check (KB_AI_PRODUCERS)
 passages: true        # false removes the passages and reindex tools
 hubs: true            # concepts many others link to rank a little higher
-semantic: false       # also match by meaning: needs `uv run --with fastembed` or knowledgebasemcp[semantic];
-                      # the model downloads once, passages are embedded and kept in the index
+semantic: false       # also match by meaning; nothing to install. The model (~65 MB) downloads once into
+                      # ~/.cache/knowledgebasemcp/models; passages are embedded and kept in the index
 semantic_model: BAAI/bge-small-en-v1.5
 min_similarity: 0.6   # how close in meaning a passage must be
 index: .kbmcp/index.db   # one SQLite file: passages, BM25 index, links, vectors; "" = in memory
 build: auto           # auto: passages keeps the index current; manual: only `reindex` does, passages reads
-roles: [researcher, scribe, curator]   # roles the MCP server may offer; drop one to turn it off (see Register)
+roles: [read, write, structure, lifecycle]   # roles the MCP server may offer; drop one to turn it off (see Register)
 ```
 
 With no `kbmcp.yaml` the defaults apply. The index is a cache derived from
@@ -272,21 +272,23 @@ commas), and each server offers only that role's tools:
 
 | Role | Tools | Schema |
 |---|---|---|
-| `researcher` | find and read, nothing written: `bundles` `dirs` `get` `heatmap` `links` `list` `log` `passages` `search` `status` `vocab` `web` | 12, ~2,800 tokens |
-| `scribe` | write concepts: `cite` `create` `lint` `move` `record` `recheck_apply` `recheck_plan` `set` `verify` | 9, ~2,900 tokens |
-| `curator` | upkeep and structure: `archive` `baseline` `config` `fix` `index` `ingest` `init` `lint` `migrate` `provenance` `reindex` `rename` `split` `unarchive` `upgrade` | 15, ~4,200 tokens |
+| `read` | find and read, nothing written: `dirs` `get` `passages` `search` | 4, ~1,150 tokens |
+| `structure` | structure and organization: `bundles` `dirs` `heatmap` `links` `list` `log` `migrate` `status` `vocab` `web` | 10, ~2,100 tokens |
+| `write` | write concepts: `cite` `create` `lint` `move` `record` `recheck_apply` `recheck_plan` `set` `verify` | 9, ~3,000 tokens |
+| `lifecycle` | curate the collection: `archive` `baseline` `config` `fix` `index` `ingest` `init` `lint` `provenance` `reindex` `rename` `split` `unarchive` `upgrade` | 14, ~4,000 tokens |
 
 ```json
 {
   "mcpServers": {
-    "kb-research": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "researcher"] },
-    "kb-scribe":   { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "scribe"] }
+    "kb-read":  { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "read"] },
+    "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "write"] }
   }
 }
 ```
 
-The `researcher` server is read-only, so a client can approve it without
-asking. With no `--role` the server offers every role that `roles:` in
+The `read` server is read-only, so a client can approve it without asking. (`structure`
+is mostly read-only too, but `migrate` moves a concept to another bundle.) A tool can
+belong to more than one role: `dirs` and `lint` do. With no `--role` the server offers every role that `roles:` in
 `kbmcp.yaml` leaves on; naming a role that is off refuses to start. The CLI
 always has every tool.
 
@@ -424,8 +426,9 @@ repos:
 - `ingest` does not convert other formats or check licenses. Its plan says so.
 - `passages` has no stemming ("rolling" will not match "roll"), and with
   `build: manual` it does not notice files changed since the last `reindex`.
-  Semantic search downloads its model once and keeps it in fastembed's own
-  cache (the system temp folder by default). The index lives in the file
+  Semantic search downloads its model (~65 MB) once into
+  `~/.cache/knowledgebasemcp/models`, and `fastembed` with its dependencies
+  adds about 150 MB to the install. The index lives in the file
   `index` names and is safe to delete; nothing in the
   knowledgebase changes.
 

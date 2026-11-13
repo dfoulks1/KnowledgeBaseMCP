@@ -56,6 +56,8 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Getting started: getting-started.md
+  - Understanding OKF: understanding-okf.md
   - Guide: guide.md
   - Tools: tools.md
   - Contributing: contributing.md

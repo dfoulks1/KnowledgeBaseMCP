@@ -40,6 +40,22 @@
         
           
             <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../getting-started/">Getting started</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="../understanding-okf/">Understanding OKF</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
               <a class="nav-link active"
                  aria-current="page"
                  href="./">Guide</a>
@@ -222,13 +238,13 @@ user: your-id         # prefills your id in confirmation prompts (KB_USER)
 ai_producers: [zed]   # extra AI names for the provenance check (KB_AI_PRODUCERS)
 passages: true        # false removes the passages and reindex tools
 hubs: true            # concepts many others link to rank a little higher
-semantic: false       # also match by meaning: needs `uv run --with fastembed` or knowledgebasemcp[semantic];
-                      # the model downloads once, passages are embedded and kept in the index
+semantic: false       # also match by meaning; nothing to install. The model (~65 MB) downloads once into
+                      # ~/.cache/knowledgebasemcp/models; passages are embedded and kept in the index
 semantic_model: BAAI/bge-small-en-v1.5
 min_similarity: 0.6   # how close in meaning a passage must be
 index: .kbmcp/index.db   # one SQLite file: passages, BM25 index, links, vectors; "" = in memory
 build: auto           # auto: passages keeps the index current; manual: only `reindex` does, passages reads
-roles: [researcher, scribe, curator]   # roles the MCP server may offer; drop one to turn it off (see Register)</code></pre>
+roles: [read, write, structure, lifecycle]   # roles the MCP server may offer; drop one to turn it off (see Register)</code></pre>
 <p>With no <code>kbmcp.yaml</code> the defaults apply. The index is a cache derived from
 the concepts: safe to delete, never committed (a new <code>.kbmcp/</code> folder ignores
 itself). To build it apart from the server, run <code>reindex</code> (incremental: only
@@ -387,30 +403,36 @@ commas), and each server offers only that role's tools:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>researcher</code></td>
-<td>find and read, nothing written: <code>bundles</code> <code>dirs</code> <code>get</code> <code>heatmap</code> <code>links</code> <code>list</code> <code>log</code> <code>passages</code> <code>search</code> <code>status</code> <code>vocab</code> <code>web</code></td>
-<td>12, ~2,800 tokens</td>
+<td><code>read</code></td>
+<td>find and read, nothing written: <code>dirs</code> <code>get</code> <code>passages</code> <code>search</code></td>
+<td>4, ~1,150 tokens</td>
 </tr>
 <tr>
-<td><code>scribe</code></td>
+<td><code>structure</code></td>
+<td>structure and organization: <code>bundles</code> <code>dirs</code> <code>heatmap</code> <code>links</code> <code>list</code> <code>log</code> <code>migrate</code> <code>status</code> <code>vocab</code> <code>web</code></td>
+<td>10, ~2,100 tokens</td>
+</tr>
+<tr>
+<td><code>write</code></td>
 <td>write concepts: <code>cite</code> <code>create</code> <code>lint</code> <code>move</code> <code>record</code> <code>recheck_apply</code> <code>recheck_plan</code> <code>set</code> <code>verify</code></td>
-<td>9, ~2,900 tokens</td>
+<td>9, ~3,000 tokens</td>
 </tr>
 <tr>
-<td><code>curator</code></td>
-<td>upkeep and structure: <code>archive</code> <code>baseline</code> <code>config</code> <code>fix</code> <code>index</code> <code>ingest</code> <code>init</code> <code>lint</code> <code>migrate</code> <code>provenance</code> <code>reindex</code> <code>rename</code> <code>split</code> <code>unarchive</code> <code>upgrade</code></td>
-<td>15, ~4,200 tokens</td>
+<td><code>lifecycle</code></td>
+<td>curate the collection: <code>archive</code> <code>baseline</code> <code>config</code> <code>fix</code> <code>index</code> <code>ingest</code> <code>init</code> <code>lint</code> <code>provenance</code> <code>reindex</code> <code>rename</code> <code>split</code> <code>unarchive</code> <code>upgrade</code></td>
+<td>14, ~4,000 tokens</td>
 </tr>
 </tbody>
 </table>
 <pre class="highlight"><code class="language-json">{
   "mcpServers": {
-    "kb-research": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "researcher"] },
-    "kb-scribe":   { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "scribe"] }
+    "kb-read":  { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "read"] },
+    "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "write"] }
   }
 }</code></pre>
-<p>The <code>researcher</code> server is read-only, so a client can approve it without
-asking. With no <code>--role</code> the server offers every role that <code>roles:</code> in
+<p>The <code>read</code> server is read-only, so a client can approve it without asking. (<code>structure</code>
+is mostly read-only too, but <code>migrate</code> moves a concept to another bundle.) A tool can
+belong to more than one role: <code>dirs</code> and <code>lint</code> do. With no <code>--role</code> the server offers every role that <code>roles:</code> in
 <code>kbmcp.yaml</code> leaves on; naming a role that is off refuses to start. The CLI
 always has every tool.</p>
 <h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Link to this section">#</a></h2>
@@ -520,8 +542,9 @@ uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text</
 <li><code>ingest</code> does not convert other formats or check licenses. Its plan says so.</li>
 <li><code>passages</code> has no stemming ("rolling" will not match "roll"), and with
   <code>build: manual</code> it does not notice files changed since the last <code>reindex</code>.
-  Semantic search downloads its model once and keeps it in fastembed's own
-  cache (the system temp folder by default). The index lives in the file
+  Semantic search downloads its model (~65 MB) once into
+  <code>~/.cache/knowledgebasemcp/models</code>, and <code>fastembed</code> with its dependencies
+  adds about 150 MB to the install. The index lives in the file
   <code>index</code> names and is safe to delete; nothing in the
   knowledgebase changes.</li>
 </ul></article>
@@ -529,7 +552,7 @@ uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text</
           <hr class="my-5">
           <div class="d-flex justify-content-between gap-3">
             
-              <a class="btn btn-outline-secondary" href="..">&larr; Home</a>
+              <a class="btn btn-outline-secondary" href="../understanding-okf/">&larr; Understanding OKF</a>
             
             
               <a class="btn btn-outline-secondary" href="../tools/">Tools &rarr;</a>

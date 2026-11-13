@@ -42,6 +42,22 @@
             <li class="nav-item">
               <a class="nav-link "
                  
+                 href="getting-started/">Getting started</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
+                 href="understanding-okf/">Understanding OKF</a>
+            </li>
+          
+        
+          
+            <li class="nav-item">
+              <a class="nav-link "
+                 
                  href="guide/">Guide</a>
             </li>
           
@@ -165,8 +181,8 @@ uv run KnowledgeBaseMCP.py help</code></pre>
 <p>A <code>kbmcp.yaml</code> marks the base of a knowledgebase: the server finds it from the
 project folder up (or take <code>--config path</code>), and it sets your id, what the
 knowledgebase is about, and the search settings. It is local config, kept out of git (<code>config apply=true</code> writes one and ignores it); everyone has their own (<a href="guide/#run">the guide</a> has every key). To give an agent fewer
-tools, register the server with a role: <code>researcher</code> (find and read),
-<code>scribe</code> (write) or <code>curator</code> (upkeep). <a href="guide/#roles-a-smaller-tool-list-per-agent">The guide</a> has the lists.</p>
+tools, register the server with a role: <code>read</code> (find and read, about 1,150 tokens),
+<code>structure</code>, <code>write</code> or <code>lifecycle</code> (curate the collection). <a href="guide/#roles-a-smaller-tool-list-per-agent">The guide</a> has the lists.</p>
 <p>Or work from the terminal, no AI needed:</p>
 <pre class="highlight"><code class="language-sh"># start a bundle
 uv run KnowledgeBaseMCP.py init bundle=eng apply=true
@@ -244,14 +260,16 @@ from the best sections (and says so when there is nothing to find), <code>lint</
 against the spec, <code>status</code> says what needs a person next (including the
 pages links want that nobody has written), and <code>heatmap</code> shows where the
 work is.</p>
-<p>Next: the <a href="guide/">guide</a> for layout and workflows, the <a href="tools/">tools</a>
+<p>Next: <a href="getting-started/">getting started</a> for a ten-minute walkthrough,
+<a href="understanding-okf/">understanding OKF</a> for what the format is and why it is built this way,
+the <a href="guide/">guide</a> for layout and workflows, the <a href="tools/">tools</a>
 for every command, and the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">OKF v0.2 specification</a> it implements.</p></article>
         
           <hr class="my-5">
           <div class="d-flex justify-content-between gap-3">
             <span></span>
             
-              <a class="btn btn-outline-secondary" href="guide/">Guide &rarr;</a>
+              <a class="btn btn-outline-secondary" href="getting-started/">Getting started &rarr;</a>
             
           </div>
         
