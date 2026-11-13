@@ -13,7 +13,7 @@ specification's own words: if you can `cat` a file you can read OKF, and if you 
 can ship it.
 
 OKF is published as a specification (this site follows version 0.2) in the `knowledge-catalog` repository on
-GitHub. KnowledgeBaseMCP is one tool that implements it: it writes, checks and searches OKF folders. Nothing in
+GitHub. Bowerbird is one tool that implements it: it writes, checks and searches OKF folders. Nothing in
 the format depends on this tool, which is the point.
 
 ## Why a format at all?
@@ -99,7 +99,7 @@ who *wrote* a note need not be who *checked* it; and tiers are advisory labels, 
 Concepts point at each other with ordinary Markdown links, either relative (`[the rollback steps](rollback.md)`)
 or from the bundle root with a leading slash (`/runbooks/rollback.md`, which survives moving files around inside
 a folder). A link says "these are related"; the sentence around it says how. A broken link is allowed by the
-format: it may simply be knowledge nobody has written yet. (KnowledgeBaseMCP's `status` lists the pages that
+format: it may simply be knowledge nobody has written yet. (Bowerbird's `status` lists the pages that
 links ask for and nobody has written.)
 
 A **citation** is different: it records where a *fact* came from. It lives in `sources`, and the claim in the text
@@ -111,13 +111,13 @@ A **bundle** is a folder of concepts, with subfolders as you like. Two filenames
 
 - **`index.md`** lists what is in a folder, with each concept's one-line description, so a reader (or an
   assistant) can see what is available before opening anything. The spec calls this *progressive disclosure*. At
-  the top of a bundle it may carry one frontmatter key, `okf_version`. OKF makes it optional; KnowledgeBaseMCP
-  uses it to recognise a folder as a bundle. Tools may generate `index.md`, and KnowledgeBaseMCP's `index` does.
+  the top of a bundle it may carry one frontmatter key, `okf_version`. OKF makes it optional; Bowerbird
+  uses it to recognise a folder as a bundle. Tools may generate `index.md`, and Bowerbird's `index` does.
 - **`log.md`** is the history of changes to that folder, newest first, grouped by date.
 
 A bundle can travel as a git repository (recommended, for the history and the diffs), a zip, or a subfolder of a
 bigger repository. The word **knowledgebase**, as this site uses it, is not part of OKF: it means a bundle, or a
-folder of bundles, that KnowledgeBaseMCP manages together.
+folder of bundles, that Bowerbird manages together.
 
 ## Why it is good
 
@@ -148,13 +148,13 @@ It is worth being plain about the limits.
 - **It is not a database or a search engine.** It prescribes no storage, serving or query system. Finding things
   is up to the tool you use on top.
 - **It does not define your vocabulary.** Concept types, tags and structure are yours to choose and keep
-  consistent. (`vocab` in KnowledgeBaseMCP lists what you actually use, so spellings do not drift.)
+  consistent. (`vocab` in Bowerbird lists what you actually use, so spellings do not drift.)
 - **It will not replace domain schemas.** Where an asset already has a precise schema (an API description, a
   table definition), OKF points at it with `resource`; it does not copy it.
 
-## Where KnowledgeBaseMCP fits
+## Where Bowerbird fits
 
-OKF is the format; KnowledgeBaseMCP is a way to keep a folder of it healthy. It cares how a concept is written,
+OKF is the format; Bowerbird is a way to keep a folder of it healthy. It cares how a concept is written,
 never what it says:
 
 - **`lint`** checks every file against the specification's conformance rules plus house rules (broken links,

@@ -1,13 +1,13 @@
-site_name: KnowledgeBaseMCP
+site_name: Bowerbird
 site_description: >-
   An MCP server and command line for Open Knowledge Format (OKF) v0.2
   knowledgebases, for agents and people alike.
-site_author: KnowledgeBaseMCP contributors
-copyright: KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review
+site_author: Bowerbird contributors
+copyright: Bowerbird · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review
 site_url: https://knowledgebasemcp.voltpop.com/
 
-repo_name: dfoulks1/KnowledgeBaseMCP
-repo_url: https://github.com/dfoulks1/KnowledgeBaseMCP
+repo_name: dfoulks1/bowerbird-mcp
+repo_url: https://github.com/dfoulks1/bowerbird-mcp
 edit_uri: edit/main/docs-src/
 
 # Source markdown lives in docs-src/; the built HTML is written into docs/ so
@@ -54,6 +54,10 @@ markdown_extensions:
         - ..
       check_paths: true
 
+# AI source material lives in docs-src/prompts/ for the repository, not for the website.
+exclude_docs: |
+  prompts/
+
 nav:
   - Home: index.md
   - Getting started: getting-started.md
@@ -61,9 +65,6 @@ nav:
   - Guide: guide.md
   - Tools: tools.md
   - Contributing: contributing.md
-  - AI source material:
-      - Context: prompts/00-context.md
-      - Rewrite brief: prompts/rewrite-brief.md
   - OKF v0.2: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md
 
 plugins: []

@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Understanding OKF · KnowledgeBaseMCP</title>
+  <title>Understanding OKF · Bowerbird</title>
   <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
   <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -20,7 +20,7 @@
 <nav class="navbar navbar-expand-lg sticky-top site-nav">
   <div class="container-fluid">
     <a class="navbar-brand fw-semibold" href="..">
-      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">KnowledgeBaseMCP
+      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#site-nav" aria-controls="site-nav"
@@ -79,28 +79,6 @@
           
         
           
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle "
-                 href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                AI source material
-              </a>
-              <ul class="dropdown-menu">
-                
-                  <li>
-                    <a class="dropdown-item "
-                       href="../prompts/00-context/">Context</a>
-                  </li>
-                
-                  <li>
-                    <a class="dropdown-item "
-                       href="../prompts/rewrite-brief/">Rewrite brief</a>
-                  </li>
-                
-              </ul>
-            </li>
-          
-        
-          
             <li class="nav-item">
               <a class="nav-link "
                  
@@ -112,7 +90,7 @@
       <ul class="navbar-nav">
         
           <li class="nav-item">
-            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+            <a class="nav-link" href="https://github.com/dfoulks1/bowerbird-mcp"
                target="_blank" rel="noopener noreferrer">
               <i class="bi bi-github"></i> GitHub
             </a>
@@ -190,7 +168,7 @@
     </li>
   
     <li class="nav-item">
-      <a class="nav-link py-1 px-0" href="#where-knowledgebasemcp-fits">Where KnowledgeBaseMCP fits</a>
+      <a class="nav-link py-1 px-0" href="#where-bowerbird-fits">Where Bowerbird fits</a>
       
     </li>
   
@@ -225,7 +203,7 @@ technology. There is no database, no server, no registry of allowed types and no
 specification's own words: if you can <code>cat</code> a file you can read OKF, and if you can <code>git clone</code> a repository you
 can ship it.</p>
 <p>OKF is published as a specification (this site follows version 0.2) in the <code>knowledge-catalog</code> repository on
-GitHub. KnowledgeBaseMCP is one tool that implements it: it writes, checks and searches OKF folders. Nothing in
+GitHub. Bowerbird is one tool that implements it: it writes, checks and searches OKF folders. Nothing in
 the format depends on this tool, which is the point.</p>
 <h2 id="why-a-format-at-all">Why a format at all?<a class="headerlink" href="#why-a-format-at-all" title="Link to this section">#</a></h2>
 <p>A pile of Markdown notes is already easy to read. The trouble starts when the pile grows, other people add to it,
@@ -314,7 +292,7 @@ who <em>wrote</em> a note need not be who <em>checked</em> it; and tiers are adv
 <p>Concepts point at each other with ordinary Markdown links, either relative (<code>[the rollback steps](rollback.md)</code>)
 or from the bundle root with a leading slash (<code>/runbooks/rollback.md</code>, which survives moving files around inside
 a folder). A link says "these are related"; the sentence around it says how. A broken link is allowed by the
-format: it may simply be knowledge nobody has written yet. (KnowledgeBaseMCP's <code>status</code> lists the pages that
+format: it may simply be knowledge nobody has written yet. (Bowerbird's <code>status</code> lists the pages that
 links ask for and nobody has written.)</p>
 <p>A <strong>citation</strong> is different: it records where a <em>fact</em> came from. It lives in <code>sources</code>, and the claim in the text
 points at it with a Markdown footnote (<code>[^runbook]</code>). Links are for navigation, citations are for lineage.</p>
@@ -323,13 +301,13 @@ points at it with a Markdown footnote (<code>[^runbook]</code>). Links are for n
 <ul>
 <li><strong><code>index.md</code></strong> lists what is in a folder, with each concept's one-line description, so a reader (or an
   assistant) can see what is available before opening anything. The spec calls this <em>progressive disclosure</em>. At
-  the top of a bundle it may carry one frontmatter key, <code>okf_version</code>. OKF makes it optional; KnowledgeBaseMCP
-  uses it to recognise a folder as a bundle. Tools may generate <code>index.md</code>, and KnowledgeBaseMCP's <code>index</code> does.</li>
+  the top of a bundle it may carry one frontmatter key, <code>okf_version</code>. OKF makes it optional; Bowerbird
+  uses it to recognise a folder as a bundle. Tools may generate <code>index.md</code>, and Bowerbird's <code>index</code> does.</li>
 <li><strong><code>log.md</code></strong> is the history of changes to that folder, newest first, grouped by date.</li>
 </ul>
 <p>A bundle can travel as a git repository (recommended, for the history and the diffs), a zip, or a subfolder of a
 bigger repository. The word <strong>knowledgebase</strong>, as this site uses it, is not part of OKF: it means a bundle, or a
-folder of bundles, that KnowledgeBaseMCP manages together.</p>
+folder of bundles, that Bowerbird manages together.</p>
 <h2 id="why-it-is-good">Why it is good<a class="headerlink" href="#why-it-is-good" title="Link to this section">#</a></h2>
 <p>These are the properties that follow from the format itself.</p>
 <ul>
@@ -357,12 +335,12 @@ folder of bundles, that KnowledgeBaseMCP manages together.</p>
 <li><strong>It is not a database or a search engine.</strong> It prescribes no storage, serving or query system. Finding things
   is up to the tool you use on top.</li>
 <li><strong>It does not define your vocabulary.</strong> Concept types, tags and structure are yours to choose and keep
-  consistent. (<code>vocab</code> in KnowledgeBaseMCP lists what you actually use, so spellings do not drift.)</li>
+  consistent. (<code>vocab</code> in Bowerbird lists what you actually use, so spellings do not drift.)</li>
 <li><strong>It will not replace domain schemas.</strong> Where an asset already has a precise schema (an API description, a
   table definition), OKF points at it with <code>resource</code>; it does not copy it.</li>
 </ul>
-<h2 id="where-knowledgebasemcp-fits">Where KnowledgeBaseMCP fits<a class="headerlink" href="#where-knowledgebasemcp-fits" title="Link to this section">#</a></h2>
-<p>OKF is the format; KnowledgeBaseMCP is a way to keep a folder of it healthy. It cares how a concept is written,
+<h2 id="where-bowerbird-fits">Where Bowerbird fits<a class="headerlink" href="#where-bowerbird-fits" title="Link to this section">#</a></h2>
+<p>OKF is the format; Bowerbird is a way to keep a folder of it healthy. It cares how a concept is written,
 never what it says:</p>
 <ul>
 <li><strong><code>lint</code></strong> checks every file against the specification's conformance rules plus house rules (broken links,
@@ -401,7 +379,7 @@ answer. That is the whole idea.</p>
 
   <footer class="border-top mt-4 py-3">
     <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
-      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Bowerbird · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
       <span>Built with MkDocs + Bootstrap 5.</span>
     </div>
   </footer>

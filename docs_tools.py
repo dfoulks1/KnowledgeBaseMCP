@@ -11,7 +11,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import KnowledgeBaseMCP as k
+import bowerbird_mcp as k
 
 
 def prose(doc: str) -> str:
@@ -20,12 +20,12 @@ def prose(doc: str) -> str:
     return "`".join(html.escape(p, quote=False) if i % 2 == 0 else p for i, p in enumerate(parts))
 
 
-out = ["# Tools", "", ("Every tool, from its own docstring. Run one as `uv run KnowledgeBaseMCP.py <tool> "
+out = ["# Tools", "", ("Every tool, from its own docstring. Run one as `uv run bowerbird_mcp.py <tool> "
                        "name=value ...`, or see the same text with `help <tool>`."), ""]
 for name, fn in sorted(k.REG.items()):
     out += [f"## {name}", "", prose(fn.__doc__), ""]
     if name in k.EXAMPLES:
-        out += ["```sh", *(f"uv run KnowledgeBaseMCP.py {e}" for e in k.EXAMPLES[name]), "```", ""]
+        out += ["```sh", *(f"uv run bowerbird_mcp.py {e}" for e in k.EXAMPLES[name]), "```", ""]
     args = [(n, p) for n, p in inspect.signature(fn).parameters.items() if n != "ctx"]
     if args:
         out += ["| Argument | Type | Default |", "|---|---|---|"]

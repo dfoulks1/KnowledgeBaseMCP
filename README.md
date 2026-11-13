@@ -1,4 +1,4 @@
-# KnowledgeBaseMCP
+# Bowerbird
 
 Keep a folder of Markdown notes in order, and let an AI assistant, a script or
 you search and check them. It is for anyone who keeps notes, runbooks or documentation
@@ -20,17 +20,17 @@ https://astral.sh/uv/install.sh | sh`, which downloads and runs a script, so rea
 if you prefer). In an empty folder:
 
 ```sh
-alias kb='uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp'
+alias kb='uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp'
 kb init apply=true format=text
 kb create deploy type=Playbook title="Deploy" description="How we deploy." \
    body="Run the deploy script, then check the dashboard. To roll back, redeploy the previous tag." format=text
 kb passages 'how do we roll back' format=text     # the best passages, with file and line
-kb lint format=text                               # ends: knowledgebasemcp lint: ok: ...
+kb lint format=text                               # ends: bowerbird-mcp lint: ok: ...
 ```
 
-Personal project. Apache-2.0 (see [LICENSE](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/LICENSE); [NOTICE](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/NOTICE) credits the
+Personal project. Apache-2.0 (see [LICENSE](https://github.com/dfoulks1/bowerbird-mcp/blob/main/LICENSE); [NOTICE](https://github.com/dfoulks1/bowerbird-mcp/blob/main/NOTICE) credits the
 spec), built under the [ASF generative-tooling guidelines][asf-gt]. Bugs and ideas:
-[GitHub Issues](https://github.com/dfoulks1/KnowledgeBaseMCP/issues); security reports: [SECURITY.md](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/SECURITY.md).
+[GitHub Issues](https://github.com/dfoulks1/bowerbird-mcp/issues); security reports: [SECURITY.md](https://github.com/dfoulks1/bowerbird-mcp/blob/main/SECURITY.md).
 
 <!-- --8<-- [start:run] -->
 ## Run
@@ -39,21 +39,21 @@ Requires [uv](https://docs.astral.sh/uv/). Install on the fly, nothing to clone;
 the form to use:
 
 ```sh
-uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp help
+uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help
 ```
 
-In the examples below, `uv run KnowledgeBaseMCP.py ...` means the same command run
+In the examples below, `uv run bowerbird_mcp.py ...` means the same command run
 from a checkout of this repository (or beside a saved copy of that one file).
-PyPI later: `uvx knowledgebasemcp`.
+PyPI later: `uvx bowerbird-mcp`.
 
 A `kbmcp.yaml` at the root of a knowledgebase (not in a bundle) marks its base
-and configures it, so any `knowledgebasemcp` server knows where the
+and configures it, so any `bowerbird-mcp` server knows where the
 knowledgebase and its assets (index, archive, bundles) are, and the server
 needs no env block. The tool finds the file from the current directory up, or
 you name it with `--config`. It replaces the old `KB_ROOT` variable, which is
 now refused. `KB_USER`, `KB_AI_PRODUCERS` and `KB_ROLE` still override it.
 It is local config, never committed: each person or machine has its own, and a
-fresh clone has none until `knowledgebasemcp config apply=true` writes one from
+fresh clone has none until `bowerbird-mcp config apply=true` writes one from
 a built-in example (every setting commented out at its default). That also
 lists `kbmcp.yaml` in the `.gitignore` beside it, and it never overwrites an
 existing file. `lint` flags a `kbmcp.yaml` anywhere below the root
@@ -65,8 +65,9 @@ user: your-id         # prefills your id in confirmation prompts (KB_USER)
 ai_producers: [zed]   # extra AI names for the provenance check (KB_AI_PRODUCERS)
 passages: true        # false removes the passages and reindex tools
 hubs: true            # concepts many others link to rank a little higher
-semantic: false       # also match by meaning; nothing to install. The model (~65 MB) downloads once into
-                      # ~/.cache/knowledgebasemcp/models; passages are embedded and kept in the index
+semantic: false       # also match by meaning. `uvx bowerbird-mcp` carries what it needs; the bare script needs
+                      # `uv run --with fastembed`. The model (~65 MB) downloads once into
+                      # ~/.cache/bowerbird-mcp/models; passages are embedded and kept in the index
 semantic_model: BAAI/bge-small-en-v1.5
 min_similarity: 0.6   # how close in meaning a passage must be
 index: .kbmcp/index.db   # one SQLite file: passages, BM25 index, links, vectors; "" = in memory
@@ -80,7 +81,7 @@ itself). To build it apart from the server, run `reindex` (incremental: only
 changed files are read) and set `build: manual`, so `passages` only reads it:
 
 ```sh
-uvx knowledgebasemcp reindex format=text     # first semantic run embeds everything: minutes, once
+uvx bowerbird-mcp reindex format=text     # first semantic run embeds everything: minutes, once
 ```
 
 ```yaml
@@ -89,8 +90,8 @@ repos:
   - repo: local
     hooks:
       - id: kbmcp-reindex
-        name: KnowledgeBaseMCP reindex
-        entry: uvx knowledgebasemcp reindex
+        name: Bowerbird reindex
+        entry: uvx bowerbird-mcp reindex
         language: system
         pass_filenames: false
         always_run: true
@@ -119,11 +120,11 @@ you are. Write tools act in the bundle the file belongs to. In a git work
 tree, files git ignores are skipped.
 
 ```sh
-wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
-uv run KnowledgeBaseMCP.py help                 # every tool, one line each
-uv run KnowledgeBaseMCP.py help move            # one tool: what it does, its arguments
-uv run KnowledgeBaseMCP.py lint format=text
-uv run KnowledgeBaseMCP.py init apply=true       # start a new bundle
+wget https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/bowerbird_mcp.py
+uv run bowerbird_mcp.py help                 # every tool, one line each
+uv run bowerbird_mcp.py help move            # one tool: what it does, its arguments
+uv run bowerbird_mcp.py lint format=text
+uv run bowerbird_mcp.py init apply=true       # start a new bundle
 ```
 
 Any tool runs as `<name> name=value ...` or `<name> '<json object>'`. Bare
@@ -244,9 +245,9 @@ for Cursor. VS Code's `.vscode/mcp.json` takes the same entry under `"servers"`.
 ```json
 {
   "mcpServers": {
-    "knowledgebase": {
+    "bowerbird": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp"]
+      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp"]
     }
   }
 }
@@ -257,7 +258,7 @@ id is `user:` in it). To point at one elsewhere, add `"--config",
 "/path/to/kb/kbmcp.yaml"` to `args`. Or, in Claude Code:
 
 ```sh
-claude mcp add knowledgebase -- uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp --config /path/to/kb/kbmcp.yaml
+claude mcp add bowerbird -- uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp --config /path/to/kb/kbmcp.yaml
 ```
 
 Several knowledgebases at once: one entry each, with its own `--config`. The
@@ -284,8 +285,8 @@ commas), and each server offers only that role's tools:
 ```json
 {
   "mcpServers": {
-    "kb-read":  { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "read"] },
-    "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "write"] }
+    "kb-read":  { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp", "--role", "read"] },
+    "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp", "--role", "write"] }
   }
 }
 ```
@@ -301,9 +302,9 @@ always has every tool.
 ## Before you push
 
 ```sh
-uv run KnowledgeBaseMCP.py lint format=text      # what's wrong, each with a fix
-uv run KnowledgeBaseMCP.py fix apply=true        # mechanical repairs, then re-lint
-uv run KnowledgeBaseMCP.py lint format=text      # what's left needs you
+uv run bowerbird_mcp.py lint format=text      # what's wrong, each with a fix
+uv run bowerbird_mcp.py fix apply=true        # mechanical repairs, then re-lint
+uv run bowerbird_mcp.py lint format=text      # what's left needs you
 ```
 
 `scope=okf` limits the check to the spec; `scope=house` to hygiene (links,
@@ -313,7 +314,7 @@ kinds: `lint only=stub,island`.
 
 ## CI
 
-Vendor `KnowledgeBaseMCP.py` into the bundle's repo, then:
+Vendor `bowerbird_mcp.py` into the bundle's repo, then:
 
 ```yaml
 # .github/workflows/okf.yml
@@ -327,7 +328,7 @@ jobs:
         with:
           fetch-depth: 0          # provenance needs full history
       - uses: astral-sh/setup-uv@v6
-      - run: uv run KnowledgeBaseMCP.py lint scope=okf format=github
+      - run: uv run bowerbird_mcp.py lint scope=okf format=github
 ```
 
 Findings show as annotations on the PR. `format=sarif` suits code scanning.
@@ -352,7 +353,7 @@ CLAUDE.md
 ```
 
 pre-commit, lint only (a hook that edits files leaves the commit unstaged).
-`lint` always ends with a verdict line, such as `knowledgebasemcp lint: ok: 214
+`lint` always ends with a verdict line, such as `bowerbird-mcp lint: ok: 214
 concept(s) in 3 bundle(s) checked, 0 finding(s), conformant: True`, so you can
 see it ran. pre-commit prints a passing hook's output only with `verbose: true`:
 
@@ -362,7 +363,7 @@ repos:
     hooks:
       - id: okf-lint
         name: OKF lint
-        entry: uv run KnowledgeBaseMCP.py lint format=text
+        entry: uv run bowerbird_mcp.py lint format=text
         language: system
         pass_filenames: false
         verbose: true
@@ -379,9 +380,9 @@ repos:
   lists the tags and types in use, the words those filters take.
 
   ```sh
-  uv run KnowledgeBaseMCP.py dirs format=text
-  uv run KnowledgeBaseMCP.py search deploy rollback dir=runbooks format=text
-  uv run KnowledgeBaseMCP.py get runbooks/deploy.md format=text
+  uv run bowerbird_mcp.py dirs format=text
+  uv run bowerbird_mcp.py search deploy rollback dir=runbooks format=text
+  uv run bowerbird_mcp.py get runbooks/deploy.md format=text
   ```
 
 - `passages` answers a question. It cuts concepts at
@@ -399,8 +400,8 @@ repos:
   both tools.
 
   ```sh
-  uv run KnowledgeBaseMCP.py reindex format=text
-  uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text
+  uv run bowerbird_mcp.py reindex format=text
+  uv run bowerbird_mcp.py passages 'how do we roll back a deploy' format=text
   ```
 
 - `web` maps links and citations: bundles at the knowledgebase root, concepts
@@ -431,8 +432,9 @@ repos:
 - `passages` has no stemming ("rolling" will not match "roll"), and with
   `build: manual` it does not notice files changed since the last `reindex`.
   Semantic search downloads its model (~65 MB) once into
-  `~/.cache/knowledgebasemcp/models`, and `fastembed` with its dependencies
-  adds about 150 MB to the install. The index lives in the file
+  `~/.cache/bowerbird-mcp/models`. `fastembed` and its dependencies (about 150 MB) come
+  with the installed package (`uvx bowerbird-mcp`) but not with the bare script, which
+  needs `uv run --with fastembed` for `semantic: true`. The index lives in the file
   `index` names and is safe to delete; nothing in the
   knowledgebase changes.
 
@@ -440,7 +442,7 @@ repos:
 ## Self-check
 
 ```sh
-uv run test_KnowledgeBaseMCP.py
+uv run test_bowerbird_mcp.py
 ```
 
 ## Spec

@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Guide · KnowledgeBaseMCP</title>
+  <title>Guide · Bowerbird</title>
   <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
   <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -20,7 +20,7 @@
 <nav class="navbar navbar-expand-lg sticky-top site-nav">
   <div class="container-fluid">
     <a class="navbar-brand fw-semibold" href="..">
-      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">KnowledgeBaseMCP
+      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#site-nav" aria-controls="site-nav"
@@ -79,28 +79,6 @@
           
         
           
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle "
-                 href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                AI source material
-              </a>
-              <ul class="dropdown-menu">
-                
-                  <li>
-                    <a class="dropdown-item "
-                       href="../prompts/00-context/">Context</a>
-                  </li>
-                
-                  <li>
-                    <a class="dropdown-item "
-                       href="../prompts/rewrite-brief/">Rewrite brief</a>
-                  </li>
-                
-              </ul>
-            </li>
-          
-        
-          
             <li class="nav-item">
               <a class="nav-link "
                  
@@ -112,7 +90,7 @@
       <ul class="navbar-nav">
         
           <li class="nav-item">
-            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+            <a class="nav-link" href="https://github.com/dfoulks1/bowerbird-mcp"
                target="_blank" rel="noopener noreferrer">
               <i class="bi bi-github"></i> GitHub
             </a>
@@ -217,18 +195,18 @@
 <h2 id="run">Run<a class="headerlink" href="#run" title="Link to this section">#</a></h2>
 <p>Requires <a href="https://docs.astral.sh/uv/">uv</a>. Install on the fly, nothing to clone; this is
 the form to use:</p>
-<pre class="highlight"><code class="language-sh">uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp help</code></pre>
-<p>In the examples below, <code>uv run KnowledgeBaseMCP.py ...</code> means the same command run
+<pre class="highlight"><code class="language-sh">uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help</code></pre>
+<p>In the examples below, <code>uv run bowerbird_mcp.py ...</code> means the same command run
 from a checkout of this repository (or beside a saved copy of that one file).
-PyPI later: <code>uvx knowledgebasemcp</code>.</p>
+PyPI later: <code>uvx bowerbird-mcp</code>.</p>
 <p>A <code>kbmcp.yaml</code> at the root of a knowledgebase (not in a bundle) marks its base
-and configures it, so any <code>knowledgebasemcp</code> server knows where the
+and configures it, so any <code>bowerbird-mcp</code> server knows where the
 knowledgebase and its assets (index, archive, bundles) are, and the server
 needs no env block. The tool finds the file from the current directory up, or
 you name it with <code>--config</code>. It replaces the old <code>KB_ROOT</code> variable, which is
 now refused. <code>KB_USER</code>, <code>KB_AI_PRODUCERS</code> and <code>KB_ROLE</code> still override it.
 It is local config, never committed: each person or machine has its own, and a
-fresh clone has none until <code>knowledgebasemcp config apply=true</code> writes one from
+fresh clone has none until <code>bowerbird-mcp config apply=true</code> writes one from
 a built-in example (every setting commented out at its default). That also
 lists <code>kbmcp.yaml</code> in the <code>.gitignore</code> beside it, and it never overwrites an
 existing file. <code>lint</code> flags a <code>kbmcp.yaml</code> anywhere below the root
@@ -238,8 +216,9 @@ user: your-id         # prefills your id in confirmation prompts (KB_USER)
 ai_producers: [zed]   # extra AI names for the provenance check (KB_AI_PRODUCERS)
 passages: true        # false removes the passages and reindex tools
 hubs: true            # concepts many others link to rank a little higher
-semantic: false       # also match by meaning; nothing to install. The model (~65 MB) downloads once into
-                      # ~/.cache/knowledgebasemcp/models; passages are embedded and kept in the index
+semantic: false       # also match by meaning. `uvx bowerbird-mcp` carries what it needs; the bare script needs
+                      # `uv run --with fastembed`. The model (~65 MB) downloads once into
+                      # ~/.cache/bowerbird-mcp/models; passages are embedded and kept in the index
 semantic_model: BAAI/bge-small-en-v1.5
 min_similarity: 0.6   # how close in meaning a passage must be
 index: .kbmcp/index.db   # one SQLite file: passages, BM25 index, links, vectors; "" = in memory
@@ -249,14 +228,14 @@ roles: [read, write, structure, lifecycle]   # roles the MCP server may offer; d
 the concepts: safe to delete, never committed (a new <code>.kbmcp/</code> folder ignores
 itself). To build it apart from the server, run <code>reindex</code> (incremental: only
 changed files are read) and set <code>build: manual</code>, so <code>passages</code> only reads it:</p>
-<pre class="highlight"><code class="language-sh">uvx knowledgebasemcp reindex format=text     # first semantic run embeds everything: minutes, once</code></pre>
+<pre class="highlight"><code class="language-sh">uvx bowerbird-mcp reindex format=text     # first semantic run embeds everything: minutes, once</code></pre>
 <pre class="highlight"><code class="language-yaml"># .pre-commit-config.yaml: refresh after you commit and after pulls
 repos:
   - repo: local
     hooks:
       - id: kbmcp-reindex
-        name: KnowledgeBaseMCP reindex
-        entry: uvx knowledgebasemcp reindex
+        name: Bowerbird reindex
+        entry: uvx bowerbird-mcp reindex
         language: system
         pass_filenames: false
         always_run: true
@@ -280,11 +259,11 @@ path within it (<code>bundle=eng file=runbooks/deploy.md</code>), in every input
 output. On the command line, without <code>bundle=</code>, paths are relative to where
 you are. Write tools act in the bundle the file belongs to. In a git work
 tree, files git ignores are skipped.</p>
-<pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
-uv run KnowledgeBaseMCP.py help                 # every tool, one line each
-uv run KnowledgeBaseMCP.py help move            # one tool: what it does, its arguments
-uv run KnowledgeBaseMCP.py lint format=text
-uv run KnowledgeBaseMCP.py init apply=true       # start a new bundle</code></pre>
+<pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/bowerbird_mcp.py
+uv run bowerbird_mcp.py help                 # every tool, one line each
+uv run bowerbird_mcp.py help move            # one tool: what it does, its arguments
+uv run bowerbird_mcp.py lint format=text
+uv run bowerbird_mcp.py init apply=true       # start a new bundle</code></pre>
 <p>Any tool runs as <code>&lt;name&gt; name=value ...</code> or <code>&lt;name&gt; '&lt;json object&gt;'</code>. Bare
 arguments fill the required ones in order (<code>move a.md b.md</code>); on <code>set</code>, any
 other <code>key=value</code> is frontmatter (<code>set a.md status=deprecated tags=[x,y]</code>).
@@ -374,16 +353,16 @@ Claude Code, <code>claude_desktop_config.json</code> for Claude Desktop, <code>.
 for Cursor. VS Code's <code>.vscode/mcp.json</code> takes the same entry under <code>"servers"</code>.</p>
 <pre class="highlight"><code class="language-json">{
   "mcpServers": {
-    "knowledgebase": {
+    "bowerbird": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp"]
+      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp"]
     }
   }
 }</code></pre>
 <p>The server runs in the project folder, so it finds the <code>kbmcp.yaml</code> there (your
 id is <code>user:</code> in it). To point at one elsewhere, add <code>"--config",
 "/path/to/kb/kbmcp.yaml"</code> to <code>args</code>. Or, in Claude Code:</p>
-<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase -- uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp --config /path/to/kb/kbmcp.yaml</code></pre>
+<pre class="highlight"><code class="language-sh">claude mcp add bowerbird -- uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp --config /path/to/kb/kbmcp.yaml</code></pre>
 <p>Several knowledgebases at once: one entry each, with its own <code>--config</code>. The
 client prefixes tool names with the entry name, and each file's <code>about:</code> tells
 the agent what that knowledgebase holds. Each keeps its own index.</p>
@@ -427,8 +406,8 @@ commas), and each server offers only that role's tools:</p>
 </table>
 <pre class="highlight"><code class="language-json">{
   "mcpServers": {
-    "kb-read":  { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "read"] },
-    "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "write"] }
+    "kb-read":  { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp", "--role", "read"] },
+    "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp", "--role", "write"] }
   }
 }</code></pre>
 <p>The <code>read</code> server is read-only, so a client can approve it without asking; the other
@@ -437,15 +416,15 @@ three change files. A tool can belong to more than one role (<code>dirs</code> i
 <code>kbmcp.yaml</code> leaves on; naming a role that is off refuses to start. The CLI
 always has every tool.</p>
 <h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Link to this section">#</a></h2>
-<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint format=text      # what's wrong, each with a fix
-uv run KnowledgeBaseMCP.py fix apply=true        # mechanical repairs, then re-lint
-uv run KnowledgeBaseMCP.py lint format=text      # what's left needs you</code></pre>
+<pre class="highlight"><code class="language-sh">uv run bowerbird_mcp.py lint format=text      # what's wrong, each with a fix
+uv run bowerbird_mcp.py fix apply=true        # mechanical repairs, then re-lint
+uv run bowerbird_mcp.py lint format=text      # what's left needs you</code></pre>
 <p><code>scope=okf</code> limits the check to the spec; <code>scope=house</code> to hygiene (links,
 anchors, orphans, islands, stubs, duplicate titles, reference links,
 filenames, tags, generated indexes). <code>only=</code> and <code>ignore=</code> keep or drop finding
 kinds: <code>lint only=stub,island</code>.</p>
 <h2 id="ci">CI<a class="headerlink" href="#ci" title="Link to this section">#</a></h2>
-<p>Vendor <code>KnowledgeBaseMCP.py</code> into the bundle's repo, then:</p>
+<p>Vendor <code>bowerbird_mcp.py</code> into the bundle's repo, then:</p>
 <pre class="highlight"><code class="language-yaml"># .github/workflows/okf.yml
 name: okf
 on: [push, pull_request]
@@ -457,7 +436,7 @@ jobs:
         with:
           fetch-depth: 0          # provenance needs full history
       - uses: astral-sh/setup-uv@v6
-      - run: uv run KnowledgeBaseMCP.py lint scope=okf format=github</code></pre>
+      - run: uv run bowerbird_mcp.py lint scope=okf format=github</code></pre>
 <p>Findings show as annotations on the PR. <code>format=sarif</code> suits code scanning.
 On PRs, <code>since=origin/${{ github.base_ref }}</code> limits findings to the files the PR
 changed.
@@ -475,7 +454,7 @@ AGENTS*
 CLAUDE.md
 .kiro/</code></pre>
 <p>pre-commit, lint only (a hook that edits files leaves the commit unstaged).
-<code>lint</code> always ends with a verdict line, such as <code>knowledgebasemcp lint: ok: 214
+<code>lint</code> always ends with a verdict line, such as <code>bowerbird-mcp lint: ok: 214
 concept(s) in 3 bundle(s) checked, 0 finding(s), conformant: True</code>, so you can
 see it ran. pre-commit prints a passing hook's output only with <code>verbose: true</code>:</p>
 <pre class="highlight"><code class="language-yaml">repos:
@@ -483,7 +462,7 @@ see it ran. pre-commit prints a passing hook's output only with <code>verbose: t
     hooks:
       - id: okf-lint
         name: OKF lint
-        entry: uv run KnowledgeBaseMCP.py lint format=text
+        entry: uv run bowerbird_mcp.py lint format=text
         language: system
         pass_filenames: false
         verbose: true</code></pre>
@@ -495,9 +474,9 @@ see it ran. pre-commit prints a passing hook's output only with <code>verbose: t
   <code>type=</code>, <code>tag=</code> and <code>dir=</code> filters; <code>get</code> reads only the top hit. <code>vocab</code>
   lists the tags and types in use, the words those filters take.</li>
 </ul>
-<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py dirs format=text
-uv run KnowledgeBaseMCP.py search deploy rollback dir=runbooks format=text
-uv run KnowledgeBaseMCP.py get runbooks/deploy.md format=text</code></pre>
+<pre class="highlight"><code class="language-sh">uv run bowerbird_mcp.py dirs format=text
+uv run bowerbird_mcp.py search deploy rollback dir=runbooks format=text
+uv run bowerbird_mcp.py get runbooks/deploy.md format=text</code></pre>
 <ul>
 <li><code>passages</code> answers a question. It cuts concepts at
   headings and returns the best sections, each with file, line, heading,
@@ -513,8 +492,8 @@ uv run KnowledgeBaseMCP.py get runbooks/deploy.md format=text</code></pre>
   holds and how far behind it is, <code>drop=true</code> deletes it. <code>passages: false</code> removes
   both tools.</li>
 </ul>
-<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py reindex format=text
-uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text</code></pre>
+<pre class="highlight"><code class="language-sh">uv run bowerbird_mcp.py reindex format=text
+uv run bowerbird_mcp.py passages 'how do we roll back a deploy' format=text</code></pre>
 <ul>
 <li><code>web</code> maps links and citations: bundles at the knowledgebase root, concepts
   in a bundle. <code>format=text</code> for the terminal, <code>format=mermaid</code> for anything
@@ -544,8 +523,9 @@ uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text</
 <li><code>passages</code> has no stemming ("rolling" will not match "roll"), and with
   <code>build: manual</code> it does not notice files changed since the last <code>reindex</code>.
   Semantic search downloads its model (~65 MB) once into
-  <code>~/.cache/knowledgebasemcp/models</code>, and <code>fastembed</code> with its dependencies
-  adds about 150 MB to the install. The index lives in the file
+  <code>~/.cache/bowerbird-mcp/models</code>. <code>fastembed</code> and its dependencies (about 150 MB) come
+  with the installed package (<code>uvx bowerbird-mcp</code>) but not with the bare script, which
+  needs <code>uv run --with fastembed</code> for <code>semantic: true</code>. The index lives in the file
   <code>index</code> names and is safe to delete; nothing in the
   knowledgebase changes.</li>
 </ul></article>
@@ -566,7 +546,7 @@ uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text</
 
   <footer class="border-top mt-4 py-3">
     <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
-      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Bowerbird · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
       <span>Built with MkDocs + Bootstrap 5.</span>
     </div>
   </footer>

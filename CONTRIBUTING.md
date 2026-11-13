@@ -1,13 +1,13 @@
 # Contributing
 
-KnowledgeBaseMCP is a personal project, Apache-2.0 licensed, built under the
+Bowerbird is a personal project, Apache-2.0 licensed, built under the
 [ASF generative-tooling guidelines][asf-gt]. AI assists; a human reviews before
 anything public-facing ships.
 
 ## Feedback
 
-Bugs, ideas and OKF edge cases: [GitHub Issues](https://github.com/dfoulks1/KnowledgeBaseMCP/issues). Doc fixes are welcome too.
-Security problems: see [SECURITY.md](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/SECURITY.md), and please do not open a public issue for them.
+Bugs, ideas and OKF edge cases: [GitHub Issues](https://github.com/dfoulks1/bowerbird-mcp/issues). Doc fixes are welcome too.
+Security problems: see [SECURITY.md](https://github.com/dfoulks1/bowerbird-mcp/blob/main/SECURITY.md), and please do not open a public issue for them.
 
 ## What it serves
 
@@ -17,8 +17,8 @@ more consistent, not possible.
 
 ## How we build
 
-One brief, then refinement. [`docs-src/prompts/rewrite-brief.md`](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/docs-src/prompts/rewrite-brief.md) is the current brief (AI source
-material, published on the site under *AI source material*; a draft in the beta process);
+One brief, then refinement. [`docs-src/prompts/rewrite-brief.md`](https://github.com/dfoulks1/bowerbird-mcp/blob/main/docs-src/prompts/rewrite-brief.md) is the current brief (AI source
+material kept in the repository, not on the website; a draft in the beta process);
 use cases drive changes to it. Core stays one file.
 
 ## ASF generative-tooling compliance
@@ -38,9 +38,25 @@ use cases drive changes to it. Core stays one file.
 ## Running the checks
 
 ```sh
-uv run KnowledgeBaseMCP.py lint     # exits 1 on problems; use as a pre-merge gate
-uv run test_KnowledgeBaseMCP.py     # self-check against throwaway bundles
+uv run bowerbird_mcp.py lint     # exits 1 on problems; use as a pre-merge gate
+uv run test_bowerbird_mcp.py     # self-check against throwaway bundles
 ```
+
+## Releasing
+
+1. Set `version` in `pyproject.toml`, add a section to `CHANGELOG.md`, and run the checks above (the tests
+   run on Python 3.10 to 3.14: `uv run --python 3.10 test_bowerbird_mcp.py`).
+2. Rebuild the docs site (below) and commit. Merge to `main`.
+3. Tag and publish a GitHub release, `git tag -a vX.Y.Z` then `gh release create vX.Y.Z`, with the
+   `CHANGELOG.md` section as the notes. Publishing the release runs `.github/workflows/publish.yml`, which
+   tests, builds and uploads to PyPI. The workflow refuses a tag that does not match `version`.
+
+PyPI uses *trusted publishing*, so no token is stored anywhere. One-time setup, by the project owner:
+create the project's pending publisher at https://pypi.org/manage/account/publishing/ with owner
+`dfoulks1`, repository `Bowerbird`, workflow `publish.yml` and environment `pypi`, and create a
+GitHub environment named `pypi` (Settings, Environments), ideally with the owner as a required reviewer
+so each upload waits for approval. To try it first, `uv publish --publish-url https://test.pypi.org/legacy/`
+uploads the files from `uv build` to TestPyPI.
 
 ## Docs site
 

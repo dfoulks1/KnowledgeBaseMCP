@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Contributing · KnowledgeBaseMCP</title>
+  <title>Contributing · Bowerbird</title>
   <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
   <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -20,7 +20,7 @@
 <nav class="navbar navbar-expand-lg sticky-top site-nav">
   <div class="container-fluid">
     <a class="navbar-brand fw-semibold" href="..">
-      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">KnowledgeBaseMCP
+      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#site-nav" aria-controls="site-nav"
@@ -79,28 +79,6 @@
           
         
           
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle "
-                 href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                AI source material
-              </a>
-              <ul class="dropdown-menu">
-                
-                  <li>
-                    <a class="dropdown-item "
-                       href="../prompts/00-context/">Context</a>
-                  </li>
-                
-                  <li>
-                    <a class="dropdown-item "
-                       href="../prompts/rewrite-brief/">Rewrite brief</a>
-                  </li>
-                
-              </ul>
-            </li>
-          
-        
-          
             <li class="nav-item">
               <a class="nav-link "
                  
@@ -112,7 +90,7 @@
       <ul class="navbar-nav">
         
           <li class="nav-item">
-            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+            <a class="nav-link" href="https://github.com/dfoulks1/bowerbird-mcp"
                target="_blank" rel="noopener noreferrer">
               <i class="bi bi-github"></i> GitHub
             </a>
@@ -163,6 +141,11 @@
     </li>
   
     <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#releasing">Releasing</a>
+      
+    </li>
+  
+    <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#docs-site">Docs site</a>
       
     </li>
@@ -181,19 +164,19 @@
           </nav>
         
         <article><h1 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Link to this section">#</a></h1>
-<p>KnowledgeBaseMCP is a personal project, Apache-2.0 licensed, built under the
+<p>Bowerbird is a personal project, Apache-2.0 licensed, built under the
 <a href="https://www.apache.org/legal/generative-tooling.html">ASF generative-tooling guidelines</a>. AI assists; a human reviews before
 anything public-facing ships.</p>
 <h2 id="feedback">Feedback<a class="headerlink" href="#feedback" title="Link to this section">#</a></h2>
-<p>Bugs, ideas and OKF edge cases: <a href="https://github.com/dfoulks1/KnowledgeBaseMCP/issues">GitHub Issues</a>. Doc fixes are welcome too.
-Security problems: see <a href="https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/SECURITY.md">SECURITY.md</a>, and please do not open a public issue for them.</p>
+<p>Bugs, ideas and OKF edge cases: <a href="https://github.com/dfoulks1/bowerbird-mcp/issues">GitHub Issues</a>. Doc fixes are welcome too.
+Security problems: see <a href="https://github.com/dfoulks1/bowerbird-mcp/blob/main/SECURITY.md">SECURITY.md</a>, and please do not open a public issue for them.</p>
 <h2 id="what-it-serves">What it serves<a class="headerlink" href="#what-it-serves" title="Link to this section">#</a></h2>
 <p>Bundles in the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">Open Knowledge Format</a> (OKF). Everything a tool does is
 also doable by hand (edit the file, run <code>lint</code>). The tools make it cheaper and
 more consistent, not possible.</p>
 <h2 id="how-we-build">How we build<a class="headerlink" href="#how-we-build" title="Link to this section">#</a></h2>
-<p>One brief, then refinement. <a href="https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/docs-src/prompts/rewrite-brief.md"><code>docs-src/prompts/rewrite-brief.md</code></a> is the current brief (AI source
-material, published on the site under <em>AI source material</em>; a draft in the beta process);
+<p>One brief, then refinement. <a href="https://github.com/dfoulks1/bowerbird-mcp/blob/main/docs-src/prompts/rewrite-brief.md"><code>docs-src/prompts/rewrite-brief.md</code></a> is the current brief (AI source
+material kept in the repository, not on the website; a draft in the beta process);
 use cases drive changes to it. Core stays one file.</p>
 <h2 id="asf-generative-tooling-compliance">ASF generative-tooling compliance<a class="headerlink" href="#asf-generative-tooling-compliance" title="Link to this section">#</a></h2>
 <ul>
@@ -207,8 +190,23 @@ use cases drive changes to it. Core stays one file.</p>
 </ul>
 <pre class="highlight"><code>Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;</code></pre>
 <h2 id="running-the-checks">Running the checks<a class="headerlink" href="#running-the-checks" title="Link to this section">#</a></h2>
-<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint     # exits 1 on problems; use as a pre-merge gate
-uv run test_KnowledgeBaseMCP.py     # self-check against throwaway bundles</code></pre>
+<pre class="highlight"><code class="language-sh">uv run bowerbird_mcp.py lint     # exits 1 on problems; use as a pre-merge gate
+uv run test_bowerbird_mcp.py     # self-check against throwaway bundles</code></pre>
+<h2 id="releasing">Releasing<a class="headerlink" href="#releasing" title="Link to this section">#</a></h2>
+<ol>
+<li>Set <code>version</code> in <code>pyproject.toml</code>, add a section to <code>CHANGELOG.md</code>, and run the checks above (the tests
+   run on Python 3.10 to 3.14: <code>uv run --python 3.10 test_bowerbird_mcp.py</code>).</li>
+<li>Rebuild the docs site (below) and commit. Merge to <code>main</code>.</li>
+<li>Tag and publish a GitHub release, <code>git tag -a vX.Y.Z</code> then <code>gh release create vX.Y.Z</code>, with the
+   <code>CHANGELOG.md</code> section as the notes. Publishing the release runs <code>.github/workflows/publish.yml</code>, which
+   tests, builds and uploads to PyPI. The workflow refuses a tag that does not match <code>version</code>.</li>
+</ol>
+<p>PyPI uses <em>trusted publishing</em>, so no token is stored anywhere. One-time setup, by the project owner:
+create the project's pending publisher at https://pypi.org/manage/account/publishing/ with owner
+<code>dfoulks1</code>, repository <code>Bowerbird</code>, workflow <code>publish.yml</code> and environment <code>pypi</code>, and create a
+GitHub environment named <code>pypi</code> (Settings, Environments), ideally with the owner as a required reviewer
+so each upload waits for approval. To try it first, <code>uv publish --publish-url https://test.pypi.org/legacy/</code>
+uploads the files from <code>uv build</code> to TestPyPI.</p>
 <h2 id="docs-site">Docs site<a class="headerlink" href="#docs-site" title="Link to this section">#</a></h2>
 <p><code>docs-src/</code> is the source and <code>docs/</code> the built site, committed so GitHub Pages
 serves it from <code>main</code> <code>/docs</code>. No CI builds it. After changing the README, a
@@ -222,8 +220,6 @@ uvx --with pymdown-extensions mkdocs build    # docs-src/ -&gt; docs/</code></pr
               <a class="btn btn-outline-secondary" href="../tools/">&larr; Tools</a>
             
             
-              <a class="btn btn-outline-secondary" href="../prompts/00-context/">Context &rarr;</a>
-            
           </div>
         
       </main>
@@ -232,7 +228,7 @@ uvx --with pymdown-extensions mkdocs build    # docs-src/ -&gt; docs/</code></pr
 
   <footer class="border-top mt-4 py-3">
     <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
-      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Bowerbird · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
       <span>Built with MkDocs + Bootstrap 5.</span>
     </div>
   </footer>

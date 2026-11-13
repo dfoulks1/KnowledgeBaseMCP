@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # dependencies = ["mcp>=1.10,<2", "pyyaml"]
 # ///
-"""Self-check: throwaway bundles, every tool. Run: uv run test_KnowledgeBaseMCP.py"""
+"""Self-check: throwaway bundles, every tool. Run: uv run test_bowerbird_mcp.py"""
 import asyncio
 import contextlib
 import io
@@ -24,7 +24,7 @@ os.environ.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
 (kb / "kbmcp.yaml").write_text("")  # the config file marks the knowledgebase root
 sys.argv[1:] = ["--config", str(kb / "kbmcp.yaml")]
 sys.path.insert(0, str(HERE))
-import KnowledgeBaseMCP as k
+import bowerbird_mcp as k
 
 del sys.argv[1:]
 k.CFG_DIR = None  # the tests swap KB_ROOT around; keep each one's index inside its own root
@@ -752,7 +752,7 @@ assert k.load_config(cfg)[1] == {"semantic": True, "min_similarity": 1, "hubs": 
 
 # passages: false: no passages tool, no example, the instructions send you to search.
 (cfg / "kbmcp.yaml").write_text("passages: false\n")
-probe = "import KnowledgeBaseMCP as k; print('passages' in k.REG, 'passages' in k.EXAMPLES, 'passages' in k.INSTRUCTIONS)"
+probe = "import bowerbird_mcp as k; print('passages' in k.REG, 'passages' in k.EXAMPLES, 'passages' in k.INSTRUCTIONS)"
 env = dict(os.environ) | {"PYTHONPATH": str(HERE)}
 off = subprocess.run([sys.executable, "-c", probe], cwd=cfg, env=env, capture_output=True, text=True, check=False)
 assert off.stdout.split() == ["False", "False", "False"], off
@@ -824,7 +824,7 @@ k.OPTS.update(default)
 (rk / "late.md").unlink()
 # roles: every tool has a home; the server offers the union of the roles asked for and enabled; the CLI has all.
 assert set().union(*k.ROLES.values()) == set(k.REG) and k.offered() == set(k.REG)
-list_tools = ("import sys, asyncio; sys.argv = ['x', *sys.argv[1:]]; import KnowledgeBaseMCP as k; "
+list_tools = ("import sys, asyncio; sys.argv = ['x', *sys.argv[1:]]; import bowerbird_mcp as k; "
               "print(' '.join(sorted(t.name for t in asyncio.run(k.mcp.list_tools()))))")
 def server(yaml_text="", *argv, **env):
     (cfg / "kbmcp.yaml").write_text(yaml_text)
@@ -842,7 +842,7 @@ r = server("roles: [wizard]\n")
 assert r.returncode and "unknown role wizard" in r.stderr, r
 assert k.opt_arg(["--role", "write", "lint"], "--role") == ("write", ["lint"]) and k.opt_arg(["--role=a"], "--role") == ("a", [])
 # the config file marks the knowledgebase: found from the working directory or named by --config; KB_ROOT is refused.
-probe = "import sys; sys.argv = ['x', *sys.argv[1:]]; import KnowledgeBaseMCP as k; print(k.KB_ROOT); print(k.INSTRUCTIONS)"
+probe = "import sys; sys.argv = ['x', *sys.argv[1:]]; import bowerbird_mcp as k; print(k.KB_ROOT); print(k.INSTRUCTIONS)"
 def where(cwd, *argv, **env):
     e = {kk: v for kk, v in os.environ.items() if kk != "KB_ROLE"} | {"PYTHONPATH": str(HERE)} | env
     return subprocess.run([sys.executable, "-c", probe, *argv], cwd=cwd, env=e, capture_output=True, text=True, check=False)
@@ -896,9 +896,9 @@ k.KB_ROOT, k.CFG_DIR = ck, cf
 L = k.lint()
 assert L["checked"]["concepts"] > 0 and L["checked"]["bundles"] >= 1, L
 code, text = cli("lint", "format=text")
-assert text.splitlines()[-1].startswith(f"knowledgebasemcp lint: {'ok' if code == 0 else 'FAILED'}: ") and "concept(s) in" in text, text
+assert text.splitlines()[-1].startswith(f"bowerbird-mcp lint: {'ok' if code == 0 else 'FAILED'}: ") and "concept(s) in" in text, text
 code, text = cli("lint", "format=github")
-assert text.splitlines()[-1].startswith("::notice title=knowledgebasemcp lint::knowledgebasemcp lint: "), text
+assert text.splitlines()[-1].startswith("::notice title=bowerbird-mcp lint::bowerbird-mcp lint: "), text
 assert "checked" not in k.lint(file="faq.md")  # a named file has no bundle count
 good = Path(tempfile.mkdtemp()).resolve()
 (good / "index.md").write_text('---\nokf_version: "0.2"\n---\n# kb\n')
@@ -906,7 +906,7 @@ good = Path(tempfile.mkdtemp()).resolve()
 saved_root = k.KB_ROOT
 k.KB_ROOT = good
 code, text = cli("lint", "format=text")
-assert code == 0 and text.splitlines()[-1] == "knowledgebasemcp lint: ok: 0 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True", (code, text)
+assert code == 0 and text.splitlines()[-1] == "bowerbird-mcp lint: ok: 0 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True", (code, text)
 k.KB_ROOT = saved_root
 # a file with no frontmatter that links to a concept must not crash lint (islands once raised KeyError).
 (rk / "plain.md").write_text("No frontmatter here, but it links [to a concept](seed.md).\n")

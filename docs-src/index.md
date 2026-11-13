@@ -1,10 +1,10 @@
 <div class="hero">
   <img src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a round knob" width="136" height="136">
-  <h1 id="knowledgebasemcp">KnowledgeBaseMCP</h1>
+  <h1 id="bowerbird-mcp">Bowerbird</h1>
   <p class="lead">Keep an <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">Open Knowledge Format</a> knowledgebase in order: checked, maintained and imported, by agents and people alike. It cares how a concept is written, never what it says.</p>
   <p>
     <a class="btn btn-brand me-2" href="guide/">Get started</a>
-    <a class="btn btn-outline-secondary" href="https://github.com/dfoulks1/KnowledgeBaseMCP">View on GitHub</a>
+    <a class="btn btn-outline-secondary" href="https://github.com/dfoulks1/bowerbird-mcp">View on GitHub</a>
   </p>
 </div>
 
@@ -30,14 +30,14 @@
 Nothing to clone. [uv](https://docs.astral.sh/uv/) installs it and its dependencies on the fly:
 
 ```sh
-uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp help
+uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help
 ```
 
 Or take the one file and run it:
 
 ```sh
-wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
-uv run KnowledgeBaseMCP.py help
+wget https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/bowerbird_mcp.py
+uv run bowerbird_mcp.py help
 ```
 
 No uv yet? `curl -LsSf https://astral.sh/uv/install.sh | sh`
@@ -48,9 +48,9 @@ Then add it to your MCP client's servers file (`.mcp.json` for Claude Code;
 ```json
 {
   "mcpServers": {
-    "knowledgebase": {
+    "bowerbird": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp"]
+      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp"]
     }
   }
 }
@@ -66,26 +66,26 @@ Or work from the terminal, no AI needed:
 
 ```sh
 # start a bundle
-uv run KnowledgeBaseMCP.py init bundle=eng apply=true
+uv run bowerbird_mcp.py init bundle=eng apply=true
 
 # write a concept (a few real sentences, or `passages` has nothing to find)
-uv run KnowledgeBaseMCP.py create eng/runbooks/deploy type=Playbook title="Deploy" \
+uv run bowerbird_mcp.py create eng/runbooks/deploy type=Playbook title="Deploy" \
     description="How we deploy." \
     body="Run the deploy script, then check the dashboard. To roll back, redeploy the previous tag."
 
 # find it: the map, then the best matches
-uv run KnowledgeBaseMCP.py dirs format=text
-uv run KnowledgeBaseMCP.py search deploy format=text
+uv run bowerbird_mcp.py dirs format=text
+uv run bowerbird_mcp.py search deploy format=text
 
 # ask a question: the best sections, each with file, line and trust to cite
-uv run KnowledgeBaseMCP.py passages 'how do we deploy' format=text
+uv run bowerbird_mcp.py passages 'how do we deploy' format=text
 
 # what's wrong, each with a fix; then the mechanical repairs
-uv run KnowledgeBaseMCP.py lint format=text
-uv run KnowledgeBaseMCP.py fix apply=true
+uv run bowerbird_mcp.py lint format=text
+uv run bowerbird_mcp.py fix apply=true
 
 # any tool: what it does, its arguments
-uv run KnowledgeBaseMCP.py help move
+uv run bowerbird_mcp.py help move
 ```
 
 ## What a knowledgebase looks like
