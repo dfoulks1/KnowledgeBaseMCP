@@ -65,7 +65,8 @@ user: your-id         # prefills your id in confirmation prompts (KB_USER)
 ai_producers: [zed]   # extra AI names for the provenance check (KB_AI_PRODUCERS)
 passages: true        # false removes the passages and reindex tools
 hubs: true            # concepts many others link to rank a little higher
-semantic: false       # also match by meaning; nothing to install. The model (~65 MB) downloads once into
+semantic: false       # also match by meaning. `uvx knowledgebasemcp` carries what it needs; the bare script needs
+                      # `uv run --with fastembed`. The model (~65 MB) downloads once into
                       # ~/.cache/knowledgebasemcp/models; passages are embedded and kept in the index
 semantic_model: BAAI/bge-small-en-v1.5
 min_similarity: 0.6   # how close in meaning a passage must be
@@ -431,8 +432,9 @@ repos:
 - `passages` has no stemming ("rolling" will not match "roll"), and with
   `build: manual` it does not notice files changed since the last `reindex`.
   Semantic search downloads its model (~65 MB) once into
-  `~/.cache/knowledgebasemcp/models`, and `fastembed` with its dependencies
-  adds about 150 MB to the install. The index lives in the file
+  `~/.cache/knowledgebasemcp/models`. `fastembed` and its dependencies (about 150 MB) come
+  with the installed package (`uvx knowledgebasemcp`) but not with the bare script, which
+  needs `uv run --with fastembed` for `semantic: true`. The index lives in the file
   `index` names and is safe to delete; nothing in the
   knowledgebase changes.
 

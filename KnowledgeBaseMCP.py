@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["mcp>=1.10,<2", "pyyaml", "fastembed"]
+# dependencies = ["mcp>=1.10,<2", "pyyaml"]
 # ///
 """KnowledgeBaseMCP: an MCP server (stdio) and CLI for Open Knowledge Format (OKF) v0.2 bundles.
 
@@ -86,8 +86,9 @@ EXAMPLE_CONFIG = """\
 # Concepts many others link to rank a little higher in passages.
 # hubs: true
 
-# Also match passages by meaning. Nothing to install: fastembed ships with the tool. The model (~65 MB)
-# downloads on first use into ~/.cache/knowledgebasemcp/models, and the vectors are kept in the index.
+# Also match passages by meaning. Nothing to install with `uvx knowledgebasemcp` (fastembed is a dependency of the
+# package); run the bare script and it needs `uv run --with fastembed`. The model (~65 MB) downloads on first use
+# into ~/.cache/knowledgebasemcp/models, and the vectors are kept in the index.
 # semantic: false
 # semantic_model: BAAI/bge-small-en-v1.5
 # min_similarity: 0.6
@@ -1476,7 +1477,8 @@ def embedder(model: str):
         try:
             from fastembed import TextEmbedding
         except ImportError:
-            raise ValueError("fastembed is missing | fix: reinstall knowledgebasemcp, or set semantic: false in kbmcp.yaml")
+            raise ValueError("fastembed is missing | fix: run the installed tool (`uvx knowledgebasemcp`), which carries it, or add "
+                             "`--with fastembed` to `uv run`, or set semantic: false in kbmcp.yaml")
         cache = Path(os.environ.get("XDG_CACHE_HOME") or "~/.cache").expanduser() / "knowledgebasemcp" / "models"
         m = TextEmbedding(model, cache_dir=str(cache))
         EMBEDDERS[model] = lambda texts: [list(map(float, v)) for v in m.embed(texts)]

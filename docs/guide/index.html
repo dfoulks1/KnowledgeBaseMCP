@@ -238,7 +238,8 @@ user: your-id         # prefills your id in confirmation prompts (KB_USER)
 ai_producers: [zed]   # extra AI names for the provenance check (KB_AI_PRODUCERS)
 passages: true        # false removes the passages and reindex tools
 hubs: true            # concepts many others link to rank a little higher
-semantic: false       # also match by meaning; nothing to install. The model (~65 MB) downloads once into
+semantic: false       # also match by meaning. `uvx knowledgebasemcp` carries what it needs; the bare script needs
+                      # `uv run --with fastembed`. The model (~65 MB) downloads once into
                       # ~/.cache/knowledgebasemcp/models; passages are embedded and kept in the index
 semantic_model: BAAI/bge-small-en-v1.5
 min_similarity: 0.6   # how close in meaning a passage must be
@@ -544,8 +545,9 @@ uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text</
 <li><code>passages</code> has no stemming ("rolling" will not match "roll"), and with
   <code>build: manual</code> it does not notice files changed since the last <code>reindex</code>.
   Semantic search downloads its model (~65 MB) once into
-  <code>~/.cache/knowledgebasemcp/models</code>, and <code>fastembed</code> with its dependencies
-  adds about 150 MB to the install. The index lives in the file
+  <code>~/.cache/knowledgebasemcp/models</code>. <code>fastembed</code> and its dependencies (about 150 MB) come
+  with the installed package (<code>uvx knowledgebasemcp</code>) but not with the bare script, which
+  needs <code>uv run --with fastembed</code> for <code>semantic: true</code>. The index lives in the file
   <code>index</code> names and is safe to delete; nothing in the
   knowledgebase changes.</li>
 </ul></article>
