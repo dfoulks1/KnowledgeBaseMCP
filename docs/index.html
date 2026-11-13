@@ -181,8 +181,8 @@ uv run KnowledgeBaseMCP.py help</code></pre>
 <p>A <code>kbmcp.yaml</code> marks the base of a knowledgebase: the server finds it from the
 project folder up (or take <code>--config path</code>), and it sets your id, what the
 knowledgebase is about, and the search settings. It is local config, kept out of git (<code>config apply=true</code> writes one and ignores it); everyone has their own (<a href="guide/#run">the guide</a> has every key). To give an agent fewer
-tools, register the server with a role: <code>read</code> (find and read, about 1,150 tokens),
-<code>structure</code>, <code>write</code> or <code>lifecycle</code> (curate the collection). <a href="guide/#roles-a-smaller-tool-list-per-agent">The guide</a> has the lists.</p>
+tools, register the server with a role: <code>read</code> (find and read, nothing written), <code>structure</code>
+(reorganize), <code>write</code> (author and check) or <code>lifecycle</code> (keep it current). <a href="guide/#roles-a-smaller-tool-list-per-agent">The guide</a> has the lists.</p>
 <p>Or work from the terminal, no AI needed:</p>
 <pre class="highlight"><code class="language-sh"># start a bundle
 uv run KnowledgeBaseMCP.py init bundle=eng apply=true

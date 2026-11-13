@@ -266,16 +266,16 @@ the client or reconnect the server (`/mcp` in Claude Code).
 
 ### Roles: a smaller tool list per agent
 
-All 35 tools cost an agent about 9,300 tokens of schema. Register the same
+All 35 tools cost an agent about 9,500 tokens of schema; each role is about a quarter of that. Register the same
 script more than once, each with a role (`--role`, or `KB_ROLE`; several with
 commas), and each server offers only that role's tools:
 
 | Role | Tools | Schema |
 |---|---|---|
-| `read` | find and read, nothing written: `dirs` `get` `passages` `search` | 4, ~1,150 tokens |
-| `structure` | structure and organization: `bundles` `dirs` `heatmap` `links` `list` `log` `migrate` `status` `vocab` `web` | 10, ~2,100 tokens |
-| `write` | write concepts: `cite` `create` `lint` `move` `record` `recheck_apply` `recheck_plan` `set` `verify` | 9, ~3,000 tokens |
-| `lifecycle` | curate the collection: `archive` `baseline` `config` `fix` `index` `ingest` `init` `lint` `provenance` `reindex` `rename` `split` `unarchive` `upgrade` | 14, ~4,000 tokens |
+| `read` | find and read, nothing written: `dirs` `get` `heatmap` `links` `list` `log` `passages` `search` `status` `vocab` | 10, ~2,460 tokens |
+| `structure` | shape and reorganization: `archive` `bundles` `dirs` `ingest` `migrate` `move` `rename` `split` `unarchive` `web` | 10, ~2,450 tokens |
+| `write` | write a concept and check it: `cite` `create` `fix` `lint` `record` `set` `verify` | 7, ~2,450 tokens |
+| `lifecycle` | keep it current: `baseline` `config` `index` `init` `provenance` `recheck_apply` `recheck_plan` `reindex` `upgrade` | 9, ~2,270 tokens |
 
 ```json
 {
@@ -286,9 +286,9 @@ commas), and each server offers only that role's tools:
 }
 ```
 
-The `read` server is read-only, so a client can approve it without asking. (`structure`
-is mostly read-only too, but `migrate` moves a concept to another bundle.) A tool can
-belong to more than one role: `dirs` and `lint` do. With no `--role` the server offers every role that `roles:` in
+The `read` server is read-only, so a client can approve it without asking; the other
+three change files. A tool can belong to more than one role (`dirs` is in `read` and
+`structure`), and a server with no `--role` offers them all. With no `--role` the server offers every role that `roles:` in
 `kbmcp.yaml` leaves on; naming a role that is off refuses to start. The CLI
 always has every tool.
 

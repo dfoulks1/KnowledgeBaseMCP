@@ -390,7 +390,7 @@ the agent what that knowledgebase holds. Each keeps its own index.</p>
 <p>The client loads the tool list at start. After editing the script, restart
 the client or reconnect the server (<code>/mcp</code> in Claude Code).</p>
 <h3 id="roles-a-smaller-tool-list-per-agent">Roles: a smaller tool list per agent<a class="headerlink" href="#roles-a-smaller-tool-list-per-agent" title="Link to this section">#</a></h3>
-<p>All 35 tools cost an agent about 9,300 tokens of schema. Register the same
+<p>All 35 tools cost an agent about 9,500 tokens of schema; each role is about a quarter of that. Register the same
 script more than once, each with a role (<code>--role</code>, or <code>KB_ROLE</code>; several with
 commas), and each server offers only that role's tools:</p>
 <table>
@@ -404,23 +404,23 @@ commas), and each server offers only that role's tools:</p>
 <tbody>
 <tr>
 <td><code>read</code></td>
-<td>find and read, nothing written: <code>dirs</code> <code>get</code> <code>passages</code> <code>search</code></td>
-<td>4, ~1,150 tokens</td>
+<td>find and read, nothing written: <code>dirs</code> <code>get</code> <code>heatmap</code> <code>links</code> <code>list</code> <code>log</code> <code>passages</code> <code>search</code> <code>status</code> <code>vocab</code></td>
+<td>10, ~2,460 tokens</td>
 </tr>
 <tr>
 <td><code>structure</code></td>
-<td>structure and organization: <code>bundles</code> <code>dirs</code> <code>heatmap</code> <code>links</code> <code>list</code> <code>log</code> <code>migrate</code> <code>status</code> <code>vocab</code> <code>web</code></td>
-<td>10, ~2,100 tokens</td>
+<td>shape and reorganization: <code>archive</code> <code>bundles</code> <code>dirs</code> <code>ingest</code> <code>migrate</code> <code>move</code> <code>rename</code> <code>split</code> <code>unarchive</code> <code>web</code></td>
+<td>10, ~2,450 tokens</td>
 </tr>
 <tr>
 <td><code>write</code></td>
-<td>write concepts: <code>cite</code> <code>create</code> <code>lint</code> <code>move</code> <code>record</code> <code>recheck_apply</code> <code>recheck_plan</code> <code>set</code> <code>verify</code></td>
-<td>9, ~3,000 tokens</td>
+<td>write a concept and check it: <code>cite</code> <code>create</code> <code>fix</code> <code>lint</code> <code>record</code> <code>set</code> <code>verify</code></td>
+<td>7, ~2,450 tokens</td>
 </tr>
 <tr>
 <td><code>lifecycle</code></td>
-<td>curate the collection: <code>archive</code> <code>baseline</code> <code>config</code> <code>fix</code> <code>index</code> <code>ingest</code> <code>init</code> <code>lint</code> <code>provenance</code> <code>reindex</code> <code>rename</code> <code>split</code> <code>unarchive</code> <code>upgrade</code></td>
-<td>14, ~4,000 tokens</td>
+<td>keep it current: <code>baseline</code> <code>config</code> <code>index</code> <code>init</code> <code>provenance</code> <code>recheck_apply</code> <code>recheck_plan</code> <code>reindex</code> <code>upgrade</code></td>
+<td>9, ~2,270 tokens</td>
 </tr>
 </tbody>
 </table>
@@ -430,9 +430,9 @@ commas), and each server offers only that role's tools:</p>
     "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "write"] }
   }
 }</code></pre>
-<p>The <code>read</code> server is read-only, so a client can approve it without asking. (<code>structure</code>
-is mostly read-only too, but <code>migrate</code> moves a concept to another bundle.) A tool can
-belong to more than one role: <code>dirs</code> and <code>lint</code> do. With no <code>--role</code> the server offers every role that <code>roles:</code> in
+<p>The <code>read</code> server is read-only, so a client can approve it without asking; the other
+three change files. A tool can belong to more than one role (<code>dirs</code> is in <code>read</code> and
+<code>structure</code>), and a server with no <code>--role</code> offers them all. With no <code>--role</code> the server offers every role that <code>roles:</code> in
 <code>kbmcp.yaml</code> leaves on; naming a role that is off refuses to start. The CLI
 always has every tool.</p>
 <h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Link to this section">#</a></h2>

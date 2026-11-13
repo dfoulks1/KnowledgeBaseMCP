@@ -211,10 +211,10 @@ Restart the assistant (in Claude Code, `/mcp` reconnects). It now has the tools 
 use them: look at `dirs`, then `passages`, then `get` only what it needs, cite the file and line, and say so
 when the answer is a gap or the passage is unverified or stale.
 
-All 35 tools cost an assistant about 9,300 tokens of tool descriptions before it has said a word. Give each
-assistant only what it needs by adding `"--role", "read"` (find and read only: `dirs`, `get`, `passages` and
-`search`, about 1,150 tokens, safe to auto-approve), or `write` (write concepts), `structure` (maps and
-organization) or `lifecycle` (curate the collection). You can register the same
+All 35 tools cost an assistant about 9,500 tokens of tool descriptions before it has said a word. Give each
+assistant only what it needs by adding `"--role", "read"` (find and read only, 10 tools, safe to auto-approve),
+`write` (write a concept and check it), `structure` (reorganize) or `lifecycle` (keep it current). Each role is
+about a quarter of the total. You can register the same
 knowledgebase several times, one per role, and you can load several different knowledgebases side by side, each
 with its own `--config`. [The guide](guide.md#roles-a-smaller-tool-list-per-agent) has the tool lists.
 

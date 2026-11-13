@@ -59,8 +59,8 @@ Then add it to your MCP client's servers file (`.mcp.json` for Claude Code;
 A `kbmcp.yaml` marks the base of a knowledgebase: the server finds it from the
 project folder up (or take `--config path`), and it sets your id, what the
 knowledgebase is about, and the search settings. It is local config, kept out of git (`config apply=true` writes one and ignores it); everyone has their own ([the guide](guide.md#run) has every key). To give an agent fewer
-tools, register the server with a role: `read` (find and read, about 1,150 tokens),
-`structure`, `write` or `lifecycle` (curate the collection). [The guide](guide.md#roles-a-smaller-tool-list-per-agent) has the lists.
+tools, register the server with a role: `read` (find and read, nothing written), `structure`
+(reorganize), `write` (author and check) or `lifecycle` (keep it current). [The guide](guide.md#roles-a-smaller-tool-list-per-agent) has the lists.
 
 Or work from the terminal, no AI needed:
 

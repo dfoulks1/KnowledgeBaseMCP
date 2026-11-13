@@ -56,11 +56,11 @@ DEFAULTS = {  # kbmcp.yaml keys beyond root, user and ai_producers; each is chec
     "roles": ["read", "write", "structure", "lifecycle"],  # which roles the MCP server may offer; drop one to turn it off
     "about": ""}  # a sentence for the agent: what this knowledgebase holds (matters with several loaded)
 ROLES = {  # who needs which tools; the MCP server offers the union of its roles (the CLI always has them all)
-    "read": {"dirs", "get", "passages", "search"},  # find and read: the smallest set that can answer a question
-    "structure": {"bundles", "dirs", "heatmap", "links", "list", "log", "migrate", "status", "vocab", "web"},
-    "write": {"cite", "create", "lint", "move", "record", "recheck_apply", "recheck_plan", "set", "verify"},
-    "lifecycle": {"archive", "baseline", "config", "fix", "index", "ingest", "init", "lint", "provenance", "reindex",
-                  "rename", "split", "unarchive", "upgrade"}}
+    "read": {"dirs", "get", "heatmap", "links", "list", "log", "passages", "search", "status", "vocab"},  # read-only
+    "structure": {"archive", "bundles", "dirs", "ingest", "migrate", "move", "rename", "split", "unarchive", "web"},
+    "write": {"cite", "create", "fix", "lint", "record", "set", "verify"},  # author a concept, and check it
+    "lifecycle": {"baseline", "config", "index", "init", "provenance", "recheck_apply", "recheck_plan", "reindex",
+                  "upgrade"}}  # each role is about a quarter of the tool descriptions (tests keep every tool in one)
 CONFIG_KEYS = {"user", "ai_producers", *DEFAULTS}
 EXAMPLE_CONFIG = """\
 # kbmcp.yaml: settings for this knowledgebase. It sits at the knowledgebase root (not in a bundle), which is
@@ -77,7 +77,7 @@ EXAMPLE_CONFIG = """\
 # ai_producers: [zed]
 
 # The MCP server may offer these roles (--role or KB_ROLE picks among them); drop one to turn it off.
-# read finds and reads, write writes concepts, structure maps and organizes, lifecycle curates the collection.
+# read finds and reads (changes nothing), structure reorganizes, write authors and checks, lifecycle keeps it current.
 # roles: [read, write, structure, lifecycle]
 
 # false removes the passages and reindex tools.

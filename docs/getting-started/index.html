@@ -338,10 +338,10 @@ works in <code>claude_desktop_config.json</code> for Claude Desktop and <code>.c
 <p>Restart the assistant (in Claude Code, <code>/mcp</code> reconnects). It now has the tools and a short instruction on how to
 use them: look at <code>dirs</code>, then <code>passages</code>, then <code>get</code> only what it needs, cite the file and line, and say so
 when the answer is a gap or the passage is unverified or stale.</p>
-<p>All 35 tools cost an assistant about 9,300 tokens of tool descriptions before it has said a word. Give each
-assistant only what it needs by adding <code>"--role", "read"</code> (find and read only: <code>dirs</code>, <code>get</code>, <code>passages</code> and
-<code>search</code>, about 1,150 tokens, safe to auto-approve), or <code>write</code> (write concepts), <code>structure</code> (maps and
-organization) or <code>lifecycle</code> (curate the collection). You can register the same
+<p>All 35 tools cost an assistant about 9,500 tokens of tool descriptions before it has said a word. Give each
+assistant only what it needs by adding <code>"--role", "read"</code> (find and read only, 10 tools, safe to auto-approve),
+<code>write</code> (write a concept and check it), <code>structure</code> (reorganize) or <code>lifecycle</code> (keep it current). Each role is
+about a quarter of the total. You can register the same
 knowledgebase several times, one per role, and you can load several different knowledgebases side by side, each
 with its own <code>--config</code>. <a href="../guide/#roles-a-smaller-tool-list-per-agent">The guide</a> has the tool lists.</p>
 <h2 id="7-keep-it-checked-automatically">7. Keep it checked automatically<a class="headerlink" href="#7-keep-it-checked-automatically" title="Link to this section">#</a></h2>

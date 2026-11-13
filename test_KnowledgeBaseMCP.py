@@ -831,7 +831,7 @@ def server(yaml_text="", *argv, **env):
     e = {kk: v for kk, v in os.environ.items() if kk != "KB_ROLE"} | {"PYTHONPATH": str(HERE)} | env
     return subprocess.run([sys.executable, "-c", list_tools, *argv], cwd=cfg, env=e, capture_output=True, text=True, check=False)
 r = server("", "--role", "read")
-assert set(r.stdout.split()) == k.ROLES["read"] == {"dirs", "get", "passages", "search"}, r
+assert set(r.stdout.split()) == k.ROLES["read"] and {"passages", "get", "dirs"} <= k.ROLES["read"], r
 r = server("", KB_ROLE="write,lifecycle")
 assert set(r.stdout.split()) == k.ROLES["write"] | k.ROLES["lifecycle"], r
 r = server("roles: [read]\n")  # the others are off: only read is offered
