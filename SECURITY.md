@@ -2,7 +2,7 @@
 
 Please report a vulnerability privately, not in a public issue: use GitHub's
 [private vulnerability reporting](https://github.com/dfoulks1/KnowledgeBaseMCP/security/advisories/new) for this repository.
-Say what you found, how to reproduce it and which version (`git rev-parse HEAD` or the
+Say what you found, how to reproduce it and which version (the release tag, or the
 commit you installed). This is a personal project, so there is no response-time promise.
 
 What counts: the tool reads and writes files only inside the knowledgebase it is pointed at.
