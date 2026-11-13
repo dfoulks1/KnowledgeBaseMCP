@@ -1,7 +1,7 @@
 # Getting started
 
 !!! note "AI-generated"
-    Written with Claude Opus 5.5 and Claude Sonnet 5.5, under human review. Every command and output on this page was run for real.
+    Written with Claude Opus 5.5 and Claude Sonnet 5.5, under human review. Every command on this page was run for real. Long output lines are shortened (marked `...`), and a few fields are left out where noted.
 
 In about ten minutes you will have a small knowledgebase on your own disk, ask it a question and get an answer
 with the file and line to cite, catch a mistake with the checker, record where a fact came from and who checked
@@ -58,7 +58,9 @@ edited: {".": ["index.md", "log.md"]}
 gitattributes: ["log.md merge=union", "index.md merge=union"]
 ```
 
-`index.md` is a generated table of contents for the folder, and `log.md` is its history, newest first. Now
+`index.md` is a generated table of contents for the folder, and `log.md` is its history, newest first. It also
+made a `.gitattributes`, which lets two people who edit `log.md` and `index.md` on different branches merge
+without a conflict. Now
 write two notes. Each has a few real sentences, because a note with an empty body gives the search nothing to
 find:
 
@@ -100,9 +102,13 @@ kb passages 'how do I undo a bad release' format=text
 total: 2
 gap: false
 hits:
-  - file: rollback.md, line: 10, heading: Rollback, match: 100, tier: unverified, stale: false, text: To roll back a release, redeploy the previous tag, ...
-  - file: deploy.md, line: 10, heading: Deploy, match: 58, tier: unverified, stale: false, text: Run the deploy script, then check the dashboard. ...
+  - bundle: ., file: rollback.md, line: 10, heading: Rollback, match: 100, title: Rollback, type: Playbook, status: stable, tier: unverified, stale: false, links: 1, text: To roll back a release, redeploy the previous tag, ...
+  - bundle: ., file: deploy.md, line: 10, heading: Deploy, match: 58, title: Deploy, type: Playbook, status: stable, tier: unverified, stale: false, links: 1, text: Run the deploy script, then check the dashboard. ...
 ```
+
+(`title`, `type`, `status` and `links`, the count of notes that link here, are in the real output too.) The first
+search also builds a small search index in a `.kbmcp/` folder beside your notes. It is a cache: safe to delete,
+and it ignores itself in git.
 
 `passages` cuts every note into sections at its headings and returns the sections that best answer the
 question, best first. For each one you get:
@@ -211,7 +217,8 @@ Restart the assistant (in Claude Code, `/mcp` reconnects). It now has the tools 
 use them: look at `dirs`, then `passages`, then `get` only what it needs, cite the file and line, and say so
 when the answer is a gap or the passage is unverified or stale.
 
-All 35 tools cost an assistant about 9,500 tokens of tool descriptions before it has said a word. Give each
+All 35 tools cost an assistant about 9,500 tokens of tool descriptions (an estimate: the length of each
+description in characters, divided by four) before it has said a word. Give each
 assistant only what it needs by adding `"--role", "read"` (find and read only, 10 tools, safe to auto-approve),
 `write` (write a concept and check it), `structure` (reorganize) or `lifecycle` (keep it current). Each role is
 about a quarter of the total. You can register the same

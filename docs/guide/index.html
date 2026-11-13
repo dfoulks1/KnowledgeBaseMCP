@@ -390,7 +390,8 @@ the agent what that knowledgebase holds. Each keeps its own index.</p>
 <p>The client loads the tool list at start. After editing the script, restart
 the client or reconnect the server (<code>/mcp</code> in Claude Code).</p>
 <h3 id="roles-a-smaller-tool-list-per-agent">Roles: a smaller tool list per agent<a class="headerlink" href="#roles-a-smaller-tool-list-per-agent" title="Link to this section">#</a></h3>
-<p>All 35 tools cost an agent about 9,500 tokens of schema; each role is about a quarter of that. Register the same
+<p>All 35 tools cost an agent about 9,500 tokens of schema (an estimate: each tool's description
+length in characters, divided by four); each role is about a quarter of that. Register the same
 script more than once, each with a role (<code>--role</code>, or <code>KB_ROLE</code>; several with
 commas), and each server offers only that role's tools:</p>
 <table>

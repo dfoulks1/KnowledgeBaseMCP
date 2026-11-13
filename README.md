@@ -1,20 +1,23 @@
 # KnowledgeBaseMCP
 
 Keep a folder of Markdown notes in order, and let an AI assistant, a script or
-you search and check them. It works on knowledgebases in [Open Knowledge Format][okf]
+you search and check them. It is for anyone who keeps notes, runbooks or documentation
+as Markdown in a folder or repository. It works on knowledgebases in [Open Knowledge Format][okf]
 (OKF) v0.2: one Markdown file per *concept*, each starting with a small header of
 facts (its type, a description, where it came from, who checked it). A *bundle* is
 a folder of concepts; a knowledgebase is a bundle, or a folder of bundles.
 
-It is an MCP server (stdio, so an AI assistant can use it) and a command line. It
+It is an MCP server (MCP, the Model Context Protocol, is how AI assistants call
+tools) and a command line. It
 checks, maintains and imports concepts, and finds the passages that answer a
 question. It cares how a concept is written, never what it says. Local files only,
 no network (but see semantic search, which downloads a model once). Never writes
 to git. One contract, three users: an agent over MCP, CI, and a person at a
 terminal with no AI.
 
-Try it (needs [uv](https://docs.astral.sh/uv/); install it with `curl -LsSf
-https://astral.sh/uv/install.sh | sh`). In an empty folder:
+Try it (needs [uv](https://docs.astral.sh/uv/); its installer is `curl -LsSf
+https://astral.sh/uv/install.sh | sh`, which downloads and runs a script, so read it first
+if you prefer). In an empty folder:
 
 ```sh
 alias kb='uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp'
@@ -266,7 +269,8 @@ the client or reconnect the server (`/mcp` in Claude Code).
 
 ### Roles: a smaller tool list per agent
 
-All 35 tools cost an agent about 9,500 tokens of schema; each role is about a quarter of that. Register the same
+All 35 tools cost an agent about 9,500 tokens of schema (an estimate: each tool's description
+length in characters, divided by four); each role is about a quarter of that. Register the same
 script more than once, each with a role (`--role`, or `KB_ROLE`; several with
 commas), and each server offers only that role's tools:
 
