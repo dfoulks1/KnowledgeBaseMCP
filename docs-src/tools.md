@@ -67,6 +67,19 @@ uv run KnowledgeBaseMCP.py cite db.md resource=https://www.postgresql.org/docs/r
 | `last_modified` | `str` | `''` |
 | `bundle` | `str` | `''` |
 
+## config
+
+Write a kbmcp.yaml at the root of the knowledgebase from the built-in example: every setting, commented out at its default, so the file's presence marks the base and you uncomment what you change. Never overwrites one. In a git work tree it also lists kbmcp.yaml in the .gitignore beside it: the file is local to you. apply=false shows what would change.
+
+```sh
+uv run KnowledgeBaseMCP.py config
+uv run KnowledgeBaseMCP.py config apply=true
+```
+
+| Argument | Type | Default |
+|---|---|---|
+| `apply` | `bool` | `False` |
+
 ## create
 
 Create a concept with valid OKF frontmatter (§4.1): type, title, description, resource, tags, status, and `generated` {by, at} when by (your actor) is given. body is markdown; a `# title` heading is added unless the body starts with one. Refuses an existing file or a reserved name (index.md, log.md).
@@ -297,6 +310,25 @@ uv run KnowledgeBaseMCP.py move runbooks/deploy.md runbooks/ship.md bundle=eng a
 | `apply` | `bool` | `False` |
 | `bundle` | `str` | `''` |
 
+## passages
+
+The passages that best answer query, for you to read and cite. Each concept is cut into one passage per heading section, ranked by BM25 (rarer words count more; any word may match, no stemming), with the heading path, title, tags, type and description counting too. Concepts many others link to rank a little higher (hubs). With semantic on, passages are also matched by meaning (embeddings) and the two rankings are fused. Each hit: {bundle, file, line, heading, score, title, type, status, tier (trust, §5.3), stale, links (inbound), text}. Answer from the text, cite the file and line, and say so when tier is unverified or stale. No hit: gap is true, so tell the user the knowledgebase has nothing, rather than guess. Filters as in search. Everything is indexed in one SQLite file (index in kbmcp.yaml), updated from the files that changed, or only by `reindex` when build is manual; semantic mode also downloads its model once.
+
+```sh
+uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text
+uv run KnowledgeBaseMCP.py passages rollback tag=ops limit=3
+```
+
+| Argument | Type | Default |
+|---|---|---|
+| `query` | `str` | required |
+| `type` | `str` | `''` |
+| `tag` | `str` | `''` |
+| `dir` | `str` | `''` |
+| `limit` | `int` | `8` |
+| `offset` | `int` | `0` |
+| `bundle` | `str` | `''` |
+
 ## provenance
 
 Fill a missing `generated: {by, at}` (§5.2). From git history: the last commit that changed the body, by its AI trailer (&lt;producer&gt;/&lt;name&gt;), bot (process:) or author (human:&lt;login | ASF id | email&gt;), marked `basis: git-history` (inferred). Concepts git knows nothing about (untracked, or no repository): with apply=true the person is asked who wrote them, once (a confirmation prompt over MCP; --attest at the terminal), and recorded as `generated: {by: human:<id>, at: <file's last change>, basis: stated}`; otherwise they are listed in `unknown`. Never sets a human from a caller. Trust tiers come only from `verified`, so this never raises one. Concepts that carry `generated` are left alone. skip: paths to leave without it. apply=False shows the diff.
@@ -356,6 +388,23 @@ uv run KnowledgeBaseMCP.py record "Reviewed the runbooks against the new pipelin
 | `kind` | `str` | `'Update'` |
 | `dir` | `str` | `''` |
 | `bundle` | `str` | `''` |
+
+## reindex
+
+Build, inspect or delete the passage index (`index` in kbmcp.yaml). Default: build or refresh it from the whole knowledgebase, and its vectors when semantic is on. Only files that changed since the last run are read, so it is cheap to run from a pre-commit, post-merge or post-checkout hook; the first semantic run embeds every passage and takes minutes (an interrupted run resumes). full=true starts over. info=true only reports: the file, its size, files, passages and vectors held, the model they came from, and `behind` (files changed since the last build). drop=true deletes the file (a cache; reindex makes it again). Never edits the bundle. Pick one of full, info and drop.
+
+```sh
+uv run KnowledgeBaseMCP.py reindex format=text
+uv run KnowledgeBaseMCP.py reindex info=true format=text
+uv run KnowledgeBaseMCP.py reindex full=true
+uv run KnowledgeBaseMCP.py reindex drop=true
+```
+
+| Argument | Type | Default |
+|---|---|---|
+| `full` | `bool` | `False` |
+| `info` | `bool` | `False` |
+| `drop` | `bool` | `False` |
 
 ## rename
 

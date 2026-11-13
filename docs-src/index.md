@@ -19,15 +19,21 @@
   </div></div>
   <div class="col-md-4"><div class="card p-3">
     <h3>A person at a terminal</h3>
-    <p>No AI needed: <code>help</code>, ranked <code>search</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
+    <p>No AI needed: <code>help</code>, ranked <code>search</code>, <code>passages</code> for questions, readable text output, and <code>--attest</code> to sign your own reviews.</p>
   </div></div>
 </div>
 
-<p class="note">Local files only. No network. Never writes to git. One Python file, run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and are under human review.</p>
+<p class="note">Local files only. No network, except the one-time model download if you turn on semantic search. Never writes to git. One Python file, installed or run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and Claude Sonnet 5.5 and are under human review.</p>
 
 ## Quickstart
 
-One file. [uv](https://docs.astral.sh/uv/) fetches its dependencies on the first run.
+Nothing to clone. [uv](https://docs.astral.sh/uv/) installs it and its dependencies on the fly:
+
+```sh
+uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp help
+```
+
+Or take the one file and run it:
 
 ```sh
 wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
@@ -43,13 +49,18 @@ Then add it to your MCP client's servers file (`.mcp.json` for Claude Code;
 {
   "mcpServers": {
     "knowledgebase": {
-      "command": "uv",
-      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
-      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp"]
     }
   }
 }
 ```
+
+A `kbmcp.yaml` marks the base of a knowledgebase: the server finds it from the
+project folder up (or take `--config path`), and it sets your id, what the
+knowledgebase is about, and the search settings. It is local config, kept out of git (`config apply=true` writes one and ignores it); everyone has their own ([the guide](guide.md#run) has every key). To give an agent fewer
+tools, register the server with a role: `researcher` (find and read),
+`scribe` (write) or `curator` (upkeep). [The guide](guide.md#roles-a-smaller-tool-list-per-agent) has the lists.
 
 Or work from the terminal, no AI needed:
 
@@ -64,6 +75,9 @@ uv run KnowledgeBaseMCP.py create eng/runbooks/deploy \
 # find it: the map, then the best matches
 uv run KnowledgeBaseMCP.py dirs format=text
 uv run KnowledgeBaseMCP.py search deploy format=text
+
+# ask a question: the best sections, each with file, line and trust to cite
+uv run KnowledgeBaseMCP.py passages 'how do we deploy' format=text
 
 # what's wrong, each with a fix; then the mechanical repairs
 uv run KnowledgeBaseMCP.py lint format=text
@@ -136,7 +150,8 @@ graph LR
 Solid arrows are links; dotted ones are citations. The boxes are bundles, so
 an arrow that leaves its box crosses into another bundle. That is allowed,
 but lint flags it because the link breaks if one bundle is published alone.
-From here, `dirs` and `search` find a concept, `lint` checks every file
+From here, `dirs` and `search` find a concept, `passages` answers a question
+from the best sections (and says so when there is nothing to find), `lint` checks every file
 against the spec, `status` says what needs a person next (including the
 pages links want that nobody has written), and `heatmap` shows where the
 work is.

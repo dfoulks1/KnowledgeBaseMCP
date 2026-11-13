@@ -117,14 +117,16 @@
   </div></div>
   <div class="col-md-4"><div class="card p-3">
     <h3>A person at a terminal</h3>
-    <p>No AI needed: <code>help</code>, ranked <code>search</code>, readable text output, and <code>--attest</code> to sign your own reviews.</p>
+    <p>No AI needed: <code>help</code>, ranked <code>search</code>, <code>passages</code> for questions, readable text output, and <code>--attest</code> to sign your own reviews.</p>
   </div></div>
 </div>
 
-<p class="note">Local files only. No network. Never writes to git. One Python file, run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and are under human review.</p>
+<p class="note">Local files only. No network, except the one-time model download if you turn on semantic search. Never writes to git. One Python file, installed or run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and Claude Sonnet 5.5 and are under human review.</p>
 
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Link to this section">#</a></h2>
-<p>One file. <a href="https://docs.astral.sh/uv/">uv</a> fetches its dependencies on the first run.</p>
+<p>Nothing to clone. <a href="https://docs.astral.sh/uv/">uv</a> installs it and its dependencies on the fly:</p>
+<pre class="highlight"><code class="language-sh">uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp help</code></pre>
+<p>Or take the one file and run it:</p>
 <pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/KnowledgeBaseMCP/main/KnowledgeBaseMCP.py
 uv run KnowledgeBaseMCP.py help</code></pre>
 <p>No uv yet? <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></p>
@@ -133,12 +135,16 @@ uv run KnowledgeBaseMCP.py help</code></pre>
 <pre class="highlight"><code class="language-json">{
   "mcpServers": {
     "knowledgebase": {
-      "command": "uv",
-      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
-      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp"]
     }
   }
 }</code></pre>
+<p>A <code>kbmcp.yaml</code> marks the base of a knowledgebase: the server finds it from the
+project folder up (or take <code>--config path</code>), and it sets your id, what the
+knowledgebase is about, and the search settings. It is local config, kept out of git (<code>config apply=true</code> writes one and ignores it); everyone has their own (<a href="guide/#run">the guide</a> has every key). To give an agent fewer
+tools, register the server with a role: <code>researcher</code> (find and read),
+<code>scribe</code> (write) or <code>curator</code> (upkeep). <a href="guide/#roles-a-smaller-tool-list-per-agent">The guide</a> has the lists.</p>
 <p>Or work from the terminal, no AI needed:</p>
 <pre class="highlight"><code class="language-sh"># start a bundle
 uv run KnowledgeBaseMCP.py init bundle=eng apply=true
@@ -150,6 +156,9 @@ uv run KnowledgeBaseMCP.py create eng/runbooks/deploy \
 # find it: the map, then the best matches
 uv run KnowledgeBaseMCP.py dirs format=text
 uv run KnowledgeBaseMCP.py search deploy format=text
+
+# ask a question: the best sections, each with file, line and trust to cite
+uv run KnowledgeBaseMCP.py passages 'how do we deploy' format=text
 
 # what's wrong, each with a fix; then the mechanical repairs
 uv run KnowledgeBaseMCP.py lint format=text
@@ -207,7 +216,8 @@ format=mermaid</code> draws both for the whole knowledgebase:</p>
 <p>Solid arrows are links; dotted ones are citations. The boxes are bundles, so
 an arrow that leaves its box crosses into another bundle. That is allowed,
 but lint flags it because the link breaks if one bundle is published alone.
-From here, <code>dirs</code> and <code>search</code> find a concept, <code>lint</code> checks every file
+From here, <code>dirs</code> and <code>search</code> find a concept, <code>passages</code> answers a question
+from the best sections (and says so when there is nothing to find), <code>lint</code> checks every file
 against the spec, <code>status</code> says what needs a person next (including the
 pages links want that nobody has written), and <code>heatmap</code> shows where the
 work is.</p>

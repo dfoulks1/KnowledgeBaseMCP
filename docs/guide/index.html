@@ -128,7 +128,14 @@
   
     <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#register-with-an-mcp-client">Register with an MCP client</a>
+      <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#roles-a-smaller-tool-list-per-agent">Roles: a smaller tool list per agent</a>
       
+    </li>
+  
+</ul>
     </li>
   
     <li class="nav-item">
@@ -167,12 +174,57 @@
         <article><h1 id="guide">Guide<a class="headerlink" href="#guide" title="Link to this section">#</a></h1>
 <div class="admonition note">
 <p class="admonition-title">AI-generated</p>
-<p>Drawn from the README, written with Claude Opus 5.5, under human review.</p>
+<p>Drawn from the README, written with Claude Opus 5.5 and Claude Sonnet 5.5, under human review.</p>
 </div>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Link to this section">#</a></h2>
-<p>Requires <a href="https://docs.astral.sh/uv/">uv</a>.</p>
-<p>A knowledgebase is wherever you point the tool: <code>KB_ROOT</code>, else the current
-directory. It is one bundle at its root, or a set of sibling bundles. A
+<p>Requires <a href="https://docs.astral.sh/uv/">uv</a>. Install on the fly, nothing to clone:</p>
+<pre class="highlight"><code class="language-sh">uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp help</code></pre>
+<p>(<code>uv run KnowledgeBaseMCP.py ...</code> below does the same from a checkout. PyPI
+later: <code>uvx knowledgebasemcp</code>.)</p>
+<p>A <code>kbmcp.yaml</code> at the root of a knowledgebase (not in a bundle) marks its base
+and configures it, so any <code>knowledgebasemcp</code> server knows where the
+knowledgebase and its assets (index, archive, bundles) are, and the server
+needs no env block. The tool finds the file from the current directory up, or
+you name it with <code>--config</code>. It replaces the old <code>KB_ROOT</code> variable, which is
+now refused. <code>KB_USER</code>, <code>KB_AI_PRODUCERS</code> and <code>KB_ROLE</code> still override it.
+It is local config, never committed: each person or machine has its own, and a
+fresh clone has none until <code>knowledgebasemcp config apply=true</code> writes one from
+a built-in example (every setting commented out at its default). That also
+lists <code>kbmcp.yaml</code> in the <code>.gitignore</code> beside it, and it never overwrites an
+existing file. <code>lint</code> flags a <code>kbmcp.yaml</code> anywhere below the root
+(<code>nested_config</code>): a second one would make that folder a second knowledgebase.</p>
+<pre class="highlight"><code class="language-yaml">about: Engineering runbooks.   # shown to the agent; tells knowledgebases apart when several are loaded
+user: your-id         # prefills your id in confirmation prompts (KB_USER)
+ai_producers: [zed]   # extra AI names for the provenance check (KB_AI_PRODUCERS)
+passages: true        # false removes the passages and reindex tools
+hubs: true            # concepts many others link to rank a little higher
+semantic: false       # also match by meaning: needs `uv run --with fastembed` or knowledgebasemcp[semantic];
+                      # the model downloads once, passages are embedded and kept in the index
+semantic_model: BAAI/bge-small-en-v1.5
+min_similarity: 0.6   # how close in meaning a passage must be
+index: .kbmcp/index.db   # one SQLite file: passages, BM25 index, links, vectors; "" = in memory
+build: auto           # auto: passages keeps the index current; manual: only `reindex` does, passages reads
+roles: [researcher, scribe, curator]   # roles the MCP server may offer; drop one to turn it off (see Register)</code></pre>
+<p>With no <code>kbmcp.yaml</code> the defaults apply. The index is a cache derived from
+the concepts: safe to delete, never committed (a new <code>.kbmcp/</code> folder ignores
+itself). To build it apart from the server, run <code>reindex</code> (incremental: only
+changed files are read) and set <code>build: manual</code>, so <code>passages</code> only reads it:</p>
+<pre class="highlight"><code class="language-sh">uvx knowledgebasemcp reindex format=text     # first semantic run embeds everything: minutes, once</code></pre>
+<pre class="highlight"><code class="language-yaml"># .pre-commit-config.yaml: refresh after you commit and after pulls
+repos:
+  - repo: local
+    hooks:
+      - id: kbmcp-reindex
+        name: KnowledgeBaseMCP reindex
+        entry: uvx knowledgebasemcp reindex
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        stages: [pre-commit, post-merge, post-checkout]</code></pre>
+<p>A knowledgebase is where its <code>kbmcp.yaml</code> is: the tool looks for one from the
+current directory up (or takes <code>--config path/to/kbmcp.yaml</code>) and treats that
+file's folder as the base. With none, it uses the current directory. It is one bundle at its root, or a set of sibling bundles. A
 directory whose <code>index.md</code> declares <code>okf_version</code> is a bundle root; bundles do
 not nest. An <code>index.md</code> at the knowledgebase root lists its bundles (<code>index
 apply=true</code> there writes it), and tools find the root from inside a bundle
@@ -204,7 +256,7 @@ only on the command line: no MCP call can pass it.</p>
 <p>Output is JSON; <code>format=text</code> prints one key per line and diffs as is.</p>
 <p>Exit codes: 0 ok, 1 findings, 2 usage error.</p>
 <h2 id="layout">Layout<a class="headerlink" href="#layout" title="Link to this section">#</a></h2>
-<pre class="highlight"><code>kb/                          the knowledgebase (KB_ROOT)
+<pre class="highlight"><code>kb/                          the knowledgebase (kbmcp.yaml sits here)
   index.md                   lists the bundles; no frontmatter
   .gitattributes             log.md and index.md merge=union
   eng/                       a bundle
@@ -283,17 +335,60 @@ for Cursor. VS Code's <code>.vscode/mcp.json</code> takes the same entry under <
 <pre class="highlight"><code class="language-json">{
   "mcpServers": {
     "knowledgebase": {
-      "command": "uv",
-      "args": ["run", "/path/to/KnowledgeBaseMCP.py"],
-      "env": { "KB_ROOT": "/path/to/kb", "KB_USER": "your-id" }
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp"]
     }
   }
 }</code></pre>
-<p><code>KB_ROOT</code> is the knowledgebase (else the client's working directory). <code>KB_USER</code>
-prefills your id in confirmation prompts. Or, in Claude Code:</p>
-<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase --env KB_ROOT=/path/to/kb -- uv run /path/to/KnowledgeBaseMCP.py</code></pre>
+<p>The server runs in the project folder, so it finds the <code>kbmcp.yaml</code> there (your
+id is <code>user:</code> in it). To point at one elsewhere, add <code>"--config",
+"/path/to/kb/kbmcp.yaml"</code> to <code>args</code>. Or, in Claude Code:</p>
+<pre class="highlight"><code class="language-sh">claude mcp add knowledgebase -- uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp --config /path/to/kb/kbmcp.yaml</code></pre>
+<p>Several knowledgebases at once: one entry each, with its own <code>--config</code>. The
+client prefixes tool names with the entry name, and each file's <code>about:</code> tells
+the agent what that knowledgebase holds. Each keeps its own index.</p>
 <p>The client loads the tool list at start. After editing the script, restart
 the client or reconnect the server (<code>/mcp</code> in Claude Code).</p>
+<h3 id="roles-a-smaller-tool-list-per-agent">Roles: a smaller tool list per agent<a class="headerlink" href="#roles-a-smaller-tool-list-per-agent" title="Link to this section">#</a></h3>
+<p>All 35 tools cost an agent about 9,300 tokens of schema. Register the same
+script more than once, each with a role (<code>--role</code>, or <code>KB_ROLE</code>; several with
+commas), and each server offers only that role's tools:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Tools</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>researcher</code></td>
+<td>find and read, nothing written: <code>bundles</code> <code>dirs</code> <code>get</code> <code>heatmap</code> <code>links</code> <code>list</code> <code>log</code> <code>passages</code> <code>search</code> <code>status</code> <code>vocab</code> <code>web</code></td>
+<td>12, ~2,800 tokens</td>
+</tr>
+<tr>
+<td><code>scribe</code></td>
+<td>write concepts: <code>cite</code> <code>create</code> <code>lint</code> <code>move</code> <code>record</code> <code>recheck_apply</code> <code>recheck_plan</code> <code>set</code> <code>verify</code></td>
+<td>9, ~2,900 tokens</td>
+</tr>
+<tr>
+<td><code>curator</code></td>
+<td>upkeep and structure: <code>archive</code> <code>baseline</code> <code>config</code> <code>fix</code> <code>index</code> <code>ingest</code> <code>init</code> <code>lint</code> <code>migrate</code> <code>provenance</code> <code>reindex</code> <code>rename</code> <code>split</code> <code>unarchive</code> <code>upgrade</code></td>
+<td>15, ~4,200 tokens</td>
+</tr>
+</tbody>
+</table>
+<pre class="highlight"><code class="language-json">{
+  "mcpServers": {
+    "kb-research": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "researcher"] },
+    "kb-scribe":   { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp", "--role", "scribe"] }
+  }
+}</code></pre>
+<p>The <code>researcher</code> server is read-only, so a client can approve it without
+asking. With no <code>--role</code> the server offers every role that <code>roles:</code> in
+<code>kbmcp.yaml</code> leaves on; naming a role that is off refuses to start. The CLI
+always has every tool.</p>
 <h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint format=text      # what's wrong, each with a fix
 uv run KnowledgeBaseMCP.py fix apply=true        # mechanical repairs, then re-lint
@@ -332,7 +427,10 @@ skip itself with the line <code>&lt;!-- kbmcp-nolint --&gt;</code>.</p>
 AGENTS*
 CLAUDE.md
 .kiro/</code></pre>
-<p>pre-commit, lint only (a hook that edits files leaves the commit unstaged):</p>
+<p>pre-commit, lint only (a hook that edits files leaves the commit unstaged).
+<code>lint</code> always ends with a verdict line, such as <code>knowledgebasemcp lint: ok: 214
+concept(s) in 3 bundle(s) checked, 0 finding(s), conformant: True</code>, so you can
+see it ran. pre-commit prints a passing hook's output only with <code>verbose: true</code>:</p>
 <pre class="highlight"><code class="language-yaml">repos:
   - repo: local
     hooks:
@@ -340,7 +438,8 @@ CLAUDE.md
         name: OKF lint
         entry: uv run KnowledgeBaseMCP.py lint format=text
         language: system
-        pass_filenames: false</code></pre>
+        pass_filenames: false
+        verbose: true</code></pre>
 <h2 id="reading-the-knowledgebase">Reading the knowledgebase<a class="headerlink" href="#reading-the-knowledgebase" title="Link to this section">#</a></h2>
 <ul>
 <li>Find things in three steps, each small: <code>dirs</code> maps the bundle (each
@@ -352,6 +451,23 @@ CLAUDE.md
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py dirs format=text
 uv run KnowledgeBaseMCP.py search deploy rollback dir=runbooks format=text
 uv run KnowledgeBaseMCP.py get runbooks/deploy.md format=text</code></pre>
+<ul>
+<li><code>passages</code> answers a question. It cuts concepts at
+  headings and returns the best sections, each with file, line, heading,
+  trust tier and staleness, so the answer can cite and qualify its sources.
+  Ranking is BM25 (rarer words count more; any one word may match; no
+  stemming), with title, tags, type and description counting too, and
+  concepts many others link to a little higher (<code>hubs</code>). With <code>semantic</code> on,
+  passages are also matched by meaning and the two rankings are fused. No hit
+  returns <code>gap: true</code>: say the knowledgebase has nothing, don't guess. Passages
+  are indexed in one SQLite file (<code>index</code> in <code>kbmcp.yaml</code>), updated from the
+  files that changed. <code>reindex</code> builds it ahead of time, for a hook, and with
+  <code>build: manual</code> <code>passages</code> only reads it; <code>reindex info=true</code> reports what it
+  holds and how far behind it is, <code>drop=true</code> deletes it. <code>passages: false</code> removes
+  both tools.</li>
+</ul>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py reindex format=text
+uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text</code></pre>
 <ul>
 <li><code>web</code> maps links and citations: bundles at the knowledgebase root, concepts
   in a bundle. <code>format=text</code> for the terminal, <code>format=mermaid</code> for anything
@@ -378,6 +494,12 @@ uv run KnowledgeBaseMCP.py get runbooks/deploy.md format=text</code></pre>
 <li>OKF makes <code>okf_version</code> optional; here it is how a bundle is found. An
   undeclared bundle is any folder until you pass it as <code>bundle=</code>.</li>
 <li><code>ingest</code> does not convert other formats or check licenses. Its plan says so.</li>
+<li><code>passages</code> has no stemming ("rolling" will not match "roll"), and with
+  <code>build: manual</code> it does not notice files changed since the last <code>reindex</code>.
+  Semantic search downloads its model once and keeps it in fastembed's own
+  cache (the system temp folder by default). The index lives in the file
+  <code>index</code> names and is safe to delete; nothing in the
+  knowledgebase changes.</li>
 </ul></article>
         
           <hr class="my-5">

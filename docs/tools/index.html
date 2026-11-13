@@ -120,6 +120,11 @@
     </li>
   
     <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#config">config</a>
+      
+    </li>
+  
+    <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#create">create</a>
       
     </li>
@@ -190,6 +195,11 @@
     </li>
   
     <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#passages">passages</a>
+      
+    </li>
+  
+    <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#provenance">provenance</a>
       
     </li>
@@ -206,6 +216,11 @@
   
     <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#record">record</a>
+      
+    </li>
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#reindex">reindex</a>
       
     </li>
   
@@ -428,6 +443,26 @@ uv run KnowledgeBaseMCP.py archive bundle=mkt apply=true</code></pre>
 <td><code>bundle</code></td>
 <td><code>str</code></td>
 <td><code>''</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="config">config<a class="headerlink" href="#config" title="Link to this section">#</a></h2>
+<p>Write a kbmcp.yaml at the root of the knowledgebase from the built-in example: every setting, commented out at its default, so the file's presence marks the base and you uncomment what you change. Never overwrites one. In a git work tree it also lists kbmcp.yaml in the .gitignore beside it: the file is local to you. apply=false shows what would change.</p>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py config
+uv run KnowledgeBaseMCP.py config apply=true</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>apply</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
 </tr>
 </tbody>
 </table>
@@ -983,6 +1018,56 @@ uv run KnowledgeBaseMCP.py lint scope=okf since=origin/main format=github</code>
 </tr>
 </tbody>
 </table>
+<h2 id="passages">passages<a class="headerlink" href="#passages" title="Link to this section">#</a></h2>
+<p>The passages that best answer query, for you to read and cite. Each concept is cut into one passage per heading section, ranked by BM25 (rarer words count more; any word may match, no stemming), with the heading path, title, tags, type and description counting too. Concepts many others link to rank a little higher (hubs). With semantic on, passages are also matched by meaning (embeddings) and the two rankings are fused. Each hit: {bundle, file, line, heading, score, title, type, status, tier (trust, §5.3), stale, links (inbound), text}. Answer from the text, cite the file and line, and say so when tier is unverified or stale. No hit: gap is true, so tell the user the knowledgebase has nothing, rather than guess. Filters as in search. Everything is indexed in one SQLite file (index in kbmcp.yaml), updated from the files that changed, or only by <code>reindex</code> when build is manual; semantic mode also downloads its model once.</p>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py passages 'how do we roll back a deploy' format=text
+uv run KnowledgeBaseMCP.py passages rollback tag=ops limit=3</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>query</code></td>
+<td><code>str</code></td>
+<td>required</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>tag</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>dir</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>limit</code></td>
+<td><code>int</code></td>
+<td><code>8</code></td>
+</tr>
+<tr>
+<td><code>offset</code></td>
+<td><code>int</code></td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td><code>bundle</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+</tbody>
+</table>
 <h2 id="provenance">provenance<a class="headerlink" href="#provenance" title="Link to this section">#</a></h2>
 <p>Fill a missing <code>generated: {by, at}</code> (§5.2). From git history: the last commit that changed the body, by its AI trailer (&lt;producer&gt;/&lt;name&gt;), bot (process:) or author (human:&lt;login | ASF id | email&gt;), marked <code>basis: git-history</code> (inferred). Concepts git knows nothing about (untracked, or no repository): with apply=true the person is asked who wrote them, once (a confirmation prompt over MCP; --attest at the terminal), and recorded as <code>generated: {by: human:&lt;id&gt;, at: &lt;file's last change&gt;, basis: stated}</code>; otherwise they are listed in <code>unknown</code>. Never sets a human from a caller. Trust tiers come only from <code>verified</code>, so this never raises one. Concepts that carry <code>generated</code> are left alone. skip: paths to leave without it. apply=False shows the diff.</p>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py provenance apply=true
@@ -1112,6 +1197,38 @@ uv run KnowledgeBaseMCP.py provenance apply=true --attest</code></pre>
 <td><code>bundle</code></td>
 <td><code>str</code></td>
 <td><code>''</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="reindex">reindex<a class="headerlink" href="#reindex" title="Link to this section">#</a></h2>
+<p>Build, inspect or delete the passage index (<code>index</code> in kbmcp.yaml). Default: build or refresh it from the whole knowledgebase, and its vectors when semantic is on. Only files that changed since the last run are read, so it is cheap to run from a pre-commit, post-merge or post-checkout hook; the first semantic run embeds every passage and takes minutes (an interrupted run resumes). full=true starts over. info=true only reports: the file, its size, files, passages and vectors held, the model they came from, and <code>behind</code> (files changed since the last build). drop=true deletes the file (a cache; reindex makes it again). Never edits the bundle. Pick one of full, info and drop.</p>
+<pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py reindex format=text
+uv run KnowledgeBaseMCP.py reindex info=true format=text
+uv run KnowledgeBaseMCP.py reindex full=true
+uv run KnowledgeBaseMCP.py reindex drop=true</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>full</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>info</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>drop</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
 </tr>
 </tbody>
 </table>

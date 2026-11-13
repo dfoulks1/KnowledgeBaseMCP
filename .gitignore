@@ -15,3 +15,11 @@ venv/
 
 # OS
 .DS_Store
+
+# build output
+build/
+dist/
+
+# per-person config and the passage index (derived, rebuilt by `reindex`)
+kbmcp.yaml
+.kbmcp/

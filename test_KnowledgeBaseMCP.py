@@ -20,9 +20,14 @@ from types import SimpleNamespace
 HERE = Path(__file__).resolve().parent
 kb = Path(tempfile.mkdtemp()) / "kb"
 kb.mkdir()
-os.environ.update(KB_ROOT=str(kb), GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+os.environ.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+(kb / "kbmcp.yaml").write_text("")  # the config file marks the knowledgebase root
+sys.argv[1:] = ["--config", str(kb / "kbmcp.yaml")]
 sys.path.insert(0, str(HERE))
 import KnowledgeBaseMCP as k
+
+del sys.argv[1:]
+k.CFG_DIR = None  # the tests swap KB_ROOT around; keep each one's index inside its own root
 
 TS = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
 
@@ -698,8 +703,211 @@ L = kinds_of()
 assert ("island1.md", "island") in L and ("island1.md", "unused_ref") in L and not any(x == "island" and f.startswith("ops") for f, x in L), L
 assert {x for _, x in kinds_of(only=["stub"])} == {"stub"} and "stub" not in {x for _, x in kinds_of(ignore=["stub"])}
 raises(k.lint, only=["nope"])
+(rk / "kbmcp.yaml").write_text(k.EXAMPLE_CONFIG)  # at the knowledgebase root: right
+assert not any(x == "nested_config" for _, x in kinds_of())
+(rk / "ops/kbmcp.yaml").write_text("")  # below it: a second knowledgebase, as far as a server can tell
+assert ("ops/kbmcp.yaml", "nested_config") in kinds_of() and ("kbmcp.yaml", "nested_config") not in kinds_of()
+(rk / "ops/kbmcp.yaml").unlink()
+(rk / "kbmcp.yaml").unlink()
 src = Path(k.__file__).read_text()
 assert set(re.findall(r'finding\(\s*"(\w+)"', src)) | set(k.ERR) | {"island"} <= k.KINDS
+# passages: heading-level BM25, with trust shown; a miss is a gap.
+(rk / "ops").mkdir(exist_ok=True)
+(rk / "ops/runbook.md").write_text("---\ntype: Playbook\ndescription: Shipping.\ntags: [ops]\n---\n"
+                                   "Intro text about shipping.\n\n## Rollback\n\nTo roll back, redeploy the previous tag.\n\n"
+                                   "```\n# not a heading\n```\n\n## Deploy\n\nPush the tag. " + "filler " * 40 + "\n")
+P = k.passages("roll back previous tag")
+top = P["hits"][0]
+assert top["file"] == "ops/runbook.md" and top["heading"].endswith("Rollback") and top["line"] == 9, top
+assert {"tier", "stale", "status", "text"} <= set(top) and not P["gap"]
+assert [c[0].split(" > ")[-1] for c in k.chunks((rk / "ops/runbook.md").read_text(), "T")] == ["T", "Rollback", "Deploy"]
+G = k.passages("zzzunseen")
+assert G["gap"] and G["total"] == 0 and k.passages("tag", tag="nope")["total"] == 0
+raises(k.passages, "   ")
+
+# kbmcp.yaml: root, user, ai_producers; unknown keys refuse.
+cfg = Path(tempfile.mkdtemp()).resolve()
+(cfg / "sub").mkdir()
+(cfg / "kbmcp.yaml").write_text("user: drew\nai_producers: [zed]\n")
+d, c = k.load_config(cfg / "sub")
+assert d == cfg and c == {"user": "drew", "ai_producers": ["zed"]}
+assert k.load_config(Path("/"))[0] is None
+(cfg / "kbmcp.yaml").write_text("bogus: 1\n")
+try:
+    k.load_config(cfg)
+    raise AssertionError("bad key accepted")
+except SystemExit as e:
+    assert "unknown key bogus" in str(e)
+# flat passage settings: types and values are checked.
+for bad, msg in (("semantic: 3", "semantic must be a bool"), ("build: sometimes", "must be auto or manual"),
+                 ("min_similarity: high", "must be a float"), ("index: {path: x}", "index must be a str"), ("nope: 1", "unknown key nope")):
+    (cfg / "kbmcp.yaml").write_text(bad + "\n")
+    try:
+        k.load_config(cfg)
+        raise AssertionError(bad)
+    except SystemExit as e:
+        assert msg in str(e), (bad, str(e))
+(cfg / "kbmcp.yaml").write_text("semantic: true\nmin_similarity: 1\nhubs: false\n")
+assert k.load_config(cfg)[1] == {"semantic": True, "min_similarity": 1, "hubs": False}
+
+# passages: false: no passages tool, no example, the instructions send you to search.
+(cfg / "kbmcp.yaml").write_text("passages: false\n")
+probe = "import KnowledgeBaseMCP as k; print('passages' in k.REG, 'passages' in k.EXAMPLES, 'passages' in k.INSTRUCTIONS)"
+env = dict(os.environ) | {"PYTHONPATH": str(HERE)}
+off = subprocess.run([sys.executable, "-c", probe], cwd=cfg, env=env, capture_output=True, text=True, check=False)
+assert off.stdout.split() == ["False", "False", "False"], off
+(cfg / "kbmcp.yaml").write_text("\n")
+on = subprocess.run([sys.executable, "-c", probe], cwd=cfg, env=env, capture_output=True, text=True, check=False)
+assert on.stdout.split() == ["True", "True", "True"], on
+
+# hubs: the concept others link to ranks first on a tie, and shows its inbound count.
+(rk / "hub").mkdir(exist_ok=True)
+for n in ("a", "b"):
+    (rk / f"hub/{n}.md").write_text(f"---\ntype: Note\ndescription: x\n---\nThe quokka protocol {n}.\n")
+for n in range(3):
+    (rk / f"hub/l{n}.md").write_text("---\ntype: Note\ndescription: x\n---\nSee [b](b.md).\n")
+H = k.passages("quokka", dir="hub")["hits"]
+assert [h["file"] for h in H][:2] == ["hub/b.md", "hub/a.md"] and H[0]["links"] == 3 and H[1]["links"] == 0, H
+k.OPTS["hubs"] = False
+assert [h["file"] for h in k.passages("quokka", dir="hub")["hits"]] == ["hub/a.md", "hub/b.md"]
+k.OPTS["hubs"] = True
+
+# semantic: a fake embedder finds a passage that shares no word with the query; the cache is reused.
+calls = []
+def fake(texts):
+    calls.append(len(texts))
+    return [[1.0, 0.0] if ("release" in t.lower() or "reverse" in t.lower()) else [0.0, 0.0] for t in texts]
+(rk / "sem.md").write_text("---\ntype: Note\ndescription: x\n---\n## Release\n\nShip the release.\n")
+k.EMBEDDERS["fake"] = fake
+k.OPTS |= {"semantic": True, "semantic_model": "fake", "min_similarity": 0.5}
+S = k.passages("reverse")
+assert [h["file"] for h in S["hits"]] == ["sem.md"], S
+n_first = sum(calls)
+k.passages("reverse")
+assert sum(calls) == n_first + 1 and (rk / ".kbmcp/.gitignore").is_file()  # only the query was embedded again
+assert k.passages("zzzunseen")["gap"]
+k.OPTS["semantic"] = False
+assert k.passages("reverse")["gap"]
+# reindex builds the one file at the chosen path; build: manual makes passages read it and nothing else.
+default = {x: k.OPTS[x] for x in ("index", "build", "min_similarity", "semantic_model")}
+idx = Path(tempfile.mkdtemp()) / "x" / "my.db"
+k.OPTS["index"] = str(idx)
+out = k.reindex()
+assert idx.is_file() and out["passages"] > 0 and out["vectors"] == 0 and out["path"] == str(idx) and not out["semantic"], out
+k.OPTS["build"] = "manual"
+(rk / "late.md").write_text("---\ntype: Note\ndescription: x\n---\nThe zorblax arrived late.\n")
+assert k.passages("zorblax")["gap"]  # manual: the new file is not read until reindex
+assert k.reindex()["passages"] == out["passages"] + 1 and [h["file"] for h in k.passages("zorblax")["hits"]] == ["late.md"]
+k.OPTS["index"] = str(idx.parent / "missing.db")
+assert "reindex" in raises(k.passages, "zorblax")
+k.OPTS |= {"index": str(idx), "build": "auto"}
+assert k.reindex(full=True)["passages"] == out["passages"] + 1
+code, text = cli("reindex", "format=text")
+assert code == 0 and "passages" in text, (code, text)
+# reindex info and drop: manage the file from the tool.
+k.OPTS["index"] = str(idx)
+I = k.reindex(info=True)
+assert I["exists"] and I["files"] > 0 and I["behind"] == 0 and I["bytes"] > 0 and I["vectors"] == 0 and I["build"] == "auto", I
+(rk / "late2.md").write_text("---\ntype: Note\ndescription: x\n---\nAnother.\n")
+assert k.reindex(info=True)["behind"] == 1 and k.reindex(info=True)["files"] == I["files"]  # info never builds
+k.reindex()
+assert k.reindex(info=True)["behind"] == 0 and k.reindex(info=True)["files"] == I["files"] + 1
+assert "pass one" in raises(k.reindex, full=True, drop=True)
+assert k.reindex(drop=True)["dropped"] and not idx.exists() and not k.reindex(drop=True)["dropped"]
+assert k.reindex(info=True)["exists"] is False and not idx.exists()
+idx.parent.mkdir(exist_ok=True); idx.write_text("not a database")
+assert k.reindex(info=True)["usable"] is False
+(rk / "late2.md").unlink()
+k.OPTS["index"] = ""
+assert "kbmcp.yaml" in raises(k.reindex) and k.passages("zorblax")["hits"]  # in memory: passages still works
+k.OPTS.update(default)
+(rk / "late.md").unlink()
+# roles: every tool has a home; the server offers the union of the roles asked for and enabled; the CLI has all.
+assert set().union(*k.ROLES.values()) == set(k.REG) and k.offered() == set(k.REG)
+list_tools = ("import sys, asyncio; sys.argv = ['x', *sys.argv[1:]]; import KnowledgeBaseMCP as k; "
+              "print(' '.join(sorted(t.name for t in asyncio.run(k.mcp.list_tools()))))")
+def server(yaml_text="", *argv, **env):
+    (cfg / "kbmcp.yaml").write_text(yaml_text)
+    e = {kk: v for kk, v in os.environ.items() if kk != "KB_ROLE"} | {"PYTHONPATH": str(HERE)} | env
+    return subprocess.run([sys.executable, "-c", list_tools, *argv], cwd=cfg, env=e, capture_output=True, text=True, check=False)
+r = server("", "--role", "researcher")
+assert set(r.stdout.split()) == k.ROLES["researcher"], r
+r = server("", KB_ROLE="scribe,curator")
+assert set(r.stdout.split()) == k.ROLES["scribe"] | k.ROLES["curator"], r
+r = server("roles: [researcher]\n")  # the others are off: only researcher is offered
+assert set(r.stdout.split()) == k.ROLES["researcher"], r
+r = server("roles: [researcher]\n", "--role=curator")  # asking for a role that is off refuses
+assert r.returncode and "off in kbmcp.yaml" in r.stderr, r
+r = server("roles: [wizard]\n")
+assert r.returncode and "unknown role wizard" in r.stderr, r
+assert k.opt_arg(["--role", "scribe", "lint"], "--role") == ("scribe", ["lint"]) and k.opt_arg(["--role=a"], "--role") == ("a", [])
+# the config file marks the knowledgebase: found from the working directory or named by --config; KB_ROOT is refused.
+probe = "import sys; sys.argv = ['x', *sys.argv[1:]]; import KnowledgeBaseMCP as k; print(k.KB_ROOT); print(k.INSTRUCTIONS)"
+def where(cwd, *argv, **env):
+    e = {kk: v for kk, v in os.environ.items() if kk != "KB_ROLE"} | {"PYTHONPATH": str(HERE)} | env
+    return subprocess.run([sys.executable, "-c", probe, *argv], cwd=cwd, env=e, capture_output=True, text=True, check=False)
+base = Path(tempfile.mkdtemp()).resolve()
+(base / "eng/deep").mkdir(parents=True)
+(base / "eng/kbmcp.yaml").write_text("about: Engineering runbooks.\n")
+r = where(base / "eng/deep")  # found from below: the file's own folder is the knowledgebase
+assert r.stdout.splitlines()[0] == str(base / "eng") and "This knowledgebase: Engineering runbooks." in r.stdout, r
+assert where(base / "eng").stdout.splitlines()[0] == str(base / "eng")
+(base / "other").mkdir()
+r = where(base / "other", "--config", str(base / "eng/kbmcp.yaml"))  # --config wins over where we are
+assert r.stdout.splitlines()[0] == str(base / "eng") and "Engineering runbooks" in r.stdout, r
+r = where(base / "other", "--config", str(base / "nope.yaml"))
+assert r.returncode and "--config takes the path" in r.stderr, r
+r = where(base / "other", KB_ROOT=str(base))
+assert r.returncode and "KB_ROOT is no longer read" in r.stderr, r
+# config: writes the commented example once, never over a file; the example tracks the real keys and defaults.
+_y = k.yaml
+eg = k.EXAMPLE_CONFIG
+assert _y.safe_load(eg) is None  # all comments: valid, and marks the base
+for key in k.CONFIG_KEYS:
+    line = next((ln for ln in eg.splitlines() if ln.startswith(f"# {key}: ")), None)
+    assert line, f"{key} missing from the example"
+    if key in k.DEFAULTS and key != "about":  # about is only illustrated
+        assert _y.safe_load(line[2:])[key] == k.DEFAULTS[key], (key, line)
+cf, ck, k.CFG_DIR = k.CFG_DIR, k.KB_ROOT, None
+k.KB_ROOT = Path(tempfile.mkdtemp()).resolve()
+C = k.config()
+assert not C["written"] and not (k.KB_ROOT / "kbmcp.yaml").exists() and C["content"] == eg
+assert k.config(apply=True)["written"] and (k.KB_ROOT / "kbmcp.yaml").read_text() == eg
+assert "exists" in raises(k.config)
+assert k.load_config(k.KB_ROOT) == (k.KB_ROOT, {}) and C["gitignore"] == "not a git work tree"
+code, text = cli("config")
+assert code == 2, (code, text)  # the CLI refuses too: it exists now
+# in a git work tree: kbmcp.yaml is listed in .gitignore (local config), and a stray one there is still linted.
+gr = Path(tempfile.mkdtemp()).resolve()
+subprocess.run(["git", "init", "-q", str(gr)], check=True)
+(gr / ".gitignore").write_text("build/")  # no trailing newline: kept
+k.KB_ROOT = gr
+k.init(apply=True)
+assert k.config()["gitignore"] == ".gitignore gets kbmcp.yaml" and (gr / ".gitignore").read_text() == "build/"
+assert k.config(apply=True)["written"] and (gr / ".gitignore").read_text() == "build/\nkbmcp.yaml\n"
+(gr / "sub").mkdir()
+(gr / "sub/kbmcp.yaml").write_text("")  # git-ignored by the pattern above, flagged anyway
+assert any(f["kind"] == "nested_config" and f["file"] == "sub/kbmcp.yaml" for f in k.lint(limit=0)["findings"])
+(gr / "kbmcp.yaml").unlink()
+(gr / ".gitignore").write_text("/kbmcp.yaml\n")
+assert k.config()["gitignore"] == ".gitignore already lists it"
+k.KB_ROOT, k.CFG_DIR = ck, cf
+# lint always says it ran: a verdict line (with what it checked) on success and failure, text and github.
+L = k.lint()
+assert L["checked"]["concepts"] > 0 and L["checked"]["bundles"] >= 1, L
+code, text = cli("lint", "format=text")
+assert text.splitlines()[-1].startswith(f"knowledgebasemcp lint: {'ok' if code == 0 else 'FAILED'}: ") and "concept(s) in" in text, text
+code, text = cli("lint", "format=github")
+assert text.splitlines()[-1].startswith("::notice title=knowledgebasemcp lint::knowledgebasemcp lint: "), text
+assert "checked" not in k.lint(file="faq.md")  # a named file has no bundle count
+good = Path(tempfile.mkdtemp()).resolve()
+(good / "index.md").write_text('---\nokf_version: "0.2"\n---\n# kb\n')
+(good / "log.md").write_text("# Log\n")
+saved_root = k.KB_ROOT
+k.KB_ROOT = good
+code, text = cli("lint", "format=text")
+assert code == 0 and text.splitlines()[-1] == "knowledgebasemcp lint: ok: 0 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True", (code, text)
+k.KB_ROOT = saved_root
 k.KB_ROOT = saved
 
 print("ok")

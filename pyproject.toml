@@ -1,5 +1,9 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "knowledgebase-mcp"
+name = "knowledgebasemcp"
 version = "0.1.0"
 description = "An MCP server and CLI for Open Knowledge Format (OKF) v0.2 bundles."
 readme = "README.md"
@@ -7,9 +11,17 @@ requires-python = ">=3.10"
 license = "Apache-2.0"
 dependencies = ["mcp>=1.10,<2", "pyyaml"]
 
-# The server runs as a self-contained PEP 723 script (see the `# /// script`
-# block in KnowledgeBaseMCP.py). This file is for dev tooling and dependency
-# declaration, not for packaging the script.
+[project.optional-dependencies]
+semantic = ["fastembed"]  # `semantic: true` in kbmcp.yaml
+
+[project.scripts]
+knowledgebasemcp = "KnowledgeBaseMCP:main"
+
+[tool.setuptools]
+py-modules = ["KnowledgeBaseMCP"]
+
+# The file still runs as a PEP 723 script (`uv run KnowledgeBaseMCP.py`); the table above
+# makes it installable too: `uvx --from git+<repo> knowledgebasemcp`.
 
 [dependency-groups]
 dev = ["ruff"]
