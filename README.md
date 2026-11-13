@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)"
-            srcset="https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/docs-src/img/logo-dark.svg">
+            srcset="https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/docs-src/img/logo-dark-v2.svg">
     <img src="https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/docs-src/img/logo-readme.png"
          alt="Bowerbird: a bower of sticks rising from an open book, with a small bird" width="260">
   </picture>

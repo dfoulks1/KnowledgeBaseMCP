@@ -1,6 +1,6 @@
 <div class="hero">
-  <img class="logo-light" src="img/logo.svg" alt="Bowerbird: a bower of sticks rising from an open book, with a small bird" width="240" height="175">
-  <img class="logo-dark" src="img/logo-dark.svg" alt="Bowerbird: a bower of sticks rising from an open book, with a small bird" width="240" height="175">
+  <img class="logo-light" src="img/logo-v2.svg" alt="Bowerbird: a bower of sticks rising from an open book, with a small bird" width="240" height="175">
+  <img class="logo-dark" src="img/logo-dark-v2.svg" alt="Bowerbird: a bower of sticks rising from an open book, with a small bird" width="240" height="175">
   <h1 id="bowerbird-mcp">Bowerbird</h1>
   <p class="lead">Keep an <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">Open Knowledge Format</a> knowledgebase in order: checked, maintained and imported, by agents and people alike. It cares how a concept is written, never what it says.</p>
   <p>
