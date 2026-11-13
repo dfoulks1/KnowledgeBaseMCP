@@ -28,9 +28,9 @@ kb passages 'how do we roll back' format=text     # the best passages, with file
 kb lint format=text                               # ends: knowledgebasemcp lint: ok: ...
 ```
 
-Personal project. Apache-2.0 (see [LICENSE](LICENSE); [NOTICE](NOTICE) credits the
+Personal project. Apache-2.0 (see [LICENSE](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/LICENSE); [NOTICE](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/NOTICE) credits the
 spec), built under the [ASF generative-tooling guidelines][asf-gt]. Bugs and ideas:
-[GitHub Issues](https://github.com/dfoulks1/KnowledgeBaseMCP/issues); security reports: [SECURITY.md](SECURITY.md).
+[GitHub Issues](https://github.com/dfoulks1/KnowledgeBaseMCP/issues); security reports: [SECURITY.md](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/SECURITY.md).
 
 <!-- --8<-- [start:run] -->
 ## Run
