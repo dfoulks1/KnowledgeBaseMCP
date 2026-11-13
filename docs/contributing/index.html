@@ -5,8 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Contributing · Bowerbird</title>
-  <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="../img/favicon.png" type="image/png">
+  <link rel="icon" href="../img/favicon.ico" sizes="any">
   <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Contributing · Bowerbird">
+  <meta property="og:description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <meta property="og:image" content="https://bowerbird.voltpop.com/img/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 <nav class="navbar navbar-expand-lg sticky-top site-nav">
   <div class="container-fluid">
     <a class="navbar-brand fw-semibold" href="..">
-      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
+      <img src="../img/favicon.png" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#site-nav" aria-controls="site-nav"
@@ -188,10 +194,12 @@ use cases drive changes to it. Core stays one file.</p>
 <li>Provenance trailer on commits: the exact string your tool is configured
   with, confirmed before committing, never fabricated. For example:</li>
 </ul>
-<pre class="highlight"><code>Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;
+</code></pre></div>
 <h2 id="running-the-checks">Running the checks<a class="headerlink" href="#running-the-checks" title="Link to this section">#</a></h2>
-<pre class="highlight"><code class="language-sh">uv run bowerbird_mcp.py lint     # exits 1 on problems; use as a pre-merge gate
-uv run test_bowerbird_mcp.py     # self-check against throwaway bundles</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>lint<span class="w">     </span><span class="c1"># exits 1 on problems; use as a pre-merge gate</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>run<span class="w"> </span>test_bowerbird_mcp.py<span class="w">     </span><span class="c1"># self-check against throwaway bundles</span>
+</code></pre></div>
 <h2 id="releasing">Releasing<a class="headerlink" href="#releasing" title="Link to this section">#</a></h2>
 <ol>
 <li>Set <code>version</code> in <code>pyproject.toml</code>, add a section to <code>CHANGELOG.md</code>, and run the checks above (the tests
@@ -211,8 +219,9 @@ uploads the files from <code>uv build</code> to TestPyPI.</p>
 <p><code>docs-src/</code> is the source and <code>docs/</code> the built site, committed so GitHub Pages
 serves it from <code>main</code> <code>/docs</code>. No CI builds it. After changing the README, a
 tool or <code>docs-src/</code>, rebuild locally and commit both:</p>
-<pre class="highlight"><code class="language-sh">uv run docs_tools.py                          # docs-src/tools.md, from the tools' docstrings
-uvx --with pymdown-extensions mkdocs build    # docs-src/ -&gt; docs/</code></pre></article>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uv<span class="w"> </span>run<span class="w"> </span>docs_tools.py<span class="w">                          </span><span class="c1"># docs-src/tools.md, from the tools' docstrings</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>uvx<span class="w"> </span>--with<span class="w"> </span>pymdown-extensions<span class="w"> </span>mkdocs<span class="w"> </span>build<span class="w">    </span><span class="c1"># docs-src/ -&gt; docs/</span>
+</code></pre></div></article>
         
           <hr class="my-5">
           <div class="d-flex justify-content-between gap-3">

@@ -9,7 +9,10 @@
   `~/.cache/bowerbird-mcp/models`. The 1.0.0 release keeps its old names.
 - The generated-index marker in `index.md` files still says "KnowledgeBaseMCP", so existing knowledgebases are
   not rewritten.
-- The website address is unchanged for now.
+- A new logo (a bower of sticks rising from an open book), on the site, in the README and as the favicon, with a
+  social-preview image for link cards.
+- The install lines use the PyPI name (`uvx bowerbird-mcp`); the repository form is kept for unreleased code.
+- The website moved to <https://bowerbird.voltpop.com/>.
 
 ### Changed
 - `fastembed` is declared once, as a dependency of the package. It is no longer in the script's own header, so

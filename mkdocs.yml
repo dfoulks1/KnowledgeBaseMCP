@@ -4,7 +4,7 @@ site_description: >-
   knowledgebases, for agents and people alike.
 site_author: Bowerbird contributors
 copyright: Bowerbird · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review
-site_url: https://knowledgebasemcp.voltpop.com/
+site_url: https://bowerbird.voltpop.com/
 
 repo_name: dfoulks1/bowerbird-mcp
 repo_url: https://github.com/dfoulks1/bowerbird-mcp

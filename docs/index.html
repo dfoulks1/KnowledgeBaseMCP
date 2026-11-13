@@ -5,8 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bowerbird</title>
-  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="img/favicon.png" type="image/png">
+  <link rel="icon" href="img/favicon.ico" sizes="any">
   <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Bowerbird">
+  <meta property="og:description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <meta property="og:image" content="https://bowerbird.voltpop.com/img/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 <nav class="navbar navbar-expand-lg sticky-top site-nav">
   <div class="container-fluid">
     <a class="navbar-brand fw-semibold" href=".">
-      <img src="img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
+      <img src="img/favicon.png" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#site-nav" aria-controls="site-nav"
@@ -113,7 +119,7 @@
       <main class="py-5 docs-content home">
         
         <article><div class="hero">
-  <img src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a round knob" width="136" height="136">
+  <img src="img/logo.png" alt="Bowerbird: a bower of sticks rising from an open book, with a small bird" width="240" height="175">
   <h1 id="bowerbird-mcp">Bowerbird</h1>
   <p class="lead">Keep an <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">Open Knowledge Format</a> knowledgebase in order: checked, maintained and imported, by agents and people alike. It cares how a concept is written, never what it says.</p>
   <p>
@@ -140,79 +146,85 @@
 <p class="note">Local files only. No network, except the one-time model download if you turn on semantic search. Never writes to git. One Python file, installed or run with <a href="https://docs.astral.sh/uv/">uv</a>. These pages were written with Claude Opus 5.5 and Claude Sonnet 5.5 and are under human review.</p>
 
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Link to this section">#</a></h2>
-<p>Nothing to clone. <a href="https://docs.astral.sh/uv/">uv</a> installs it and its dependencies on the fly:</p>
-<pre class="highlight"><code class="language-sh">uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help</code></pre>
+<p>Nothing to clone. <a href="https://docs.astral.sh/uv/">uv</a> installs it from PyPI, with its dependencies, on the fly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uvx<span class="w"> </span>bowerbird-mcp<span class="w"> </span><span class="nb">help</span>
+</code></pre></div>
 <p>Or take the one file and run it:</p>
-<pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/bowerbird_mcp.py
-uv run bowerbird_mcp.py help</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>wget<span class="w"> </span>https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/bowerbird_mcp.py
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span><span class="nb">help</span>
+</code></pre></div>
 <p>No uv yet? <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></p>
 <p>Then add it to your MCP client's servers file (<code>.mcp.json</code> for Claude Code;
 <a href="guide/#register-with-an-mcp-client">other clients</a>):</p>
-<pre class="highlight"><code class="language-json">{
-  "mcpServers": {
-    "bowerbird": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp"]
-    }
-  }
-}</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"mcpServers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">"bowerbird"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uvx"</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"bowerbird-mcp"</span><span class="p">]</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">}</span>
+</code></pre></div>
 <p>A <code>kbmcp.yaml</code> marks the base of a knowledgebase: the server finds it from the
 project folder up (or take <code>--config path</code>), and it sets your id, what the
 knowledgebase is about, and the search settings. It is local config, kept out of git (<code>config apply=true</code> writes one and ignores it); everyone has their own (<a href="guide/#run">the guide</a> has every key). To give an agent fewer
 tools, register the server with a role: <code>read</code> (find and read, nothing written), <code>structure</code>
 (reorganize), <code>write</code> (author and check) or <code>lifecycle</code> (keep it current). <a href="guide/#roles-a-smaller-tool-list-per-agent">The guide</a> has the lists.</p>
 <p>Or work from the terminal, no AI needed:</p>
-<pre class="highlight"><code class="language-sh"># start a bundle
-uv run bowerbird_mcp.py init bundle=eng apply=true
-
-# write a concept (a few real sentences, or `passages` has nothing to find)
-uv run bowerbird_mcp.py create eng/runbooks/deploy type=Playbook title="Deploy" \
-    description="How we deploy." \
-    body="Run the deploy script, then check the dashboard. To roll back, redeploy the previous tag."
-
-# find it: the map, then the best matches
-uv run bowerbird_mcp.py dirs format=text
-uv run bowerbird_mcp.py search deploy format=text
-
-# ask a question: the best sections, each with file, line and trust to cite
-uv run bowerbird_mcp.py passages 'how do we deploy' format=text
-
-# what's wrong, each with a fix; then the mechanical repairs
-uv run bowerbird_mcp.py lint format=text
-uv run bowerbird_mcp.py fix apply=true
-
-# any tool: what it does, its arguments
-uv run bowerbird_mcp.py help move</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># start a bundle</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>init<span class="w"> </span><span class="nv">bundle</span><span class="o">=</span>eng<span class="w"> </span><span class="nv">apply</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># write a concept (a few real sentences, or `passages` has nothing to find)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>create<span class="w"> </span>eng/runbooks/deploy<span class="w"> </span><span class="nv">type</span><span class="o">=</span>Playbook<span class="w"> </span><span class="nv">title</span><span class="o">=</span><span class="s2">"Deploy"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nv">description</span><span class="o">=</span><span class="s2">"How we deploy."</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nv">body</span><span class="o">=</span><span class="s2">"Run the deploy script, then check the dashboard. To roll back, redeploy the previous tag."</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># find it: the map, then the best matches</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span><span class="nb">dirs</span><span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>search<span class="w"> </span>deploy<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># ask a question: the best sections, each with file, line and trust to cite</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>passages<span class="w"> </span><span class="s1">'how do we deploy'</span><span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># what's wrong, each with a fix; then the mechanical repairs</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>lint<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>fix<span class="w"> </span><span class="nv">apply</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="c1"># any tool: what it does, its arguments</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span><span class="nb">help</span><span class="w"> </span>move
+</code></pre></div>
 <h2 id="what-a-knowledgebase-looks-like">What a knowledgebase looks like<a class="headerlink" href="#what-a-knowledgebase-looks-like" title="Link to this section">#</a></h2>
 <p>A knowledgebase is a folder of bundles. A bundle is a folder of concepts, one
 Markdown file each. Two small bundles:</p>
-<pre class="highlight"><code class="language-text">kb/
-  index.md                 lists the bundles
-  eng/                     a bundle: its index.md declares okf_version "0.2"
-    index.md
-    log.md                 what changed, newest first
-    db.md
-    runbooks/ship.md
-    refs/pg.md
-  mkt/
-    index.md
-    log.md
-    launch.md</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kb/
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  index.md                 lists the bundles
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  eng/                     a bundle: its index.md declares okf_version "0.2"
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    index.md
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    log.md                 what changed, newest first
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    db.md
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    runbooks/ship.md
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    refs/pg.md
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>  mkt/
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    index.md
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    log.md
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    launch.md
+</code></pre></div>
 <p>Each concept is frontmatter (what kind of thing it is, where its facts came
 from, who checked it) over an ordinary Markdown body. Here is <code>eng/db.md</code>:</p>
-<pre class="highlight"><code class="language-markdown">---
-type: Reference
-title: Database
-description: The PostgreSQL cluster behind every service.
-sources:
-  - id: pg
-    resource: refs/pg.md
-verified: { by: human:dfoulks, at: 2026-10-27T14:00:00Z }
----
-
-We run PostgreSQL 16.4.[^pg] Deploys follow [the ship runbook](/runbooks/ship.md).
-
-[^pg]: PostgreSQL release notes</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>---
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>type: Reference
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>title: Database
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>description: The PostgreSQL cluster behind every service.
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>sources:
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="k">-</span><span class="w"> </span>id: pg
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    resource: refs/pg.md
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="gu">verified: { by: human:dfoulks, at: 2026-10-27T14:00:00Z }</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="gu">---</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>We run PostgreSQL 16.4.[^pg] Deploys follow [<span class="nt">the ship runbook</span>](<span class="na">/runbooks/ship.md</span>).
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>[<span class="nl">^pg</span>]: <span class="na">PostgreSQL release notes</span>
+</code></pre></div>
 <p>Concepts point at each other in two ways: a Markdown <strong>link</strong> in the body,
 and a <strong>citation</strong> in <code>sources</code>, which records where a fact came from. <code>web
 format=mermaid</code> draws both for the whole knowledgebase:</p>

@@ -33,11 +33,11 @@ The tool runs through [uv](https://docs.astral.sh/uv/), a fast Python launcher. 
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-There is nothing else to install and nothing to clone. This line runs the tool straight from its repository,
-fetching what it needs the first time. Make a shortcut so the rest of this page is short:
+There is nothing else to install and nothing to clone. This line runs the tool straight from PyPI, fetching
+what it needs the first time (to try the latest unreleased code, use `uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp`). Make a shortcut so the rest of this page is short:
 
 ```sh
-alias kb='uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp'
+alias kb='uvx bowerbird-mcp'
 kb help          # every tool, one line each (35 of them)
 ```
 
@@ -206,7 +206,7 @@ works in `claude_desktop_config.json` for Claude Desktop and `.cursor/mcp.json` 
   "mcpServers": {
     "notes": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp",
+      "args": ["bowerbird-mcp",
                "--config", "/full/path/to/notes/kbmcp.yaml"]
     }
   }
@@ -236,7 +236,7 @@ repos:
     hooks:
       - id: okf-lint
         name: OKF lint
-        entry: uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp lint format=text
+        entry: uvx bowerbird-mcp lint format=text
         language: system
         pass_filenames: false
         verbose: true

@@ -5,8 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Guide · Bowerbird</title>
-  <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="../img/favicon.png" type="image/png">
+  <link rel="icon" href="../img/favicon.ico" sizes="any">
   <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Guide · Bowerbird">
+  <meta property="og:description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
+  <meta property="og:image" content="https://bowerbird.voltpop.com/img/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 <nav class="navbar navbar-expand-lg sticky-top site-nav">
   <div class="container-fluid">
     <a class="navbar-brand fw-semibold" href="..">
-      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
+      <img src="../img/favicon.png" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#site-nav" aria-controls="site-nav"
@@ -193,12 +199,14 @@
 <p>Drawn from the README, written with Claude Opus 5.5 and Claude Sonnet 5.5, under human review.</p>
 </div>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Link to this section">#</a></h2>
-<p>Requires <a href="https://docs.astral.sh/uv/">uv</a>. Install on the fly, nothing to clone; this is
-the form to use:</p>
-<pre class="highlight"><code class="language-sh">uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help</code></pre>
+<p>Requires <a href="https://docs.astral.sh/uv/">uv</a>. Install on the fly from PyPI, nothing to clone; this is
+the form to use (<code>pip install bowerbird-mcp</code> works too):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uvx<span class="w"> </span>bowerbird-mcp<span class="w"> </span><span class="nb">help</span>
+</code></pre></div>
 <p>In the examples below, <code>uv run bowerbird_mcp.py ...</code> means the same command run
 from a checkout of this repository (or beside a saved copy of that one file).
-PyPI later: <code>uvx bowerbird-mcp</code>.</p>
+To run the latest unreleased code instead of the PyPI release, give uv the repository:
+<code>uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help</code>.</p>
 <p>A <code>kbmcp.yaml</code> at the root of a knowledgebase (not in a bundle) marks its base
 and configures it, so any <code>bowerbird-mcp</code> server knows where the
 knowledgebase and its assets (index, archive, bundles) are, and the server
@@ -211,36 +219,39 @@ a built-in example (every setting commented out at its default). That also
 lists <code>kbmcp.yaml</code> in the <code>.gitignore</code> beside it, and it never overwrites an
 existing file. <code>lint</code> flags a <code>kbmcp.yaml</code> anywhere below the root
 (<code>nested_config</code>): a second one would make that folder a second knowledgebase.</p>
-<pre class="highlight"><code class="language-yaml">about: Engineering runbooks.   # shown to the agent; tells knowledgebases apart when several are loaded
-user: your-id         # prefills your id in confirmation prompts (KB_USER)
-ai_producers: [zed]   # extra AI names for the provenance check (KB_AI_PRODUCERS)
-passages: true        # false removes the passages and reindex tools
-hubs: true            # concepts many others link to rank a little higher
-semantic: false       # also match by meaning. `uvx bowerbird-mcp` carries what it needs; the bare script needs
-                      # `uv run --with fastembed`. The model (~65 MB) downloads once into
-                      # ~/.cache/bowerbird-mcp/models; passages are embedded and kept in the index
-semantic_model: BAAI/bge-small-en-v1.5
-min_similarity: 0.6   # how close in meaning a passage must be
-index: .kbmcp/index.db   # one SQLite file: passages, BM25 index, links, vectors; "" = in memory
-build: auto           # auto: passages keeps the index current; manual: only `reindex` does, passages reads
-roles: [read, write, structure, lifecycle]   # roles the MCP server may offer; drop one to turn it off (see Register)</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">about</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Engineering runbooks.</span><span class="w">   </span><span class="c1"># shown to the agent; tells knowledgebases apart when several are loaded</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your-id</span><span class="w">         </span><span class="c1"># prefills your id in confirmation prompts (KB_USER)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">ai_producers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">zed</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># extra AI names for the provenance check (KB_AI_PRODUCERS)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nt">passages</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">        </span><span class="c1"># false removes the passages and reindex tools</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nt">hubs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">            </span><span class="c1"># concepts many others link to rank a little higher</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nt">semantic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">       </span><span class="c1"># also match by meaning. `uvx bowerbird-mcp` carries what it needs; the bare script needs</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">                      </span><span class="c1"># `uv run --with fastembed`. The model (~65 MB) downloads once into</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">                      </span><span class="c1"># ~/.cache/bowerbird-mcp/models; passages are embedded and kept in the index</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nt">semantic_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BAAI/bge-small-en-v1.5</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="nt">min_similarity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.6</span><span class="w">   </span><span class="c1"># how close in meaning a passage must be</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.kbmcp/index.db</span><span class="w">   </span><span class="c1"># one SQLite file: passages, BM25 index, links, vectors; "" = in memory</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span><span class="w">           </span><span class="c1"># auto: passages keeps the index current; manual: only `reindex` does, passages reads</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="nt">roles</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">read</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">write</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">structure</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">lifecycle</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># roles the MCP server may offer; drop one to turn it off (see Register)</span>
+</code></pre></div>
 <p>With no <code>kbmcp.yaml</code> the defaults apply. The index is a cache derived from
 the concepts: safe to delete, never committed (a new <code>.kbmcp/</code> folder ignores
 itself). To build it apart from the server, run <code>reindex</code> (incremental: only
 changed files are read) and set <code>build: manual</code>, so <code>passages</code> only reads it:</p>
-<pre class="highlight"><code class="language-sh">uvx bowerbird-mcp reindex format=text     # first semantic run embeds everything: minutes, once</code></pre>
-<pre class="highlight"><code class="language-yaml"># .pre-commit-config.yaml: refresh after you commit and after pulls
-repos:
-  - repo: local
-    hooks:
-      - id: kbmcp-reindex
-        name: Bowerbird reindex
-        entry: uvx bowerbird-mcp reindex
-        language: system
-        pass_filenames: false
-        always_run: true
-        verbose: true
-        stages: [pre-commit, post-merge, post-checkout]</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uvx<span class="w"> </span>bowerbird-mcp<span class="w"> </span>reindex<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text<span class="w">     </span><span class="c1"># first semantic run embeds everything: minutes, once</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># .pre-commit-config.yaml: refresh after you commit and after pulls</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">repos</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">repo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">hooks</span><span class="p">:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kbmcp-reindex</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Bowerbird reindex</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">        </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uvx bowerbird-mcp reindex</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">        </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">        </span><span class="nt">pass_filenames</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">        </span><span class="nt">always_run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">        </span><span class="nt">verbose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">        </span><span class="nt">stages</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">pre-commit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">post-merge</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">post-checkout</span><span class="p p-Indicator">]</span>
+</code></pre></div>
 <p>A knowledgebase is where its <code>kbmcp.yaml</code> is: the tool looks for one from the
 current directory up (or takes <code>--config path/to/kbmcp.yaml</code>) and treats that
 file's folder as the base. With none, it uses the current directory. It is one bundle at its root, or a set of sibling bundles. A
@@ -259,11 +270,12 @@ path within it (<code>bundle=eng file=runbooks/deploy.md</code>), in every input
 output. On the command line, without <code>bundle=</code>, paths are relative to where
 you are. Write tools act in the bundle the file belongs to. In a git work
 tree, files git ignores are skipped.</p>
-<pre class="highlight"><code class="language-sh">wget https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/bowerbird_mcp.py
-uv run bowerbird_mcp.py help                 # every tool, one line each
-uv run bowerbird_mcp.py help move            # one tool: what it does, its arguments
-uv run bowerbird_mcp.py lint format=text
-uv run bowerbird_mcp.py init apply=true       # start a new bundle</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>wget<span class="w"> </span>https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/bowerbird_mcp.py
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span><span class="nb">help</span><span class="w">                 </span><span class="c1"># every tool, one line each</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span><span class="nb">help</span><span class="w"> </span>move<span class="w">            </span><span class="c1"># one tool: what it does, its arguments</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>lint<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>init<span class="w"> </span><span class="nv">apply</span><span class="o">=</span><span class="nb">true</span><span class="w">       </span><span class="c1"># start a new bundle</span>
+</code></pre></div>
 <p>Any tool runs as <code>&lt;name&gt; name=value ...</code> or <code>&lt;name&gt; '&lt;json object&gt;'</code>. Bare
 arguments fill the required ones in order (<code>move a.md b.md</code>); on <code>set</code>, any
 other <code>key=value</code> is frontmatter (<code>set a.md status=deprecated tags=[x,y]</code>).
@@ -275,33 +287,35 @@ only on the command line: no MCP call can pass it.</p>
 <p>Output is JSON; <code>format=text</code> prints one key per line and diffs as is.</p>
 <p>Exit codes: 0 ok, 1 findings, 2 usage error.</p>
 <h2 id="layout">Layout<a class="headerlink" href="#layout" title="Link to this section">#</a></h2>
-<pre class="highlight"><code>kb/                          the knowledgebase (kbmcp.yaml sits here)
-  index.md                   lists the bundles; no frontmatter
-  .gitattributes             log.md and index.md merge=union
-  eng/                       a bundle
-    index.md                 okf_version, then the list of its concepts
-    log.md                   its history (§9)
-    runbooks/
-      index.md               optional: this directory's concepts
-      deploy.md              a concept
-  archive/                   the archive: a knowledgebase of its own, set apart
-    index.md                 lists the archived bundles
-    eng/old-runbook.md       archived from eng (archive/eng is a bundle)</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kb/                          the knowledgebase (kbmcp.yaml sits here)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  index.md                   lists the bundles; no frontmatter
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  .gitattributes             log.md and index.md merge=union
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  eng/                       a bundle
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    index.md                 okf_version, then the list of its concepts
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    log.md                   its history (§9)
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    runbooks/
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>      index.md               optional: this directory's concepts
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>      deploy.md              a concept
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>  archive/                   the archive: a knowledgebase of its own, set apart
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    index.md                 lists the archived bundles
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    eng/old-runbook.md       archived from eng (archive/eng is a bundle)
+</code></pre></div>
 <h3 id="indexmd">index.md<a class="headerlink" href="#indexmd" title="Link to this section">#</a></h3>
 <p>OKF §8: an index lists what is in its directory, for progressive disclosure.
 Every index has the same body shape, sections under headings with one entry
 per item:</p>
-<pre class="highlight"><code class="language-markdown"># Engineering
-
-Hand-written text is kept.
-
-&lt;!-- kb-index:start (generated by KnowledgeBaseMCP index; do not edit between the markers) --&gt;
-
-### runbooks
-
-* [Deploy](./runbooks/deploy.md) - How we deploy.
-
-&lt;!-- kb-index:end --&gt;</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gh"># Engineering</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Hand-written text is kept.
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>&lt;!-- kb-index:start (generated by KnowledgeBaseMCP index; do not edit between the markers) --&gt;
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="gu">### runbooks</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">*</span><span class="w"> </span>[<span class="nt">Deploy</span>](<span class="na">./runbooks/deploy.md</span>) - How we deploy.
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>&lt;!-- kb-index:end --&gt;
+</code></pre></div>
 <ul>
 <li>The tool owns what is between the markers and rebuilds it from frontmatter
   (title, else first heading, else file name; <code>description</code>, else the first
@@ -321,9 +335,10 @@ Hand-written text is kept.
 <h3 id="logmd">log.md<a class="headerlink" href="#logmd" title="Link to this section">#</a></h3>
 <p>OKF §9: date headings, newest first, one entry per line. Each tool write adds an
 entry to the nearest <code>log.md</code> above the change, with a hidden unix-time stamp:</p>
-<pre class="highlight"><code class="language-markdown">## 2026-10-27
-
-* &lt;!-- 1761588000 --&gt; **Update**: Moved deploy.md to [ship.md](/runbooks/ship.md).</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gu">## 2026-10-27</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">*</span><span class="w"> </span>&lt;!-- 1761588000 --&gt; <span class="gs">**Update**</span>: Moved deploy.md to [<span class="nt">ship.md</span>](<span class="na">/runbooks/ship.md</span>).
+</code></pre></div>
 <p><code>record "note"</code> writes one by hand (link the concept it is about). <code>log file=x.md</code>
 reads a concept's history: the entries linking to it in every <code>log.md</code> above it,
 and the git commits that changed it. <code>log</code> alone shows the bundle's recent
@@ -351,18 +366,20 @@ bundle itself.</p>
 <p>Add this to your MCP client's servers file: <code>.mcp.json</code> in the project for
 Claude Code, <code>claude_desktop_config.json</code> for Claude Desktop, <code>.cursor/mcp.json</code>
 for Cursor. VS Code's <code>.vscode/mcp.json</code> takes the same entry under <code>"servers"</code>.</p>
-<pre class="highlight"><code class="language-json">{
-  "mcpServers": {
-    "bowerbird": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp"]
-    }
-  }
-}</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"mcpServers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">"bowerbird"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uvx"</span><span class="p">,</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">      </span><span class="nt">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"bowerbird-mcp"</span><span class="p">]</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">}</span>
+</code></pre></div>
 <p>The server runs in the project folder, so it finds the <code>kbmcp.yaml</code> there (your
 id is <code>user:</code> in it). To point at one elsewhere, add <code>"--config",
 "/path/to/kb/kbmcp.yaml"</code> to <code>args</code>. Or, in Claude Code:</p>
-<pre class="highlight"><code class="language-sh">claude mcp add bowerbird -- uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp --config /path/to/kb/kbmcp.yaml</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>claude<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>bowerbird<span class="w"> </span>--<span class="w"> </span>uvx<span class="w"> </span>bowerbird-mcp<span class="w"> </span>--config<span class="w"> </span>/path/to/kb/kbmcp.yaml
+</code></pre></div>
 <p>Several knowledgebases at once: one entry each, with its own <code>--config</code>. The
 client prefixes tool names with the entry name, and each file's <code>about:</code> tells
 the agent what that knowledgebase holds. Each keeps its own index.</p>
@@ -404,39 +421,42 @@ commas), and each server offers only that role's tools:</p>
 </tr>
 </tbody>
 </table>
-<pre class="highlight"><code class="language-json">{
-  "mcpServers": {
-    "kb-read":  { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp", "--role", "read"] },
-    "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp", "--role", "write"] }
-  }
-}</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">"mcpServers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">"kb-read"</span><span class="p">:</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uvx"</span><span class="p">,</span><span class="w"> </span><span class="nt">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"bowerbird-mcp"</span><span class="p">,</span><span class="w"> </span><span class="s2">"--role"</span><span class="p">,</span><span class="w"> </span><span class="s2">"read"</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nt">"kb-write"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uvx"</span><span class="p">,</span><span class="w"> </span><span class="nt">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"bowerbird-mcp"</span><span class="p">,</span><span class="w"> </span><span class="s2">"--role"</span><span class="p">,</span><span class="w"> </span><span class="s2">"write"</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">}</span>
+</code></pre></div>
 <p>The <code>read</code> server is read-only, so a client can approve it without asking; the other
 three change files. A tool can belong to more than one role (<code>dirs</code> is in <code>read</code> and
 <code>structure</code>), and a server with no <code>--role</code> offers them all. With no <code>--role</code> the server offers every role that <code>roles:</code> in
 <code>kbmcp.yaml</code> leaves on; naming a role that is off refuses to start. The CLI
 always has every tool.</p>
 <h2 id="before-you-push">Before you push<a class="headerlink" href="#before-you-push" title="Link to this section">#</a></h2>
-<pre class="highlight"><code class="language-sh">uv run bowerbird_mcp.py lint format=text      # what's wrong, each with a fix
-uv run bowerbird_mcp.py fix apply=true        # mechanical repairs, then re-lint
-uv run bowerbird_mcp.py lint format=text      # what's left needs you</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>lint<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text<span class="w">      </span><span class="c1"># what's wrong, each with a fix</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>fix<span class="w"> </span><span class="nv">apply</span><span class="o">=</span><span class="nb">true</span><span class="w">        </span><span class="c1"># mechanical repairs, then re-lint</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>lint<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text<span class="w">      </span><span class="c1"># what's left needs you</span>
+</code></pre></div>
 <p><code>scope=okf</code> limits the check to the spec; <code>scope=house</code> to hygiene (links,
 anchors, orphans, islands, stubs, duplicate titles, reference links,
 filenames, tags, generated indexes). <code>only=</code> and <code>ignore=</code> keep or drop finding
 kinds: <code>lint only=stub,island</code>.</p>
 <h2 id="ci">CI<a class="headerlink" href="#ci" title="Link to this section">#</a></h2>
 <p>Vendor <code>bowerbird_mcp.py</code> into the bundle's repo, then:</p>
-<pre class="highlight"><code class="language-yaml"># .github/workflows/okf.yml
-name: okf
-on: [push, pull_request]
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0          # provenance needs full history
-      - uses: astral-sh/setup-uv@v6
-      - run: uv run bowerbird_mcp.py lint scope=okf format=github</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># .github/workflows/okf.yml</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">okf</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">push</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">pull_request</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nt">jobs</span><span class="p">:</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">lint</span><span class="p">:</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">          </span><span class="nt">fetch-depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">          </span><span class="c1"># provenance needs full history</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">astral-sh/setup-uv@v6</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uv run bowerbird_mcp.py lint scope=okf format=github</span>
+</code></pre></div>
 <p>Findings show as annotations on the PR. <code>format=sarif</code> suits code scanning.
 On PRs, <code>since=origin/${{ github.base_ref }}</code> limits findings to the files the PR
 changed.
@@ -449,23 +469,25 @@ it does not push fixes (fork PRs get a read-only token anyway).</p>
 last match wins and <code>!</code> re-includes. At the knowledgebase root it covers every
 bundle. Skipped files are still read, so links to them resolve. One file can
 skip itself with the line <code>&lt;!-- kbmcp-nolint --&gt;</code>.</p>
-<pre class="highlight"><code class="language-gitignore"># kbmcp.nolint: agent instructions are not concepts
-AGENTS*
-CLAUDE.md
-.kiro/</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a># kbmcp.nolint: agent instructions are not concepts
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>AGENTS*
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>CLAUDE.md
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>.kiro/
+</code></pre></div>
 <p>pre-commit, lint only (a hook that edits files leaves the commit unstaged).
 <code>lint</code> always ends with a verdict line, such as <code>bowerbird-mcp lint: ok: 214
 concept(s) in 3 bundle(s) checked, 0 finding(s), conformant: True</code>, so you can
 see it ran. pre-commit prints a passing hook's output only with <code>verbose: true</code>:</p>
-<pre class="highlight"><code class="language-yaml">repos:
-  - repo: local
-    hooks:
-      - id: okf-lint
-        name: OKF lint
-        entry: uv run bowerbird_mcp.py lint format=text
-        language: system
-        pass_filenames: false
-        verbose: true</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">repos</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">repo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="nt">hooks</span><span class="p">:</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">okf-lint</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OKF lint</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">        </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uv run bowerbird_mcp.py lint format=text</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">        </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">        </span><span class="nt">pass_filenames</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">        </span><span class="nt">verbose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
 <h2 id="reading-the-knowledgebase">Reading the knowledgebase<a class="headerlink" href="#reading-the-knowledgebase" title="Link to this section">#</a></h2>
 <ul>
 <li>Find things in three steps, each small: <code>dirs</code> maps the bundle (each
@@ -474,9 +496,10 @@ see it ran. pre-commit prints a passing hook's output only with <code>verbose: t
   <code>type=</code>, <code>tag=</code> and <code>dir=</code> filters; <code>get</code> reads only the top hit. <code>vocab</code>
   lists the tags and types in use, the words those filters take.</li>
 </ul>
-<pre class="highlight"><code class="language-sh">uv run bowerbird_mcp.py dirs format=text
-uv run bowerbird_mcp.py search deploy rollback dir=runbooks format=text
-uv run bowerbird_mcp.py get runbooks/deploy.md format=text</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span><span class="nb">dirs</span><span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>search<span class="w"> </span>deploy<span class="w"> </span>rollback<span class="w"> </span><span class="nv">dir</span><span class="o">=</span>runbooks<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>get<span class="w"> </span>runbooks/deploy.md<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+</code></pre></div>
 <ul>
 <li><code>passages</code> answers a question. It cuts concepts at
   headings and returns the best sections, each with file, line, heading,
@@ -492,8 +515,9 @@ uv run bowerbird_mcp.py get runbooks/deploy.md format=text</code></pre>
   holds and how far behind it is, <code>drop=true</code> deletes it. <code>passages: false</code> removes
   both tools.</li>
 </ul>
-<pre class="highlight"><code class="language-sh">uv run bowerbird_mcp.py reindex format=text
-uv run bowerbird_mcp.py passages 'how do we roll back a deploy' format=text</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>reindex<span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>uv<span class="w"> </span>run<span class="w"> </span>bowerbird_mcp.py<span class="w"> </span>passages<span class="w"> </span><span class="s1">'how do we roll back a deploy'</span><span class="w"> </span><span class="nv">format</span><span class="o">=</span>text
+</code></pre></div>
 <ul>
 <li><code>web</code> maps links and citations: bundles at the knowledgebase root, concepts
   in a bundle. <code>format=text</code> for the terminal, <code>format=mermaid</code> for anything

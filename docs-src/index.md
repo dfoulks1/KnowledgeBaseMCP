@@ -1,5 +1,5 @@
 <div class="hero">
-  <img src="img/logo.svg" alt="A card-catalog drawer front: wood, a brass label frame, a round knob" width="136" height="136">
+  <img src="img/logo.png" alt="Bowerbird: a bower of sticks rising from an open book, with a small bird" width="240" height="175">
   <h1 id="bowerbird-mcp">Bowerbird</h1>
   <p class="lead">Keep an <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md">Open Knowledge Format</a> knowledgebase in order: checked, maintained and imported, by agents and people alike. It cares how a concept is written, never what it says.</p>
   <p>
@@ -27,10 +27,10 @@
 
 ## Quickstart
 
-Nothing to clone. [uv](https://docs.astral.sh/uv/) installs it and its dependencies on the fly:
+Nothing to clone. [uv](https://docs.astral.sh/uv/) installs it from PyPI, with its dependencies, on the fly:
 
 ```sh
-uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help
+uvx bowerbird-mcp help
 ```
 
 Or take the one file and run it:
@@ -50,7 +50,7 @@ Then add it to your MCP client's servers file (`.mcp.json` for Claude Code;
   "mcpServers": {
     "bowerbird": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp"]
+      "args": ["bowerbird-mcp"]
     }
   }
 }

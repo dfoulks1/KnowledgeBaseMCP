@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dfoulks1/bowerbird-mcp/main/docs-src/img/logo-readme.png"
+       alt="Bowerbird: a bower of sticks rising from an open book, with a small bird" width="260">
+</p>
+
 # Bowerbird
 
 Keep a folder of Markdown notes in order, and let an AI assistant, a script or
@@ -20,7 +25,7 @@ https://astral.sh/uv/install.sh | sh`, which downloads and runs a script, so rea
 if you prefer). In an empty folder:
 
 ```sh
-alias kb='uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp'
+alias kb='uvx bowerbird-mcp'
 kb init apply=true format=text
 kb create deploy type=Playbook title="Deploy" description="How we deploy." \
    body="Run the deploy script, then check the dashboard. To roll back, redeploy the previous tag." format=text
@@ -35,16 +40,17 @@ spec), built under the [ASF generative-tooling guidelines][asf-gt]. Bugs and ide
 <!-- --8<-- [start:run] -->
 ## Run
 
-Requires [uv](https://docs.astral.sh/uv/). Install on the fly, nothing to clone; this is
-the form to use:
+Requires [uv](https://docs.astral.sh/uv/). Install on the fly from PyPI, nothing to clone; this is
+the form to use (`pip install bowerbird-mcp` works too):
 
 ```sh
-uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help
+uvx bowerbird-mcp help
 ```
 
 In the examples below, `uv run bowerbird_mcp.py ...` means the same command run
 from a checkout of this repository (or beside a saved copy of that one file).
-PyPI later: `uvx bowerbird-mcp`.
+To run the latest unreleased code instead of the PyPI release, give uv the repository:
+`uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp help`.
 
 A `kbmcp.yaml` at the root of a knowledgebase (not in a bundle) marks its base
 and configures it, so any `bowerbird-mcp` server knows where the
@@ -247,7 +253,7 @@ for Cursor. VS Code's `.vscode/mcp.json` takes the same entry under `"servers"`.
   "mcpServers": {
     "bowerbird": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp"]
+      "args": ["bowerbird-mcp"]
     }
   }
 }
@@ -258,7 +264,7 @@ id is `user:` in it). To point at one elsewhere, add `"--config",
 "/path/to/kb/kbmcp.yaml"` to `args`. Or, in Claude Code:
 
 ```sh
-claude mcp add bowerbird -- uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp --config /path/to/kb/kbmcp.yaml
+claude mcp add bowerbird -- uvx bowerbird-mcp --config /path/to/kb/kbmcp.yaml
 ```
 
 Several knowledgebases at once: one entry each, with its own `--config`. The
@@ -285,8 +291,8 @@ commas), and each server offers only that role's tools:
 ```json
 {
   "mcpServers": {
-    "kb-read":  { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp", "--role", "read"] },
-    "kb-write": { "command": "uvx", "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp", "--role", "write"] }
+    "kb-read":  { "command": "uvx", "args": ["bowerbird-mcp", "--role", "read"] },
+    "kb-write": { "command": "uvx", "args": ["bowerbird-mcp", "--role", "write"] }
   }
 }
 ```
