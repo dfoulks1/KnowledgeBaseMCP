@@ -15,7 +15,7 @@ of facts about it: what kind of thing it is, a one-line description, where it ca
 file format is called [Open Knowledge Format](understanding-okf.md) (OKF), and it is deliberately plain: if you
 can open a text file, you can read it, and if you use git, you can version it.
 
-KnowledgeBaseMCP is the tool that looks after such a folder. It does three jobs, for three kinds of user:
+Bowerbird is the tool that looks after such a folder. It does three jobs, for three kinds of user:
 
 - **A person at a terminal** can search the notes, check them, and keep them tidy. No AI involved.
 - **An AI assistant** (through MCP, the protocol assistants use to call tools) can look things up in the notes
@@ -37,7 +37,7 @@ There is nothing else to install and nothing to clone. This line runs the tool s
 fetching what it needs the first time. Make a shortcut so the rest of this page is short:
 
 ```sh
-alias kb='uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp'
+alias kb='uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp'
 kb help          # every tool, one line each (35 of them)
 ```
 
@@ -133,7 +133,7 @@ kb lint format=text
 ```
 
 ```text
-knowledgebasemcp lint: ok: 2 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True
+bowerbird-mcp lint: ok: 2 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True
 ```
 
 `lint` checks every file against the format and some house rules (broken links, empty notes, notes nothing links
@@ -147,7 +147,7 @@ kb lint format=text
 
 ```text
 scratch.md: error: no_frontmatter: no frontmatter (§4) | fix: start the file with a `---` block holding at least `type:`
-knowledgebasemcp lint: FAILED: 3 concept(s) in 1 bundle(s) checked, 1 finding(s), conformant: False
+bowerbird-mcp lint: FAILED: 3 concept(s) in 1 bundle(s) checked, 1 finding(s), conformant: False
 ```
 
 Every finding names the file, what is wrong and how to fix it, and the command exits with a failure code, which
@@ -206,7 +206,7 @@ works in `claude_desktop_config.json` for Claude Desktop and `.cursor/mcp.json` 
   "mcpServers": {
     "notes": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp",
+      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp",
                "--config", "/full/path/to/notes/kbmcp.yaml"]
     }
   }
@@ -236,7 +236,7 @@ repos:
     hooks:
       - id: okf-lint
         name: OKF lint
-        entry: uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp lint format=text
+        entry: uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp lint format=text
         language: system
         pass_filenames: false
         verbose: true

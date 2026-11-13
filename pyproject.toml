@@ -3,14 +3,14 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "knowledgebasemcp"
+name = "bowerbird-mcp"
 version = "1.0.1"
 description = "An MCP server and CLI for Open Knowledge Format (OKF) v0.2 bundles."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
-authors = [{name = "KnowledgeBaseMCP contributors"}]
+authors = [{name = "Bowerbird contributors"}]
 keywords = ["mcp", "model-context-protocol", "okf", "open-knowledge-format", "markdown", "knowledge-base", "rag", "lint"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -24,23 +24,23 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Text Processing :: Markup :: Markdown",
 ]
-dependencies = ["mcp>=1.10,<2", "pyyaml", "fastembed"]  # fastembed: semantic search, off until `semantic: true`; not in the script's own header, so `uv run KnowledgeBaseMCP.py` stays light
+dependencies = ["mcp>=1.10,<2", "pyyaml", "fastembed"]  # fastembed: semantic search, off until `semantic: true`; not in the script's own header, so `uv run bowerbird_mcp.py` stays light
 
 [project.urls]
 Homepage = "https://knowledgebasemcp.voltpop.com/"
 Documentation = "https://knowledgebasemcp.voltpop.com/getting-started/"
-Repository = "https://github.com/dfoulks1/KnowledgeBaseMCP"
-Issues = "https://github.com/dfoulks1/KnowledgeBaseMCP/issues"
-Changelog = "https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/CHANGELOG.md"
+Repository = "https://github.com/dfoulks1/bowerbird-mcp"
+Issues = "https://github.com/dfoulks1/bowerbird-mcp/issues"
+Changelog = "https://github.com/dfoulks1/bowerbird-mcp/blob/main/CHANGELOG.md"
 
 [project.scripts]
-knowledgebasemcp = "KnowledgeBaseMCP:main"
+bowerbird-mcp = "bowerbird_mcp:main"
 
 [tool.setuptools]
-py-modules = ["KnowledgeBaseMCP"]
+py-modules = ["bowerbird_mcp"]
 
-# The file still runs as a PEP 723 script (`uv run KnowledgeBaseMCP.py`); the table above
-# makes it installable too: `uvx --from git+<repo> knowledgebasemcp`.
+# The file still runs as a PEP 723 script (`uv run bowerbird_mcp.py`); the table above
+# makes it installable too: `uvx --from git+<repo> bowerbird-mcp`.
 
 [dependency-groups]
 dev = ["ruff"]

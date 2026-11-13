@@ -2,6 +2,15 @@
 
 ## 1.0.1 (2026-11-13)
 
+### Renamed
+- The project is now **Bowerbird**. The PyPI package and the command are `bowerbird-mcp` (was
+  `knowledgebasemcp`), the script is `bowerbird_mcp.py` (was `KnowledgeBaseMCP.py`), and the repository is
+  `dfoulks1/bowerbird-mcp`. The settings files stay `kbmcp.yaml` and `kbmcp.nolint`. The model cache moved to
+  `~/.cache/bowerbird-mcp/models`. The 1.0.0 release keeps its old names.
+- The generated-index marker in `index.md` files still says "KnowledgeBaseMCP", so existing knowledgebases are
+  not rewritten.
+- The website address is unchanged for now.
+
 ### Changed
 - `fastembed` is declared once, as a dependency of the package. It is no longer in the script's own header, so
   `uv run KnowledgeBaseMCP.py` (and a lint-only hook that runs the script) no longer installs it. `uvx

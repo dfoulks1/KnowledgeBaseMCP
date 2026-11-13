@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Getting started · KnowledgeBaseMCP</title>
+  <title>Getting started · Bowerbird</title>
   <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
   <meta name="description" content="An MCP server and command line for Open Knowledge Format (OKF) v0.2 knowledgebases, for agents and people alike.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -20,7 +20,7 @@
 <nav class="navbar navbar-expand-lg sticky-top site-nav">
   <div class="container-fluid">
     <a class="navbar-brand fw-semibold" href="..">
-      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">KnowledgeBaseMCP
+      <img src="../img/logo.svg" alt="" width="32" height="32" class="me-2 align-text-bottom">Bowerbird
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#site-nav" aria-controls="site-nav"
@@ -90,7 +90,7 @@
       <ul class="navbar-nav">
         
           <li class="nav-item">
-            <a class="nav-link" href="https://github.com/dfoulks1/KnowledgeBaseMCP"
+            <a class="nav-link" href="https://github.com/dfoulks1/bowerbird-mcp"
                target="_blank" rel="noopener noreferrer">
               <i class="bi bi-github"></i> GitHub
             </a>
@@ -192,7 +192,7 @@ here sends your notes anywhere.</p>
 of facts about it: what kind of thing it is, a one-line description, where it came from, who checked it. The
 file format is called <a href="../understanding-okf/">Open Knowledge Format</a> (OKF), and it is deliberately plain: if you
 can open a text file, you can read it, and if you use git, you can version it.</p>
-<p>KnowledgeBaseMCP is the tool that looks after such a folder. It does three jobs, for three kinds of user:</p>
+<p>Bowerbird is the tool that looks after such a folder. It does three jobs, for three kinds of user:</p>
 <ul>
 <li><strong>A person at a terminal</strong> can search the notes, check them, and keep them tidy. No AI involved.</li>
 <li><strong>An AI assistant</strong> (through MCP, the protocol assistants use to call tools) can look things up in the notes
@@ -206,7 +206,7 @@ is broken or a fact has no source. It will not tell you the fact is wrong. That 
 <pre class="highlight"><code class="language-sh">curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
 <p>There is nothing else to install and nothing to clone. This line runs the tool straight from its repository,
 fetching what it needs the first time. Make a shortcut so the rest of this page is short:</p>
-<pre class="highlight"><code class="language-sh">alias kb='uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp'
+<pre class="highlight"><code class="language-sh">alias kb='uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp'
 kb help          # every tool, one line each (35 of them)</code></pre>
 <h2 id="2-make-a-knowledgebase">2. Make a knowledgebase<a class="headerlink" href="#2-make-a-knowledgebase" title="Link to this section">#</a></h2>
 <p>Make an empty folder and start a knowledgebase in it:</p>
@@ -268,14 +268,14 @@ by meaning, at the cost of a model download. Other ways in: <code>dirs</code> (a
 notes by words), <code>get</code> (read one note) and <code>list</code> (filter by type, tag, status or trust).</p>
 <h2 id="4-let-it-catch-mistakes">4. Let it catch mistakes<a class="headerlink" href="#4-let-it-catch-mistakes" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-sh">kb lint format=text</code></pre>
-<pre class="highlight"><code class="language-text">knowledgebasemcp lint: ok: 2 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True</code></pre>
+<pre class="highlight"><code class="language-text">bowerbird-mcp lint: ok: 2 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True</code></pre>
 <p><code>lint</code> checks every file against the format and some house rules (broken links, empty notes, notes nothing links
 to, duplicate titles, secrets that look like keys). It always ends with that one verdict line, pass or fail, so
 you can see it ran. Now drop in a file with no header:</p>
 <pre class="highlight"><code class="language-sh">echo 'just some notes, no header' &gt; scratch.md
 kb lint format=text</code></pre>
 <pre class="highlight"><code class="language-text">scratch.md: error: no_frontmatter: no frontmatter (§4) | fix: start the file with a `---` block holding at least `type:`
-knowledgebasemcp lint: FAILED: 3 concept(s) in 1 bundle(s) checked, 1 finding(s), conformant: False</code></pre>
+bowerbird-mcp lint: FAILED: 3 concept(s) in 1 bundle(s) checked, 1 finding(s), conformant: False</code></pre>
 <p>Every finding names the file, what is wrong and how to fix it, and the command exits with a failure code, which
 is what makes it useful in CI. Some problems are purely mechanical (a stale table of contents, inconsistent tag
 spelling), and <code>kb fix apply=true</code> repairs those for you. Delete <code>scratch.md</code> before going on.</p>
@@ -313,7 +313,7 @@ works in <code>claude_desktop_config.json</code> for Claude Desktop and <code>.c
   "mcpServers": {
     "notes": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/dfoulks1/KnowledgeBaseMCP", "knowledgebasemcp",
+      "args": ["--from", "git+https://github.com/dfoulks1/bowerbird-mcp", "bowerbird-mcp",
                "--config", "/full/path/to/notes/kbmcp.yaml"]
     }
   }
@@ -336,7 +336,7 @@ with its own <code>--config</code>. <a href="../guide/#roles-a-smaller-tool-list
     hooks:
       - id: okf-lint
         name: OKF lint
-        entry: uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp lint format=text
+        entry: uvx --from git+https://github.com/dfoulks1/bowerbird-mcp bowerbird-mcp lint format=text
         language: system
         pass_filenames: false
         verbose: true</code></pre>
@@ -376,7 +376,7 @@ only what changed: see <a href="../guide/#ci">the guide</a>.</p>
 
   <footer class="border-top mt-4 py-3">
     <div class="container-fluid small text-muted d-flex flex-wrap justify-content-between gap-2">
-      <span>KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
+      <span>Bowerbird · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review</span>
       <span>Built with MkDocs + Bootstrap 5.</span>
     </div>
   </footer>

@@ -24,7 +24,7 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         run: test "v$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)" = "$TAG"
       - name: Tests
-        run: uv run test_KnowledgeBaseMCP.py
+        run: uv run test_bowerbird_mcp.py
       - name: Build
         run: uv build
       - name: Check the files
