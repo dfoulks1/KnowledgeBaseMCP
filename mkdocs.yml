@@ -54,6 +54,10 @@ markdown_extensions:
         - ..
       check_paths: true
 
+# AI source material lives in docs-src/prompts/ for the repository, not for the website.
+exclude_docs: |
+  prompts/
+
 nav:
   - Home: index.md
   - Getting started: getting-started.md
@@ -61,9 +65,6 @@ nav:
   - Guide: guide.md
   - Tools: tools.md
   - Contributing: contributing.md
-  - AI source material:
-      - Context: prompts/00-context.md
-      - Rewrite brief: prompts/rewrite-brief.md
   - OKF v0.2: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md
 
 plugins: []

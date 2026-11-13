@@ -79,28 +79,6 @@
           
         
           
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle "
-                 href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                AI source material
-              </a>
-              <ul class="dropdown-menu">
-                
-                  <li>
-                    <a class="dropdown-item "
-                       href="../prompts/00-context/">Context</a>
-                  </li>
-                
-                  <li>
-                    <a class="dropdown-item "
-                       href="../prompts/rewrite-brief/">Rewrite brief</a>
-                  </li>
-                
-              </ul>
-            </li>
-          
-        
-          
             <li class="nav-item">
               <a class="nav-link "
                  
@@ -163,6 +141,11 @@
     </li>
   
     <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#releasing">Releasing</a>
+      
+    </li>
+  
+    <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#docs-site">Docs site</a>
       
     </li>
@@ -193,7 +176,7 @@ also doable by hand (edit the file, run <code>lint</code>). The tools make it ch
 more consistent, not possible.</p>
 <h2 id="how-we-build">How we build<a class="headerlink" href="#how-we-build" title="Link to this section">#</a></h2>
 <p>One brief, then refinement. <a href="https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/docs-src/prompts/rewrite-brief.md"><code>docs-src/prompts/rewrite-brief.md</code></a> is the current brief (AI source
-material, published on the site under <em>AI source material</em>; a draft in the beta process);
+material kept in the repository, not on the website; a draft in the beta process);
 use cases drive changes to it. Core stays one file.</p>
 <h2 id="asf-generative-tooling-compliance">ASF generative-tooling compliance<a class="headerlink" href="#asf-generative-tooling-compliance" title="Link to this section">#</a></h2>
 <ul>
@@ -209,6 +192,21 @@ use cases drive changes to it. Core stays one file.</p>
 <h2 id="running-the-checks">Running the checks<a class="headerlink" href="#running-the-checks" title="Link to this section">#</a></h2>
 <pre class="highlight"><code class="language-sh">uv run KnowledgeBaseMCP.py lint     # exits 1 on problems; use as a pre-merge gate
 uv run test_KnowledgeBaseMCP.py     # self-check against throwaway bundles</code></pre>
+<h2 id="releasing">Releasing<a class="headerlink" href="#releasing" title="Link to this section">#</a></h2>
+<ol>
+<li>Set <code>version</code> in <code>pyproject.toml</code>, add a section to <code>CHANGELOG.md</code>, and run the checks above (the tests
+   run on Python 3.10 to 3.14: <code>uv run --python 3.10 test_KnowledgeBaseMCP.py</code>).</li>
+<li>Rebuild the docs site (below) and commit. Merge to <code>main</code>.</li>
+<li>Tag and publish a GitHub release, <code>git tag -a vX.Y.Z</code> then <code>gh release create vX.Y.Z</code>, with the
+   <code>CHANGELOG.md</code> section as the notes. Publishing the release runs <code>.github/workflows/publish.yml</code>, which
+   tests, builds and uploads to PyPI. The workflow refuses a tag that does not match <code>version</code>.</li>
+</ol>
+<p>PyPI uses <em>trusted publishing</em>, so no token is stored anywhere. One-time setup, by the project owner:
+create the project's pending publisher at https://pypi.org/manage/account/publishing/ with owner
+<code>dfoulks1</code>, repository <code>KnowledgeBaseMCP</code>, workflow <code>publish.yml</code> and environment <code>pypi</code>, and create a
+GitHub environment named <code>pypi</code> (Settings, Environments), ideally with the owner as a required reviewer
+so each upload waits for approval. To try it first, <code>uv publish --publish-url https://test.pypi.org/legacy/</code>
+uploads the files from <code>uv build</code> to TestPyPI.</p>
 <h2 id="docs-site">Docs site<a class="headerlink" href="#docs-site" title="Link to this section">#</a></h2>
 <p><code>docs-src/</code> is the source and <code>docs/</code> the built site, committed so GitHub Pages
 serves it from <code>main</code> <code>/docs</code>. No CI builds it. After changing the README, a
@@ -221,8 +219,6 @@ uvx --with pymdown-extensions mkdocs build    # docs-src/ -&gt; docs/</code></pr
             
               <a class="btn btn-outline-secondary" href="../tools/">&larr; Tools</a>
             
-            
-              <a class="btn btn-outline-secondary" href="../prompts/00-context/">Context &rarr;</a>
             
           </div>
         
