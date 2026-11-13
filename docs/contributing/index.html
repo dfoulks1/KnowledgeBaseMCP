@@ -63,6 +63,28 @@
           
         
           
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle "
+                 href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                AI source material
+              </a>
+              <ul class="dropdown-menu">
+                
+                  <li>
+                    <a class="dropdown-item "
+                       href="../prompts/00-context/">Context</a>
+                  </li>
+                
+                  <li>
+                    <a class="dropdown-item "
+                       href="../prompts/rewrite-brief/">Rewrite brief</a>
+                  </li>
+                
+              </ul>
+            </li>
+          
+        
+          
             <li class="nav-item">
               <a class="nav-link "
                  
@@ -98,6 +120,11 @@
           <div class="position-sticky py-5" style="top: 3.5rem; max-height: calc(100vh - 3.5rem); overflow-y: auto;">
             <h6 class="text-uppercase small text-body-secondary fw-semibold mb-3">On this page</h6>
             <ul class="nav flex-column docs-toc-list">
+  
+    <li class="nav-item">
+      <a class="nav-link py-1 px-0" href="#feedback">Feedback</a>
+      
+    </li>
   
     <li class="nav-item">
       <a class="nav-link py-1 px-0" href="#what-it-serves">What it serves</a>
@@ -141,12 +168,16 @@
 <p>KnowledgeBaseMCP is a personal project, Apache-2.0 licensed, built under the
 <a href="https://www.apache.org/legal/generative-tooling.html">ASF generative-tooling guidelines</a>. AI assists; a human reviews before
 anything public-facing ships.</p>
+<h2 id="feedback">Feedback<a class="headerlink" href="#feedback" title="Link to this section">#</a></h2>
+<p>Bugs, ideas and OKF edge cases: <a href="https://github.com/dfoulks1/KnowledgeBaseMCP/issues">GitHub Issues</a>. Doc fixes are welcome too.
+Security problems: see <a href="https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/SECURITY.md">SECURITY.md</a>, and please do not open a public issue for them.</p>
 <h2 id="what-it-serves">What it serves<a class="headerlink" href="#what-it-serves" title="Link to this section">#</a></h2>
 <p>Bundles in the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">Open Knowledge Format</a> (OKF). Everything a tool does is
 also doable by hand (edit the file, run <code>lint</code>). The tools make it cheaper and
 more consistent, not possible.</p>
 <h2 id="how-we-build">How we build<a class="headerlink" href="#how-we-build" title="Link to this section">#</a></h2>
-<p>One brief, then refinement. <code>prompts/rewrite-brief.md</code> is the current brief;
+<p>One brief, then refinement. <a href="https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/docs-src/prompts/rewrite-brief.md"><code>docs-src/prompts/rewrite-brief.md</code></a> is the current brief (AI source
+material, published on the site under <em>AI source material</em>; a draft in the beta process);
 use cases drive changes to it. Core stays one file.</p>
 <h2 id="asf-generative-tooling-compliance">ASF generative-tooling compliance<a class="headerlink" href="#asf-generative-tooling-compliance" title="Link to this section">#</a></h2>
 <ul>
@@ -174,6 +205,8 @@ uvx --with pymdown-extensions mkdocs build    # docs-src/ -&gt; docs/</code></pr
             
               <a class="btn btn-outline-secondary" href="../tools/">&larr; Tools</a>
             
+            
+              <a class="btn btn-outline-secondary" href="../prompts/00-context/">Context &rarr;</a>
             
           </div>
         

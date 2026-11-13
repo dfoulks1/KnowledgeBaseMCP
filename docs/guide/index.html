@@ -63,6 +63,28 @@
           
         
           
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle "
+                 href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                AI source material
+              </a>
+              <ul class="dropdown-menu">
+                
+                  <li>
+                    <a class="dropdown-item "
+                       href="../prompts/00-context/">Context</a>
+                  </li>
+                
+                  <li>
+                    <a class="dropdown-item "
+                       href="../prompts/rewrite-brief/">Rewrite brief</a>
+                  </li>
+                
+              </ul>
+            </li>
+          
+        
+          
             <li class="nav-item">
               <a class="nav-link "
                  
@@ -177,10 +199,12 @@
 <p>Drawn from the README, written with Claude Opus 5.5 and Claude Sonnet 5.5, under human review.</p>
 </div>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Link to this section">#</a></h2>
-<p>Requires <a href="https://docs.astral.sh/uv/">uv</a>. Install on the fly, nothing to clone:</p>
+<p>Requires <a href="https://docs.astral.sh/uv/">uv</a>. Install on the fly, nothing to clone; this is
+the form to use:</p>
 <pre class="highlight"><code class="language-sh">uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp help</code></pre>
-<p>(<code>uv run KnowledgeBaseMCP.py ...</code> below does the same from a checkout. PyPI
-later: <code>uvx knowledgebasemcp</code>.)</p>
+<p>In the examples below, <code>uv run KnowledgeBaseMCP.py ...</code> means the same command run
+from a checkout of this repository (or beside a saved copy of that one file).
+PyPI later: <code>uvx knowledgebasemcp</code>.</p>
 <p>A <code>kbmcp.yaml</code> at the root of a knowledgebase (not in a bundle) marks its base
 and configures it, so any <code>knowledgebasemcp</code> server knows where the
 knowledgebase and its assets (index, archive, bundles) are, and the server

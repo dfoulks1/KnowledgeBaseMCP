@@ -1010,6 +1010,8 @@ def islands(r: Path, docs) -> list:
     ids = {x.path.resolve(): x.rel for x in docs if x.meta is not None}
     nbr = collections.defaultdict(set)
     for x in docs:
+        if x.path.resolve() not in ids:  # a file with no frontmatter is no concept, whatever it links to
+            continue
         for link in hrefs(x.text or ""):
             if (t := target(link, x.path, r)) is not None and (t := t.resolve()) in ids and t != x.path.resolve():
                 nbr[ids[x.path.resolve()]].add(ids[t])
@@ -1455,7 +1457,7 @@ def chunks(text: str, title: str) -> list:
             fence = not fence
         if not fence and (m := re.match(r"(#{1,6})[ \t]+(.+?)[ \t#]*$", ln)):
             flush()
-            path, buf, start = [*path[:max(len(m.group(1)) - 1, 1)], m.group(2)], [], n
+            path, buf, start = ([m.group(2)] if len(m.group(1)) == 1 else [*path[:len(m.group(1)) - 1], m.group(2)]), [], n
             continue
         buf.append(ln)
     flush()

@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://dfoulks1.github.io/KnowledgeBaseMCP/</loc>
+         <loc>https://knowledgebasemcp.voltpop.com/</loc>
          <lastmod>2026-11-13</lastmod>
     </url>
     <url>
-         <loc>https://dfoulks1.github.io/KnowledgeBaseMCP/contributing/</loc>
+         <loc>https://knowledgebasemcp.voltpop.com/contributing/</loc>
          <lastmod>2026-11-13</lastmod>
     </url>
     <url>
-         <loc>https://dfoulks1.github.io/KnowledgeBaseMCP/guide/</loc>
+         <loc>https://knowledgebasemcp.voltpop.com/guide/</loc>
          <lastmod>2026-11-13</lastmod>
     </url>
     <url>
-         <loc>https://dfoulks1.github.io/KnowledgeBaseMCP/tools/</loc>
+         <loc>https://knowledgebasemcp.voltpop.com/tools/</loc>
+         <lastmod>2026-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://knowledgebasemcp.voltpop.com/prompts/00-context/</loc>
+         <lastmod>2026-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://knowledgebasemcp.voltpop.com/prompts/rewrite-brief/</loc>
          <lastmod>2026-11-13</lastmod>
     </url>
 </urlset>

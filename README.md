@@ -1,27 +1,47 @@
 # KnowledgeBaseMCP
 
-An MCP server (stdio) and CLI for [Open Knowledge Format][okf] (OKF) v0.2
-bundles: directories of Markdown concepts with YAML frontmatter. It checks,
-maintains and imports them. It cares how a concept is written, never what it
-says. Local files only, no network (but see semantic search, which downloads a model once). Never writes to git.
+Keep a folder of Markdown notes in order, and let an AI assistant, a script or
+you search and check them. It works on knowledgebases in [Open Knowledge Format][okf]
+(OKF) v0.2: one Markdown file per *concept*, each starting with a small header of
+facts (its type, a description, where it came from, who checked it). A *bundle* is
+a folder of concepts; a knowledgebase is a bundle, or a folder of bundles.
 
-One contract, three users: an agent over MCP, CI, and a person at a terminal
-with no AI.
+It is an MCP server (stdio, so an AI assistant can use it) and a command line. It
+checks, maintains and imports concepts, and finds the passages that answer a
+question. It cares how a concept is written, never what it says. Local files only,
+no network (but see semantic search, which downloads a model once). Never writes
+to git. One contract, three users: an agent over MCP, CI, and a person at a
+terminal with no AI.
 
-Personal project. Apache-2.0, built under the [ASF generative-tooling
-guidelines][asf-gt].
+Try it (needs [uv](https://docs.astral.sh/uv/); install it with `curl -LsSf
+https://astral.sh/uv/install.sh | sh`). In an empty folder:
+
+```sh
+alias kb='uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp'
+kb init apply=true format=text
+kb create deploy type=Playbook title="Deploy" description="How we deploy." \
+   body="Run the deploy script, then check the dashboard. To roll back, redeploy the previous tag." format=text
+kb passages 'how do we roll back' format=text     # the best passages, with file and line
+kb lint format=text                               # ends: knowledgebasemcp lint: ok: ...
+```
+
+Personal project. Apache-2.0 (see [LICENSE](LICENSE); [NOTICE](NOTICE) credits the
+spec), built under the [ASF generative-tooling guidelines][asf-gt]. Bugs and ideas:
+[GitHub Issues](https://github.com/dfoulks1/KnowledgeBaseMCP/issues); security reports: [SECURITY.md](SECURITY.md).
 
 <!-- --8<-- [start:run] -->
 ## Run
 
-Requires [uv](https://docs.astral.sh/uv/). Install on the fly, nothing to clone:
+Requires [uv](https://docs.astral.sh/uv/). Install on the fly, nothing to clone; this is
+the form to use:
 
 ```sh
 uvx --from git+https://github.com/dfoulks1/KnowledgeBaseMCP knowledgebasemcp help
 ```
 
-(`uv run KnowledgeBaseMCP.py ...` below does the same from a checkout. PyPI
-later: `uvx knowledgebasemcp`.)
+In the examples below, `uv run KnowledgeBaseMCP.py ...` means the same command run
+from a checkout of this repository (or beside a saved copy of that one file).
+PyPI later: `uvx knowledgebasemcp`.
 
 A `kbmcp.yaml` at the root of a knowledgebase (not in a bundle) marks its base
 and configures it, so any `knowledgebasemcp` server knows where the

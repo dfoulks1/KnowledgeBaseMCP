@@ -4,8 +4,7 @@ site_description: >-
   knowledgebases, for agents and people alike.
 site_author: KnowledgeBaseMCP contributors
 copyright: KnowledgeBaseMCP · Apache-2.0 · built under the ASF generative-tooling guidelines · docs AI-generated, under human review
-# Update to the published base URL once hosting is finalized.
-site_url: https://dfoulks1.github.io/KnowledgeBaseMCP/
+site_url: https://knowledgebasemcp.voltpop.com/
 
 repo_name: dfoulks1/KnowledgeBaseMCP
 repo_url: https://github.com/dfoulks1/KnowledgeBaseMCP
@@ -60,6 +59,9 @@ nav:
   - Guide: guide.md
   - Tools: tools.md
   - Contributing: contributing.md
+  - AI source material:
+      - Context: prompts/00-context.md
+      - Rewrite brief: prompts/rewrite-brief.md
   - OKF v0.2: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/bad9bdbafa82c672b00d437d4f2cc8f17e9e5f58/okf/SPEC.md
 
 plugins: []

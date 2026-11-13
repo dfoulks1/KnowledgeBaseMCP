@@ -1,0 +1,6 @@
+# Files in this repository that are documentation, not OKF concepts: lint skips them.
+README.md
+SPEC.md
+CONTRIBUTING.md
+docs-src/
+SECURITY.md

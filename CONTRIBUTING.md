@@ -4,6 +4,11 @@ KnowledgeBaseMCP is a personal project, Apache-2.0 licensed, built under the
 [ASF generative-tooling guidelines][asf-gt]. AI assists; a human reviews before
 anything public-facing ships.
 
+## Feedback
+
+Bugs, ideas and OKF edge cases: [GitHub Issues](https://github.com/dfoulks1/KnowledgeBaseMCP/issues). Doc fixes are welcome too.
+Security problems: see [SECURITY.md](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/SECURITY.md), and please do not open a public issue for them.
+
 ## What it serves
 
 Bundles in the [Open Knowledge Format][okf] (OKF). Everything a tool does is
@@ -12,7 +17,8 @@ more consistent, not possible.
 
 ## How we build
 
-One brief, then refinement. `prompts/rewrite-brief.md` is the current brief;
+One brief, then refinement. [`docs-src/prompts/rewrite-brief.md`](https://github.com/dfoulks1/KnowledgeBaseMCP/blob/main/docs-src/prompts/rewrite-brief.md) is the current brief (AI source
+material, published on the site under *AI source material*; a draft in the beta process);
 use cases drive changes to it. Core stays one file.
 
 ## ASF generative-tooling compliance

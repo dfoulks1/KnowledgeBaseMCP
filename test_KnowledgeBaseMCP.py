@@ -908,6 +908,10 @@ k.KB_ROOT = good
 code, text = cli("lint", "format=text")
 assert code == 0 and text.splitlines()[-1] == "knowledgebasemcp lint: ok: 0 concept(s) in 1 bundle(s) checked, 0 finding(s), conformant: True", (code, text)
 k.KB_ROOT = saved_root
+# a file with no frontmatter that links to a concept must not crash lint (islands once raised KeyError).
+(rk / "plain.md").write_text("No frontmatter here, but it links [to a concept](seed.md).\n")
+assert ("plain.md", "no_frontmatter") in kinds_of()
+(rk / "plain.md").unlink()
 k.KB_ROOT = saved
 
 print("ok")

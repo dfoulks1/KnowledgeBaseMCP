@@ -68,9 +68,10 @@ Or work from the terminal, no AI needed:
 # start a bundle
 uv run KnowledgeBaseMCP.py init bundle=eng apply=true
 
-# write a concept
-uv run KnowledgeBaseMCP.py create eng/runbooks/deploy \
-    type=Playbook description="How we deploy."
+# write a concept (a few real sentences, or `passages` has nothing to find)
+uv run KnowledgeBaseMCP.py create eng/runbooks/deploy type=Playbook title="Deploy" \
+    description="How we deploy." \
+    body="Run the deploy script, then check the dashboard. To roll back, redeploy the previous tag."
 
 # find it: the map, then the best matches
 uv run KnowledgeBaseMCP.py dirs format=text
